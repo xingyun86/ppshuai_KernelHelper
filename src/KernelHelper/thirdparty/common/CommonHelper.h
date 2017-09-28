@@ -15,7 +15,7 @@
 #include <winsock2.h>
 #include <shellapi.h>
 #include <sys/stat.h>
-
+#include <iconv.h>
 using namespace std;
 
 typedef std::vector<std::string> STRINGVECTOR;
@@ -1161,29 +1161,29 @@ __inline static std::string ASCII2UTF_8(std::string& strAsciiCode)
 	return strRet;
 }
 
-__inline static int code_convert(char *from_charset, char *to_charset, const char *inbuf, size_t inlen, char *outbuf, size_t outlen)
+__inline static int codeset_convert(char *from_charset, char *to_charset, const char *inbuf, size_t inlen, char *outbuf, size_t outlen)
 {
-	/*const char **pin = &inbuf;
+	const char **pin = &inbuf;
 	char **pout = &outbuf;
 
 	iconv_t cd = iconv_open(to_charset, from_charset);
 	if (cd == 0) return -1;
 	memset(outbuf, 0, outlen);
 	if (iconv(cd, (char **)pin, &inlen, pout, &outlen) == -1) return -1;
-	iconv_close(cd);*/
+	iconv_close(cd);
 	return 0;
 }
 
 /* UTF-8 to GBK  */
 __inline static int u2g(const char *inbuf, size_t inlen, char *outbuf, size_t outlen)
 {
-	return code_convert("UTF-8", "GBK", inbuf, inlen, outbuf, outlen);
+	return codeset_convert("UTF-8", "GBK", inbuf, inlen, outbuf, outlen);
 }
 
 /* GBK to UTF-8 */
 __inline static int g2u(const char *inbuf, size_t inlen, char *outbuf, size_t outlen)
 {
-	return code_convert("GBK", "UTF-8", inbuf, inlen, outbuf, outlen);
+	return codeset_convert("GBK", "UTF-8", inbuf, inlen, outbuf, outlen);
 }
 
 //显示在屏幕中央
@@ -1482,39 +1482,126 @@ __inline static tstring GetSystemPath()
 	return tsSystemPath;
 }
 
-//判断目录是否存在
-__inline static BOOL IsDirectoryExists(LPCTSTR lpDirectory)
+__inline static //获取系统路径
+tstring GetSystemPathX64()
 {
-	BOOL bResult = TRUE;
-	struct _stat st = { 0 };
-	if ((_tstat(lpDirectory, &st) != 0) || (st.st_mode & S_IFDIR != S_IFDIR))
+	tstring tsSystemPath = _T("");
+	_TCHAR tSystemPath[MAX_PATH] = { 0 };
+	GetSystemWow64Directory(tSystemPath, MAX_PATH);
+	if (*tSystemPath)
 	{
-		bResult = FALSE;
+		tsSystemPath = tstring(tSystemPath) + _T("\\");
+	}
+	return tsSystemPath;
+}
+__inline static
+BOOL FileIsExists(LPCTSTR pFileName)
+{
+	WIN32_FILE_ATTRIBUTE_DATA wfad = { 0 };
+
+	return (GetFileAttributesEx(pFileName, GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &wfad)
+		? ((wfad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY) : FALSE);
+}
+__inline static
+BOOL PathIsExists(LPCTSTR pFileName)
+{
+	WIN32_FILE_ATTRIBUTE_DATA wfad = { 0 };
+	return (GetFileAttributesEx(pFileName, GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &wfad)
+		? !((wfad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) : FALSE);
+}
+__inline static
+BOOL IsPathExists(LPCTSTR pFileName)
+{
+	WIN32_FILE_ATTRIBUTE_DATA wfad = { 0 };
+	return (GetFileAttributesEx(pFileName, GET_FILEEX_INFO_LEVELS::GetFileExInfoStandard, &wfad)
+		? !((wfad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) : FALSE);
+}
+__inline static
+BOOL IsFileExist(LPCTSTR fileName)
+{
+	HANDLE hFindFile = NULL;
+	WIN32_FIND_DATA	findData = { 0 };
+
+	hFindFile = FindFirstFile(fileName, &findData);
+	if (hFindFile != INVALID_HANDLE_VALUE)
+	{
+		FindClose(hFindFile);
+		hFindFile = NULL;
+		return TRUE;
+	}
+
+	return FALSE;
+}
+__inline static
+BOOL IsFileExistEx(LPCTSTR lpFileName)
+{
+	WIN32_FILE_ATTRIBUTE_DATA wfad = { 0 };
+	GET_FILEEX_INFO_LEVELS gfil = GetFileExInfoStandard;
+
+	if (GetFileAttributes(lpFileName) != INVALID_FILE_ATTRIBUTES)
+	{
+		return TRUE;
+	}
+	else
+	{
+		if (GetFileAttributesEx(lpFileName, gfil, &wfad) &&
+			wfad.dwFileAttributes != INVALID_FILE_ATTRIBUTES)
+		{
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+//////////////////////////////////////////////////////////////////////////
+// 函数说明：遍历目录获取指定文件列表
+// 参    数：输出的文件行内容数据、过滤后缀名、过滤的前缀字符
+// 返 回 值：bool返回类型，成功返回true；失败返回false
+// 编 写 者: ppshuai 20141112
+//////////////////////////////////////////////////////////////////////////
+__inline static BOOL DirectoryTraversal(std::map<SIZE_T, TSTRING> * pTTMAP, LPCTSTR lpDirectory = _T("."), LPCTSTR lpFormat = _T(".ext"))
+{
+	BOOL bResult = FALSE;
+	HANDLE hFindFile = NULL;
+	WIN32_FIND_DATA wfd = { 0 };
+	_TCHAR tRootPath[MAX_PATH + 1] = { 0 };
+
+	//构建遍历根目录
+	wsprintf(tRootPath, TEXT("%s\\*%s"), lpDirectory, lpFormat);
+
+	//hFileHandle = FindFirstFileEx(tPathFile, FindExInfoStandard, &wfd, FindExSearchNameMatch, NULL, 0);
+	hFindFile = FindFirstFile(tRootPath, &wfd);
+	if (hFindFile != INVALID_HANDLE_VALUE)
+	{
+		pTTMAP->insert(std::map<SIZE_T, TSTRING>::value_type(pTTMAP->size(), TSTRING(TSTRING(lpDirectory) + _T("\\") + wfd.cFileName)));
+		while (FindNextFile(hFindFile, &wfd))
+		{
+			pTTMAP->insert(std::map<SIZE_T, TSTRING>::value_type(pTTMAP->size(), TSTRING(TSTRING(lpDirectory) + _T("\\") + wfd.cFileName)));
+		}
+		FindClose(hFindFile);
+		hFindFile = NULL;
+		bResult = TRUE;
 	}
 
 	return bResult;
 }
 //判断目录是否存在，若不存在则创建
-__inline static BOOL CreateCascadeDirectory(LPCTSTR lpPathName,        //Directory name
-	LPSECURITY_ATTRIBUTES lpSecurityAttributes/* = NULL*/  // Security attribute
-)
+__inline static BOOL CreateCascadeDirectory(LPCTSTR lpPathName, //Directory name
+	LPSECURITY_ATTRIBUTES lpSecurityAttributes = NULL  // Security attribute
+	)
 {
-	if (IsDirectoryExists(lpPathName))       //如果目录已存在，直接返回
-	{
-		return TRUE;
-	}
-
-	_TCHAR tPathSect[MAX_PATH] = { 0 };
+	_TCHAR *pToken = NULL;
+	_TCHAR tPathTemp[MAX_PATH] = { 0 };
 	_TCHAR tPathName[MAX_PATH] = { 0 };
+
 	_tcscpy(tPathName, lpPathName);
-	_TCHAR *pToken = _tcstok(tPathName, _T("\\"));
+	pToken = _tcstok(tPathName, _T("\\"));
 	while (pToken)
 	{
-		_sntprintf(tPathSect, sizeof(tPathSect) / sizeof(_TCHAR), _T("%s%s\\"), tPathSect, pToken);
-		if (!IsDirectoryExists(tPathSect))
+		_sntprintf(tPathTemp, sizeof(tPathTemp) / sizeof(_TCHAR), _T("%s%s\\"), tPathTemp, pToken);
+		if (!IsFileExistEx(tPathTemp))
 		{
 			//创建失败时还应删除已创建的上层目录，此次略
-			if (!CreateDirectory(tPathSect, lpSecurityAttributes))
+			if (!CreateDirectory(tPathTemp, lpSecurityAttributes))
 			{
 				_tprintf(_T("CreateDirectory Failed: %d\n"), GetLastError());
 				return FALSE;
@@ -1524,9 +1611,9 @@ __inline static BOOL CreateCascadeDirectory(LPCTSTR lpPathName,        //Directo
 	}
 	return TRUE;
 }
-#define CMD_PATH_NAME				"cmd.exe" //相对路径名称
+#define CMD_PATH_NAME				"CMD.EXE" //相对路径名称
 
-#define ADB_PATH_NAME				"adb\\adb.exe" //相对路径名称
+//#define ADB_PATH_NAME				"adb\\adb.exe" //相对路径名称
 
 //获取cmd.exe文件路径
 __inline static tstring GetCmdPath()
@@ -1538,13 +1625,13 @@ __inline static tstring GetCmdPath()
 static const tstring CMD_FULL_PATH_NAME = GetCmdPath();
 
 //获取adb.exe文件路径
-__inline static tstring GetAdbPath()
-{
-	return /*GetProgramPath()*/GetWorkPath() + _T(ADB_PATH_NAME);
-}
+//__inline static tstring GetAdbPath()
+//{
+//	return /*GetProgramPath()*/GetWorkPath() + _T(ADB_PATH_NAME);
+//}
 
 //设定adb.exe路径
-static const tstring ADB_FULL_PATH_NAME = GetAdbPath();
+//static const tstring ADB_FULL_PATH_NAME = GetAdbPath();
 
 #define ANSI2UTF8(x) UnicodeToUTF8(ANSIToUnicode(x))
 #define UTF82ANSI(x) UnicodeToANSI(UTF8ToUnicode(x))

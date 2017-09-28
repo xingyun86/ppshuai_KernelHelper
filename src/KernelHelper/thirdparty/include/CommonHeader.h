@@ -23,6 +23,11 @@
 #pragma comment (lib, "libcares.lib")
 #pragma comment (lib, "libcurl.lib")
 #pragma comment (lib, "lib_json.lib")
+#pragma comment (lib, "libgetopt.lib")
+#pragma comment (lib, "libuv.lib")
+#pragma comment (lib, "libiconv.lib")
+#pragma comment (lib, "libcharset.lib")
+#pragma comment (lib, "libgettimeofday.lib")
 #pragma comment (lib, "kernelhelper.lib")
 
 #endif

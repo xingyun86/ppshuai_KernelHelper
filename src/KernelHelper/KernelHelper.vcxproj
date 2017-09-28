@@ -87,7 +87,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>KERNELHELPER_BUILDING;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/iconv;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/libssh2/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
@@ -112,7 +112,7 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>KERNELHELPER_BUILDING;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/iconv;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/libssh2/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
@@ -138,7 +138,7 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>KERNELHELPER_BUILDING;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/iconv;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/libssh2/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>
@@ -167,7 +167,7 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>KERNELHELPER_BUILDING;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/iconv;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/libssh2/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalUsingDirectories>
       </AdditionalUsingDirectories>

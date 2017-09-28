@@ -75,12 +75,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/iconv;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/libssh2/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -88,12 +88,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/iconv;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/libssh2/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -103,14 +103,14 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/iconv;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/libssh2/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -122,14 +122,14 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/iconv;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/libssh2/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>

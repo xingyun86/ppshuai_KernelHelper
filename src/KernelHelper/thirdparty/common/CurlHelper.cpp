@@ -14,7 +14,7 @@
 //		-1,curl访问URL失败
 //		-2,curl初始化失败
 //		-3,创建或打开文件失败
-int curl_http_get_file(string strSavePathFileName, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60*/)
+int curl_http_get_file(string strSavePathFileName, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	int result = 0;//成功返回0
 	CURLcode curlCode = CURLE_OK;
@@ -40,13 +40,14 @@ int curl_http_get_file(string strSavePathFileName, string strRequestURL, string 
 				curl_easy_setopt(pCurl, CURLOPT_HTTPHEADER, plist);
 			}
 			
+			curl_easy_setopt(pCurl, CURLOPT_TRANSFERTEXT, 1L);
 			curl_easy_setopt(pCurl, CURLOPT_FOLLOWLOCATION, 1L);
-			//curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
-			//curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
+			curl_easy_setopt(pCurl, CURLOPT_AUTOREFERER, 1L);
+			curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
+			curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
 
 			// send it verbose for max debuggaility
 			curl_easy_setopt(pCurl, CURLOPT_VERBOSE, 1L);
-			//curl_easy_setopt(pCurl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 			// HTTP/2 please
 			curl_easy_setopt(pCurl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -56,13 +57,6 @@ int curl_http_get_file(string strSavePathFileName, string strRequestURL, string 
 			curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 2L);
 
 			curl_easy_setopt(pCurl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
-
-#ifdef SKIP_PEER_VERIFICATION
-			curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-			curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
 
 			// write to this file
 			curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, pFile);
@@ -76,6 +70,12 @@ int curl_http_get_file(string strSavePathFileName, string strRequestURL, string 
 				curl_easy_setopt(pCurl, CURLOPT_POSTFIELDS, strPostFields.c_str());
 			}
 			curl_easy_setopt(pCurl, CURLOPT_URL, strRequestURL.c_str());
+
+			if (curlopt_handler)
+			{
+				curlopt_handler(pCurl);
+			}
+
 			curlCode = curl_easy_perform(pCurl);
 
 			if (curlCode != CURLE_OK)
@@ -91,7 +91,7 @@ int curl_http_get_file(string strSavePathFileName, string strRequestURL, string 
 		curl_global_cleanup();
 
 		fclose(pFile);
-		pFile = nullptr;
+		pFile = 0;
 	}
 	else
 	{
@@ -100,17 +100,6 @@ int curl_http_get_file(string strSavePathFileName, string strRequestURL, string 
 
 	return result;
 }
-/*//curl 回调处理返回数据函数
-size_t write_dynamic_data(void * buffer, size_t size, size_t nmenb, void * lpvoid)
-{
-	string * str = dynamic_cast<string *>((string*)lpvoid);
-	if (nullptr == str || nullptr == buffer) {
-		return -1;
-	}
-	char * pData = (char *)buffer;
-	str->append(pData, size*nmenb);
-	return nmenb;
-}*/
 //////////////////////////////////////////////////////////////////////
 //函数功能:传入URL获取JSON字符串
 //函数参数:
@@ -119,12 +108,12 @@ size_t write_dynamic_data(void * buffer, size_t size, size_t nmenb, void * lpvoi
 //		strHeaderData			要发送的头部数据字符串数组(\r\n为分隔符)
 //		strPostFields			发送的POST域数据
 //		bVerbose				是否为详细日志信息
-//		nDelayTime				超时设置，默认为60秒
+//		nDelayTime				超时设置，默认为60000毫秒
 //返回值:
 //		0, 成功
 //		-1,curl初始化失败
 //		-2,curl访问URL失败
-int curl_http_get_data(string & strJsonData, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60*/)
+int curl_http_get_data(string & strJsonData, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60000*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	int result = 0;//成功返回0
 	CURLcode curlCode = CURLE_OK;
@@ -146,16 +135,17 @@ int curl_http_get_data(string & strJsonData, string strRequestURL, string strHea
 			curl_easy_setopt(pCurl, CURLOPT_HTTPHEADER, plist);
 		}
 
+		curl_easy_setopt(pCurl, CURLOPT_TRANSFERTEXT, 1L);
 		curl_easy_setopt(pCurl, CURLOPT_FOLLOWLOCATION, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_AUTOREFERER, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
 
 		// send it verbose for max debuggaility
 		if (bVerbose)
 		{
 			curl_easy_setopt(pCurl, CURLOPT_VERBOSE, 1L);
 		}
-		//curl_easy_setopt(pCurl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 		// HTTP/2 please
 		curl_easy_setopt(pCurl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -166,17 +156,10 @@ int curl_http_get_data(string & strJsonData, string strRequestURL, string strHea
 
 		curl_easy_setopt(pCurl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
 
-#ifdef SKIP_PEER_VERIFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
-
-		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, write_dynamic_data);//调用处理函数
+		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, CURLTOOL::write_dynamic_data_callback);//调用处理函数
 		curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, (void *)&strJsonData);//返回的数据，这里可以加个函数指针
 
-		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, nDelayTime);
+		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT_MS, nDelayTime);
 
 		curl_easy_setopt(pCurl, CURLOPT_POST, 0L);
 		// Now specify the POST data
@@ -187,6 +170,12 @@ int curl_http_get_data(string & strJsonData, string strRequestURL, string strHea
 		}
 		//char *output = curl_easy_escape(pCurl, strRequestURL.c_str(), strRequestURL.length());
 		curl_easy_setopt(pCurl, CURLOPT_URL, strRequestURL.c_str());
+
+		if (curlopt_handler)
+		{
+			curlopt_handler(pCurl);
+		}
+
 		curlCode = curl_easy_perform(pCurl);
 
 		if (curlCode != CURLE_OK)
@@ -212,12 +201,12 @@ int curl_http_get_data(string & strJsonData, string strRequestURL, string strHea
 //		strHeaderData			要发送的头部数据字符串数组(\r\n为分隔符)
 //		strPostFields			发送的POST域数据
 //		bVerbose				是否为详细日志信息
-//		nDelayTime				超时设置，默认为60秒
+//		nDelayTime				超时设置，默认为60000毫秒
 //返回值:
 //		0, 成功
 //		-1,curl初始化失败
 //		-2,curl访问URL失败
-int curl_http_post_data(string & strJsonData, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60*/)
+int curl_http_post_data(string & strJsonData, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60000*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	int result = 0;//成功返回0
 	CURLcode curlCode = CURLE_OK;
@@ -239,16 +228,17 @@ int curl_http_post_data(string & strJsonData, string strRequestURL, string strHe
 			curl_easy_setopt(pCurl, CURLOPT_HTTPHEADER, plist);
 		}
 
+		curl_easy_setopt(pCurl, CURLOPT_TRANSFERTEXT, 1L);
 		curl_easy_setopt(pCurl, CURLOPT_FOLLOWLOCATION, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_AUTOREFERER, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
 
 		// send it verbose for max debuggaility
 		if (bVerbose)
 		{
 			curl_easy_setopt(pCurl, CURLOPT_VERBOSE, 1L);
 		}
-		//curl_easy_setopt(pCurl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 		// HTTP/2 please
 		curl_easy_setopt(pCurl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -258,18 +248,11 @@ int curl_http_post_data(string & strJsonData, string strRequestURL, string strHe
 		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 2L);
 
 		curl_easy_setopt(pCurl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
-
-#ifdef SKIP_PEER_VERIFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
-
-		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, write_dynamic_data);//调用处理函数
+		
+		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, CURLTOOL::write_dynamic_data_callback);//调用处理函数
 		curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, (void *)&strJsonData);//返回的数据，这里可以加个函数指针
 
-		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, nDelayTime);
+		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT_MS, nDelayTime);
 
 		curl_easy_setopt(pCurl, CURLOPT_POST, 1L);
 
@@ -281,6 +264,12 @@ int curl_http_post_data(string & strJsonData, string strRequestURL, string strHe
 		}
 
 		curl_easy_setopt(pCurl, CURLOPT_URL, strRequestURL.c_str());
+		
+		if (curlopt_handler)
+		{
+			curlopt_handler(pCurl);
+		}
+
 		curlCode = curl_easy_perform(pCurl);
 
 		if (curlCode != CURLE_OK)
@@ -342,12 +331,12 @@ void curl_http_print_cookies(CURL *curl)
 //		strHeaderData			要发送的头部数据字符串数组(\r\n为分隔符)
 //		strPostFields			发送的POST域数据
 //		bVerbose				是否为详细日志信息
-//		nDelayTime				超时设置，默认为60秒
+//		nDelayTime				超时设置，默认为60000毫秒
 //返回值:
 //		0, 成功
 //		-1,curl初始化失败
 //		-2,curl访问URL失败
-int curl_http_post_data(CURL * pCurl, string & strJsonData, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60*/)
+int curl_http_post_data(CURL * pCurl, string & strJsonData, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60000*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	int result = 0;//成功返回0
 	CURLcode curlCode = CURLE_OK;
@@ -355,7 +344,6 @@ int curl_http_post_data(CURL * pCurl, string & strJsonData, string strRequestURL
 
 	if (pCurl)
 	{
-
 		// start cookie engine
 		curl_easy_setopt(pCurl, CURLOPT_COOKIEFILE, "");
 
@@ -366,16 +354,17 @@ int curl_http_post_data(CURL * pCurl, string & strJsonData, string strRequestURL
 			curl_easy_setopt(pCurl, CURLOPT_HTTPHEADER, plist);
 		}
 
+		curl_easy_setopt(pCurl, CURLOPT_TRANSFERTEXT, 1L);
 		curl_easy_setopt(pCurl, CURLOPT_FOLLOWLOCATION, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_AUTOREFERER, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
 
 		// send it verbose for max debuggaility
 		if (bVerbose)
 		{
 			curl_easy_setopt(pCurl, CURLOPT_VERBOSE, 1L);
 		}
-		//curl_easy_setopt(pCurl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 		// HTTP/2 please
 		curl_easy_setopt(pCurl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -385,18 +374,11 @@ int curl_http_post_data(CURL * pCurl, string & strJsonData, string strRequestURL
 		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 2L);
 
 		curl_easy_setopt(pCurl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
-
-#ifdef SKIP_PEER_VERIFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
-
-		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, write_dynamic_data);//调用处理掉函数
+		
+		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, CURLTOOL::write_dynamic_data_callback);//调用处理掉函数
 		curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, (void *)&strJsonData);//返回的数据，这里可以加个函数指针
 
-		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, nDelayTime);
+		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT_MS, nDelayTime);
 
 		curl_easy_setopt(pCurl, CURLOPT_POST, 1L);
 		// Now specify the POST data
@@ -405,9 +387,14 @@ int curl_http_post_data(CURL * pCurl, string & strJsonData, string strRequestURL
 		{
 			curl_easy_setopt(pCurl, CURLOPT_POSTFIELDS, strPostFields.c_str());
 		}
-
-
+		
 		curl_easy_setopt(pCurl, CURLOPT_URL, strRequestURL.c_str());
+
+		if (curlopt_handler)
+		{
+			curlopt_handler(pCurl);
+		}
+
 		curlCode = curl_easy_perform(pCurl);
 
 		if (curlCode != CURLE_OK)
@@ -431,12 +418,12 @@ int curl_http_post_data(CURL * pCurl, string & strJsonData, string strRequestURL
 //		strHeaderData			要发送的头部数据字符串数组(\r\n为分隔符)
 //		strPostFields			发送的POST域数据
 //		bVerbose				是否为相信日志信息
-//		nDelayTime				超时设置，默认为60秒
+//		nDelayTime				超时设置，默认为60000毫秒
 //返回值:
 //		0, 成功
 //		-1,curl初始化失败
 //		-2,curl访问URL失败
-int curl_http_get_data(CURL * pCurl, string & strJsonData, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60*/)
+int curl_http_get_data(CURL * pCurl, string & strJsonData, string strRequestURL, string strHeaderData/* = ""*/, string strPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60000*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	int result = 0;//成功返回0
 	CURLcode curlCode = CURLE_OK;
@@ -454,16 +441,17 @@ int curl_http_get_data(CURL * pCurl, string & strJsonData, string strRequestURL,
 			curl_easy_setopt(pCurl, CURLOPT_HTTPHEADER, plist);
 		}
 
+		curl_easy_setopt(pCurl, CURLOPT_TRANSFERTEXT, 1L);
 		curl_easy_setopt(pCurl, CURLOPT_FOLLOWLOCATION, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_AUTOREFERER, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
 
 		// send it verbose for max debuggaility
 		if (bVerbose)
 		{
 			curl_easy_setopt(pCurl, CURLOPT_VERBOSE, 1L);
 		}
-		//curl_easy_setopt(pCurl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 		// HTTP/2 please
 		curl_easy_setopt(pCurl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -473,18 +461,11 @@ int curl_http_get_data(CURL * pCurl, string & strJsonData, string strRequestURL,
 		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 2L);
 
 		curl_easy_setopt(pCurl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
-
-#ifdef SKIP_PEER_VERIFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
-
-		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, write_dynamic_data);//调用处理函数
+		
+		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, CURLTOOL::write_dynamic_data_callback);//调用处理函数
 		curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, (void *)&strJsonData);//返回的数据，这里可以加个函数指针
 
-		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, nDelayTime);
+		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT_MS, nDelayTime);
 
 		curl_easy_setopt(pCurl, CURLOPT_POST, 0L);
 		// Now specify the POST data
@@ -495,6 +476,12 @@ int curl_http_get_data(CURL * pCurl, string & strJsonData, string strRequestURL,
 		}
 
 		curl_easy_setopt(pCurl, CURLOPT_URL, strRequestURL.c_str());
+		
+		if (curlopt_handler)
+		{
+			curlopt_handler(pCurl);
+		}
+		
 		curlCode = curl_easy_perform(pCurl);
 
 		if (curlCode != CURLE_OK)
@@ -509,34 +496,7 @@ int curl_http_get_data(CURL * pCurl, string & strJsonData, string strRequestURL,
 
 	return result;
 }
-/*typedef struct _tagCallBackData{
-    char * p;
-    unsigned int s;
-    unsigned int v;
-    void init(char * _p, unsigned int _s, unsigned int _v)
-    {
-        p = _p; s = _s; v = _v;
-        if(p && v > 0)
-        {
-            memset(p, 0, v * sizeof(char));
-        }
-    }
-}CallBackData, *PCallBackData;
 
-//curl 回调处理返回数据函数
-size_t write_native_data(void * buffer, size_t size, size_t nmenb, void * pv)
-{
-	CallBackData * pCBD = (CallBackData*)pv;
-	if (!pCBD || !buffer) {
-		return -1;
-	}
-	char * pData = (char *)buffer;
-	if(pCBD->s + size*nmenb < pCBD->v)
-	{
-	    memcpy(pCBD->p + pCBD->s, pData, size*nmenb);
-	}
-	return nmenb;
-}*/
 //////////////////////////////////////////////////////////////////////
 //函数功能:POST方法传入URL及参数获取JSON字符串
 //函数参数:
@@ -547,17 +507,17 @@ size_t write_native_data(void * buffer, size_t size, size_t nmenb, void * pv)
 //		pHeaderData				要发送的头部数据字符串数组(\r\n为分隔符)
 //		pPostFields				发送的POST域数据
 //		bVerbose				是否为详细日志信息
-//		nDelayTime				超时设置，默认为60秒
+//		nDelayTime				超时设置，默认为60000毫秒
 //返回值:
 //		0, 成功
 //		-1,curl初始化失败
 //		-2,curl访问URL失败
-int curl_http_post_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSize, const char * pRequestUrl, const char * pHeaderData/* = ""*/, const char * pPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60*/)
+int curl_http_post_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSize, const char * pRequestUrl, const char * pHeaderData/* = ""*/, const char * pPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60000*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	int result = 0;//成功返回0
 	CURLcode curlCode = CURLE_OK;
 	curl_slist *plist = 0;
-    CallBackData * pcbd = (CallBackData *)malloc(sizeof(CallBackData));
+	CURLTOOL::CALLBACKDATA * pcbd = (CURLTOOL::CALLBACKDATA *)malloc(sizeof(CURLTOOL::CALLBACKDATA));
 
 	if (pcbd && pCurl)
 	{
@@ -573,16 +533,17 @@ int curl_http_post_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSi
 			curl_easy_setopt(pCurl, CURLOPT_HTTPHEADER, plist);
 		}
 		
+		curl_easy_setopt(pCurl, CURLOPT_TRANSFERTEXT, 1L);
 		curl_easy_setopt(pCurl, CURLOPT_FOLLOWLOCATION, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_AUTOREFERER, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
 
 		// send it verbose for max debuggaility
 		if (bVerbose)
 		{
 			curl_easy_setopt(pCurl, CURLOPT_VERBOSE, 1L);
 		}
-		//curl_easy_setopt(pCurl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 		// HTTP/2 please
 		curl_easy_setopt(pCurl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -593,17 +554,10 @@ int curl_http_post_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSi
 
 		curl_easy_setopt(pCurl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
 
-#ifdef SKIP_PEER_VERIFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
-
-		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, write_native_data);//调用处理掉函数
+		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, CURLTOOL::write_native_data_callback);//调用处理掉函数
 		curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, (void *)pcbd);//返回的数据，这里可以加个函数指针
 
-		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, nDelayTime);
+		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT_MS, nDelayTime);
 
 		curl_easy_setopt(pCurl, CURLOPT_POST, 1L);
 		// Now specify the POST data
@@ -614,6 +568,12 @@ int curl_http_post_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSi
 		}
 
 		curl_easy_setopt(pCurl, CURLOPT_URL, pRequestUrl);
+		
+		if (curlopt_handler)
+		{
+			curlopt_handler(pCurl);
+		}
+
 		curlCode = curl_easy_perform(pCurl);
 
 		if (curlCode != CURLE_OK)
@@ -646,17 +606,17 @@ int curl_http_post_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSi
 //		pHeaderData				要发送的头部数据字符串数组(\r\n为分隔符)
 //		pPostFields				发送的POST域数据
 //		bVerbose				是否为详细日志信息
-//		nDelayTime				超时设置，默认为60秒
+//		nDelayTime				超时设置，默认为60000毫秒
 //返回值:
 //		0, 成功
 //		-1,curl初始化失败
 //		-2,curl访问URL失败
-int curl_http_get_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSize, const char * pRequestUrl, const char * pHeaderData/* = ""*/, const char * pPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60*/)
+int curl_http_get_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSize, const char * pRequestUrl, const char * pHeaderData/* = ""*/, const char * pPostFields/* = ""*/, bool bVerbose/* = false*/, int nDelayTime/* = 60000*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	int result = 0;//成功返回0
 	CURLcode curlCode = CURLE_OK;
 	curl_slist *plist = 0;
-    CallBackData * pcbd = (CallBackData *)malloc(sizeof(CallBackData));
+	CURLTOOL::CALLBACKDATA * pcbd = (CURLTOOL::CALLBACKDATA *)malloc(sizeof(CURLTOOL::CALLBACKDATA));
 
 	if (pcbd && pCurl)
 	{
@@ -672,16 +632,17 @@ int curl_http_get_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSiz
 			curl_easy_setopt(pCurl, CURLOPT_HTTPHEADER, plist);
 		}
 		
+		curl_easy_setopt(pCurl, CURLOPT_TRANSFERTEXT, 1L);
 		curl_easy_setopt(pCurl, CURLOPT_FOLLOWLOCATION, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
-		//curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_AUTOREFERER, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_FORBID_REUSE, 1L);
+		curl_easy_setopt(pCurl, CURLOPT_NOSIGNAL, 1L);
 
 		// send it verbose for max debuggaility
 		if (bVerbose)
 		{
 			curl_easy_setopt(pCurl, CURLOPT_VERBOSE, 1L);
 		}
-		//curl_easy_setopt(pCurl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 		// HTTP/2 please
 		curl_easy_setopt(pCurl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -691,18 +652,11 @@ int curl_http_get_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSiz
 		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 2L);
 
 		curl_easy_setopt(pCurl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
-
-#ifdef SKIP_PEER_VERIFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-		curl_easy_setopt(pCurl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
-
-		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, write_native_data);//调用处理函数
+		
+		curl_easy_setopt(pCurl, CURLOPT_WRITEFUNCTION, CURLTOOL::write_native_data_callback);//调用处理函数
 		curl_easy_setopt(pCurl, CURLOPT_WRITEDATA, (void *)pcbd);//返回的数据，这里可以加个函数指针
 
-		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT, nDelayTime);
+		curl_easy_setopt(pCurl, CURLOPT_TIMEOUT_MS, nDelayTime);
 
 		curl_easy_setopt(pCurl, CURLOPT_POST, 0L);
 		// Now specify the POST data
@@ -713,6 +667,12 @@ int curl_http_get_data(CURL * pCurl, char * pJsonData, unsigned int nJsonDataSiz
 		}
 
 		curl_easy_setopt(pCurl, CURLOPT_URL, pRequestUrl);
+
+		if (curlopt_handler)
+		{
+			curlopt_handler(pCurl);
+		}
+
 		curlCode = curl_easy_perform(pCurl);
 
 		if (curlCode != CURLE_OK)
@@ -766,21 +726,21 @@ size_t callback_write_data(void *ptr, size_t size, size_t nmemb, void *stream)
 	return written;
 }
 
-int visit_sites(CURL *p_curl, string strUrl, string strHeaderDataList,
-	string strHeaderFileName/* = ("head.dat")*/, string strBodyFileName/* = ("body.html")*/,
-	string strCookIEFileName/* = ("cookie.dat")*/, string strCookIEJarFileName/* = ("cookie.dat")*/,
-	string strEncodingUncompressMethodType/* = ("")*/)
+int visit_sites(CURL *p_curl, std::string strUrl, std::string strHeaderDataList,
+	std::string strHeaderFileName/* = ("head.dat")*/, std::string strBodyFileName/* = ("body.html")*/,
+	std::string strCookIEFileName/* = ("cookie.dat")*/, std::string strCookIEJarFileName/* = ("cookie.dat")*/,
+	std::string strEncodingUncompressMethodType/* = ("")*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	CURLcode curl_code = CURLE_OK;
 
 	FILE *p_header_file = 0;
 	FILE *p_body_file = 0;
 
-	string str_Url = strUrl;
+	std::string str_Url = strUrl;
 	struct curl_slist *p_curl_slist_header = 0;
-	string str_HeaderDataList = strHeaderDataList;
-	string str_CookIEFileName = strCookIEFileName;
-	string str_CookIEJarFileName = strCookIEJarFileName;
+	std::string str_HeaderDataList = strHeaderDataList;
+	std::string str_CookIEFileName = strCookIEFileName;
+	std::string str_CookIEJarFileName = strCookIEJarFileName;
 
 	p_curl_slist_header = curl_slist_append(p_curl_slist_header, str_HeaderDataList.c_str());
 	if (p_curl)
@@ -799,13 +759,14 @@ int visit_sites(CURL *p_curl, string strUrl, string strHeaderDataList,
 			goto __LEAVE_CLOSE;
 		}
 
+		curl_easy_setopt(p_curl, CURLOPT_TRANSFERTEXT, 1L);
 		curl_easy_setopt(p_curl, CURLOPT_FOLLOWLOCATION, 1L);
-		//curl_easy_setopt(p_curl, CURLOPT_FORBID_REUSE, 1L);
-		//curl_easy_setopt(p_curl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(p_curl, CURLOPT_AUTOREFERER, 1L);
+		curl_easy_setopt(p_curl, CURLOPT_FORBID_REUSE, 1L);
+		curl_easy_setopt(p_curl, CURLOPT_NOSIGNAL, 1L);
 
 		// send it verbose for max debuggaility
 		curl_easy_setopt(p_curl, CURLOPT_VERBOSE, 1L);
-		//curl_easy_setopt(p_curl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 		if (strEncodingUncompressMethodType.length())
 		{
@@ -833,12 +794,10 @@ int visit_sites(CURL *p_curl, string strUrl, string strHeaderDataList,
 		curl_easy_setopt(p_curl, CURLOPT_WRITEHEADER, p_header_file);
 		curl_easy_setopt(p_curl, CURLOPT_WRITEDATA, p_body_file);
 
-#ifdef SKIP_PEER_VERIFICATION
-		curl_easy_setopt(p_curl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-		curl_easy_setopt(p_curl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
+		if (curlopt_handler)
+		{
+			curlopt_handler(p_curl);
+		}
 
 		curl_code = curl_easy_perform(p_curl);
 	}
@@ -867,24 +826,24 @@ __LEAVE_CLOSE:
 	return 0;
 }
 
-int visit_posts_sites(CURL *p_curl, string strUrl, string strHeaderDataList, string strPostFields,
-	string strHeaderFileName/* = ("head.dat")*/, string strBodyFileName/* = ("body.html")*/,
-	string strCookIEFileName/* = ("cookie.dat")*/, string strCookIEJarFileName/* = ("cookie.dat")*/,
-	string strEncodingUncompressMethodType/* = ("")*/)
+int visit_posts_sites(CURL *p_curl, std::string strUrl, std::string strHeaderDataList, std::string strPostFields,
+	std::string strHeaderFileName/* = ("head.dat")*/, std::string strBodyFileName/* = ("body.html")*/,
+	std::string strCookIEFileName/* = ("cookie.dat")*/, std::string strCookIEJarFileName/* = ("cookie.dat")*/,
+	std::string strEncodingUncompressMethodType/* = ("")*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	CURLcode curl_code = CURLE_OK;
 
 	FILE *p_header_file = 0;
 	FILE *p_body_file = 0;
 
-	string str_Url = strUrl;
+	std::string str_Url = strUrl;
 	struct curl_slist *p_curl_slist_header = 0;
-	string str_HeaderDataList = strHeaderDataList;
-	string str_PostFields = strPostFields;
-	string str_HeaderFileName = strHeaderFileName;
-	string str_BodyFileName = strBodyFileName;
-	string str_CookIEFileName = strCookIEFileName;
-	string str_CookIEJarFileName = strCookIEJarFileName;
+	std::string str_HeaderDataList = strHeaderDataList;
+	std::string str_PostFields = strPostFields;
+	std::string str_HeaderFileName = strHeaderFileName;
+	std::string str_BodyFileName = strBodyFileName;
+	std::string str_CookIEFileName = strCookIEFileName;
+	std::string str_CookIEJarFileName = strCookIEJarFileName;
 
 	p_curl_slist_header = curl_slist_append(p_curl_slist_header, (strHeaderDataList).c_str());
 	if (p_curl)
@@ -903,13 +862,14 @@ int visit_posts_sites(CURL *p_curl, string strUrl, string strHeaderDataList, str
 			goto __LEAVE_CLOSE;
 		}
 
+		curl_easy_setopt(p_curl, CURLOPT_TRANSFERTEXT, 1L);
 		curl_easy_setopt(p_curl, CURLOPT_FOLLOWLOCATION, 1L);
-		//curl_easy_setopt(p_curl, CURLOPT_FORBID_REUSE, 1L);
-		//curl_easy_setopt(p_curl, CURLOPT_NOSIGNAL, 1L);
+		curl_easy_setopt(p_curl, CURLOPT_AUTOREFERER, 1L);
+		curl_easy_setopt(p_curl, CURLOPT_FORBID_REUSE, 1L);
+		curl_easy_setopt(p_curl, CURLOPT_NOSIGNAL, 1L);
 
 		// send it verbose for max debuggaility
 		curl_easy_setopt(p_curl, CURLOPT_VERBOSE, 1L);
-		//curl_easy_setopt(p_curl, CURLOPT_DEBUGFUNCTION, my_trace);
 
 		if (strEncodingUncompressMethodType.length())
 		{
@@ -944,12 +904,10 @@ int visit_posts_sites(CURL *p_curl, string strUrl, string strHeaderDataList, str
 		curl_easy_setopt(p_curl, CURLOPT_WRITEHEADER, p_header_file);
 		curl_easy_setopt(p_curl, CURLOPT_WRITEDATA, p_body_file);
 
-#ifdef SKIP_PEER_VERIFICATION
-		curl_easy_setopt(p_curl, CURLOPT_SSL_VERIFYPEER, 0L);
-#endif
-#ifdef SKIP_HOSTNAME_VERFICATION
-		curl_easy_setopt(p_curl, CURLOPT_SSL_VERIFYHOST, 0L);
-#endif
+		if (curlopt_handler)
+		{
+			curlopt_handler(p_curl);
+		}
 
 		curl_code = curl_easy_perform(p_curl);
 	}
@@ -976,10 +934,10 @@ __LEAVE_CLOSE:
 
 	return 0;
 }
-int visit_sites(string strUrl, string strHeaderDataList,
-	string strHeaderFileName/* = ("head.dat")*/, string strBodyFileName/* = ("body.html")*/,
-	string strCookIEFileName/* = ("cookie.dat")*/, string strCookIEJarFileName/* = ("cookie.dat")*/,
-	string strEncodingUncompressMethodType/* = ("")*/)
+	int visit_sites(std::string strUrl, std::string strHeaderDataList,
+		std::string strHeaderFileName/* = ("head.dat")*/, std::string strBodyFileName/* = ("body.html")*/,
+		std::string strCookIEFileName/* = ("cookie.dat")*/, std::string strCookIEJarFileName/* = ("cookie.dat")*/,
+		std::string strEncodingUncompressMethodType/* = ("")*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	CURL *p_curl = 0;
 
@@ -992,10 +950,10 @@ int visit_sites(string strUrl, string strHeaderDataList,
 	return 0;
 }
 
-int visit_posts_sites(string strUrl, string strHeaderDataList, string strPostFields,
-	string strHeaderFileName/* = ("head.dat")*/, string strBodyFileName/* = ("body.html")*/,
-	string strCookIEFileName/* = ("cookie.dat")*/, string strCookIEJarFileName/* = ("cookie.dat")*/,
-	string strEncodingUncompressMethodType/* = ("")*/)
+	int visit_posts_sites(std::string strUrl, std::string strHeaderDataList, std::string strPostFields,
+		std::string strHeaderFileName/* = ("head.dat")*/, std::string strBodyFileName/* = ("body.html")*/,
+		std::string strCookIEFileName/* = ("cookie.dat")*/, std::string strCookIEJarFileName/* = ("cookie.dat")*/,
+		std::string strEncodingUncompressMethodType/* = ("")*/, CURLTOOL::PFN_CURLOPT_HANDLER curlopt_handler/* = 0*/)
 {
 	CURL *p_curl = 0;
 
