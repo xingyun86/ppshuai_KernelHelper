@@ -24,6 +24,430 @@ typedef std::vector<std::wstring> WSTRINGVECTOR;
 typedef std::vector<STRINGVECTOR> STRINGVECTORVECTOR;
 typedef std::vector<WSTRINGVECTOR> WSTRINGVECTORVECTOR;
 
+__inline static std::string STRING_FORMAT_A(const CHAR * paFormat, ...)
+{
+	INT nAS = 0;
+	std::string A = ("");
+	
+	va_list valist = { 0 };
+
+	va_start(valist, paFormat);
+
+	nAS = _vscprintf_p(paFormat, valist);
+	if (nAS > 0)
+	{
+		A.resize((nAS + sizeof(CHAR)) * sizeof(CHAR), ('\0'));
+		_vsnprintf((CHAR *)A.c_str(), nAS * sizeof(CHAR), paFormat, valist);
+	}
+
+	va_end(valist);
+
+	return A.c_str();
+}
+
+__inline static std::wstring STRING_FORMAT_W(const WCHAR * pwFormat, ...)
+{
+	INT nWS = 0;
+	std::wstring W = (L"");
+
+	va_list valist = { 0 };
+
+	va_start(valist, pwFormat);
+
+	nWS = _vscwprintf_p(pwFormat, valist);
+	if (nWS > 0)
+	{
+		W.resize((nWS + sizeof(WCHAR)) * sizeof(WCHAR), (L'\0'));
+		_vsnwprintf((WCHAR *)W.c_str(), nWS * sizeof(WCHAR), pwFormat, valist);
+	}
+
+	va_end(valist);
+
+	return W.c_str();
+}
+
+//解析错误标识为字符串
+__inline static std::string ParseErrorA(DWORD dwErrorCodes, HINSTANCE hInstance = NULL)
+{
+	BOOL bResult = FALSE;
+	HLOCAL hLocal = NULL;
+	std::string strErrorText = ("");
+
+	bResult = ::FormatMessageA(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		hInstance,
+		dwErrorCodes,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+		(LPSTR)&hLocal,
+		0,
+		NULL);
+	if (!bResult)
+	{
+		if (hInstance)
+		{
+			bResult = ::FormatMessageA(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_FROM_HMODULE |
+				FORMAT_MESSAGE_IGNORE_INSERTS,
+				hInstance,
+				dwErrorCodes,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+				(LPSTR)&hLocal,
+				0,
+				NULL);
+			if (!bResult)
+			{
+				// failed
+				// Unknown error code %08x (%d)
+				strErrorText = STRING_FORMAT_A(("Unknown error code 0x%08X"), dwErrorCodes);
+			}
+		}
+	}
+
+	if (bResult && hLocal)
+	{
+		// Success
+		LPSTR pT = (LPSTR)strchr((LPCSTR)hLocal, ('\r'));
+		if (pT != NULL)
+		{
+			//Lose CRLF
+			*pT = ('\0');
+		}
+		strErrorText = (LPCSTR)hLocal;
+	}
+
+	if (hLocal)
+	{
+		::LocalFree(hLocal);
+		hLocal = NULL;
+	}
+
+	return strErrorText;
+}
+//解析错误标识为字符串
+__inline static std::wstring ParseErrorW(DWORD dwErrorCodes, HINSTANCE hInstance = NULL)
+{
+	BOOL bResult = FALSE;
+	HLOCAL hLocal = NULL;
+	std::wstring strErrorText = (L"");
+
+	bResult = ::FormatMessageW(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		hInstance,
+		dwErrorCodes,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+		(LPWSTR)&hLocal,
+		0,
+		NULL);
+	if (!bResult)
+	{
+		if (hInstance)
+		{
+			bResult = ::FormatMessageW(
+				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_FROM_HMODULE |
+				FORMAT_MESSAGE_IGNORE_INSERTS,
+				hInstance,
+				dwErrorCodes,
+				MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
+				(LPWSTR)&hLocal,
+				0,
+				NULL);
+			if (!bResult)
+			{
+				// failed
+				// Unknown error code %08x (%d)
+				strErrorText = STRING_FORMAT_W((L"Unknown error code 0x%08X"), dwErrorCodes);
+			}
+		}
+	}
+
+	if (bResult && hLocal)
+	{
+		// Success
+		LPWSTR pT = (LPWSTR)wcschr((LPCWSTR)hLocal, (L'\r'));
+		if (pT != NULL)
+		{
+			//Lose CRLF
+			*pT = (L'\0');
+		}
+		strErrorText = (LPCWSTR)hLocal;
+	}
+
+	if (hLocal)
+	{
+		::LocalFree(hLocal);
+		hLocal = NULL;
+	}
+
+	return strErrorText;
+}
+
+__inline static std::string ToUpperCaseA(LPCSTR pA)
+{
+	return strupr((LPSTR)pA);
+}
+__inline static std::wstring ToUpperCaseW(LPCWSTR pW)
+{
+	return _wcsupr((LPWSTR)pW);
+}
+__inline static std::string ToLowerCaseA(LPCSTR pA)
+{
+	return strlwr((LPSTR)pA);
+}
+__inline static std::wstring ToLowerCaseW(LPCWSTR pW)
+{
+	return _wcsupr((LPWSTR)pW);
+}
+
+__inline static std::string GetFilePathDriveA(LPCSTR lpFileName)
+{
+	CHAR szDrive[_MAX_DRIVE] = { 0 };
+	CHAR szDir[_MAX_DIR] = { 0 };
+	CHAR szFname[_MAX_FNAME] = { 0 };
+	CHAR szExt[_MAX_EXT] = { 0 };
+
+	_splitpath(lpFileName, szDrive, szDir, szFname, szExt);
+
+	return szDrive;
+}
+__inline static std::wstring GetFilePathDriveW(LPCWSTR lpFileName)
+{
+	WCHAR szDrive[_MAX_DRIVE] = { 0 };
+	WCHAR szDir[_MAX_DIR] = { 0 };
+	WCHAR szFname[_MAX_FNAME] = { 0 };
+	WCHAR szExt[_MAX_EXT] = { 0 };
+
+	_wsplitpath(lpFileName, szDrive, szDir, szFname, szExt);
+
+	return szDrive;
+}
+__inline static std::string GetFilePathDirA(LPCSTR lpFileName)
+{
+	CHAR szDrive[_MAX_DRIVE] = { 0 };
+	CHAR szDir[_MAX_DIR] = { 0 };
+	CHAR szFname[_MAX_FNAME] = { 0 };
+	CHAR szExt[_MAX_EXT] = { 0 };
+
+	_splitpath(lpFileName, szDrive, szDir, szFname, szExt);
+
+	return szDir;
+}
+__inline static std::wstring GetFilePathDirW(LPCWSTR lpFileName)
+{
+	WCHAR szDrive[_MAX_DRIVE] = { 0 };
+	WCHAR szDir[_MAX_DIR] = { 0 };
+	WCHAR szFname[_MAX_FNAME] = { 0 };
+	WCHAR szExt[_MAX_EXT] = { 0 };
+
+	_wsplitpath(lpFileName, szDrive, szDir, szFname, szExt);
+
+	return szDir;
+}
+__inline static std::string GetFilePathExtA(LPCSTR lpFileName)
+{
+	CHAR szDrive[_MAX_DRIVE] = { 0 };
+	CHAR szDir[_MAX_DIR] = { 0 };
+	CHAR szFname[_MAX_FNAME] = { 0 };
+	CHAR szExt[_MAX_EXT] = { 0 };
+
+	_splitpath(lpFileName, szDrive, szDir, szFname, szExt);
+
+	return szExt;
+}
+__inline static std::wstring GetFilePathExtW(LPCWSTR lpFileName)
+{
+	WCHAR szDrive[_MAX_DRIVE] = { 0 };
+	WCHAR szDir[_MAX_DIR] = { 0 };
+	WCHAR szFname[_MAX_FNAME] = { 0 };
+	WCHAR szExt[_MAX_EXT] = { 0 };
+
+	_wsplitpath(lpFileName, szDrive, szDir, szFname, szExt);
+
+	return szExt;
+}
+__inline static std::string GetFilePathFnameA(LPCSTR lpFileName)
+{
+	CHAR szDrive[_MAX_DRIVE] = { 0 };
+	CHAR szDir[_MAX_DIR] = { 0 };
+	CHAR szFname[_MAX_FNAME] = { 0 };
+	CHAR szExt[_MAX_EXT] = { 0 };
+
+	_splitpath(lpFileName, szDrive, szDir, szFname, szExt);
+
+	return szFname;
+}
+__inline static std::wstring GetFilePathFnameW(LPCWSTR lpFileName)
+{
+	WCHAR szDrive[_MAX_DRIVE] = { 0 };
+	WCHAR szDir[_MAX_DIR] = { 0 };
+	WCHAR szFname[_MAX_FNAME] = { 0 };
+	WCHAR szExt[_MAX_EXT] = { 0 };
+
+	_wsplitpath(lpFileName, szDrive, szDir, szFname, szExt);
+
+	return szFname;
+}
+__inline static void SplitFilePathA(LPCSTR lpFileName, std::string & strDrive, 
+	std::string & strDir, std::string & strFname, std::string & strExt)
+{
+	CHAR szDrive[_MAX_DRIVE] = { 0 };
+	CHAR szDir[_MAX_DIR] = { 0 };
+	CHAR szFname[_MAX_FNAME] = { 0 };
+	CHAR szExt[_MAX_EXT] = { 0 };
+
+	_splitpath(lpFileName, szDrive, szDir, szFname, szExt);
+	strDrive = szDrive;
+	strDir = szDir;
+	strFname = szFname;
+	strExt = szExt;
+}
+__inline static void SplitFilePathW(LPCWSTR lpFileName, std::wstring & strDrive,
+	std::wstring & strDir, std::wstring & strFname, std::wstring & strExt)
+{
+	WCHAR szDrive[_MAX_DRIVE] = { 0 };
+	WCHAR szDir[_MAX_DIR] = { 0 };
+	WCHAR szFname[_MAX_FNAME] = { 0 };
+	WCHAR szExt[_MAX_EXT] = { 0 };
+
+	_wsplitpath(lpFileName, szDrive, szDir, szFname, szExt);
+	strDrive = szDrive;
+	strDir = szDir;
+	strFname = szFname;
+	strExt = szExt;
+}
+
+__inline static void * MemoryRealloc(void * p, size_t s)
+{
+	return realloc(p, s);
+}
+__inline static void MemoryRelease(void ** p)
+{
+	free((*p));	(*p) = 0;
+}
+
+//初始化调试窗口显示
+__inline static void InitDebugConsole()
+{
+	FILE *pStdOut = stdout;
+	FILE *pStdIn = stdin;
+	FILE *pStdErr = stderr;
+
+	if (!AllocConsole())
+	{
+		_TCHAR tErrorInfos[16384] = { 0 };
+		_sntprintf(tErrorInfos, sizeof(tErrorInfos) / sizeof(_TCHAR), _T("控制台生成失败! 错误代码:0x%X。"), GetLastError());
+		MessageBox(NULL, tErrorInfos, _T("错误提示"), 0);
+		return;
+	}
+	SetConsoleTitle(_T("TraceDebugWindow"));
+
+	pStdOut = _tfreopen(_T("CONOUT$"), _T("w"), stdout);
+	pStdIn = _tfreopen(_T("CONIN$"), _T("r"), stdin);
+	pStdErr = _tfreopen(_T("CONERR$"), _T("w"), stderr);
+	_tsetlocale(LC_ALL, _T("chs"));
+}
+
+//释放掉调试窗口显示
+__inline static void ExitDebugConsole()
+{
+	FreeConsole();
+}
+
+//获取毫秒时间计数器(返回结果为100纳秒的时间, 1ns=1 000 000ms=1000 000 000s)
+#define MILLI_100NANO (ULONGLONG)(1000000ULL / 100ULL)
+__inline static std::string GetCurrentSystemTimeA()
+{
+	CHAR szTime[MAXCHAR] = {0};
+	SYSTEMTIME st = { 0 };
+	//FILETIME ft = { 0 };
+	//::GetSystemTimeAsFileTime(&ft);
+	::GetLocalTime(&st);
+	//::GetSystemTime(&st);
+	//::SystemTimeToFileTime(&st, &ft);
+	//::SystemTimeToTzSpecificLocalTime(NULL, &st, &st);
+	wsprintfA(szTime, ("%04d-%02d-%02d %02d:%02d:%02d.%03d"),
+		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	return std::string(szTime);
+}
+__inline static std::wstring GetCurrentSystemTimeW()
+{
+	WCHAR wzTime[MAXCHAR] = { 0 };
+	SYSTEMTIME st = { 0 };
+	//FILETIME ft = { 0 };
+	//::GetSystemTimeAsFileTime(&ft);
+	::GetLocalTime(&st);
+	//::GetSystemTime(&st);
+	//::SystemTimeToFileTime(&st, &ft);
+	//::SystemTimeToTzSpecificLocalTime(NULL, &st, &st);
+	wsprintfW(wzTime, (L"%04d-%02d-%02d %02d:%02d:%02d.%03d"),
+		st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+	return std::wstring(wzTime);
+}
+
+#if !defined(_UNICODE) && !defined(UNICODE)
+#define ToUpperCase				ToUpperCaseA
+#define ToLowerCase				ToLowerCaseA
+#define STRING_FORMAT			STRING_FORMAT_A
+#define GetCurrentSystemTime	GetCurrentSystemTimeA
+#define ParseError				ParseErrorA
+#define GetFilePathDrive		GetFilePathDriveA
+#define GetFilePathDir			GetFilePathDirA
+#define GetFilePathExt			GetFilePathExtA
+#define GetFilePathFname		GetFilePathFnameA
+#define SplitFilePath			SplitFilePathA
+
+#else
+#define ToUpperCase				ToUpperCaseW
+#define ToLowerCase				ToLowerCaseW
+#define STRING_FORMAT			STRING_FORMAT_W
+#define GetCurrentSystemTime	GetCurrentSystemTimeW
+#define ParseError				ParseErrorW
+#define GetFilePathDrive		GetFilePathDriveW
+#define GetFilePathDir			GetFilePathDirW
+#define GetFilePathExt			GetFilePathExtW
+#define GetFilePathFname		GetFilePathFnameW
+#define SplitFilePath			SplitFilePathW
+#endif // !defined(_UNICODE) && !defined(UNICODE)
+
+//返回值单位为100ns
+__inline static LONGLONG GetCurrentTimerTicks()
+{
+	FILETIME ft = { 0 };
+	SYSTEMTIME st = { 0 };
+	ULARGE_INTEGER u = { 0, 0 };
+	::GetSystemTime(&st);
+	::SystemTimeToFileTime(&st, &ft);
+	u.HighPart = ft.dwHighDateTime;
+	u.LowPart = ft.dwLowDateTime;
+	return u.QuadPart;
+}
+
+//获取运行时间间隔差值(输入参数单位为100纳秒)
+__inline static LONGLONG GetIntervalTimerTicks(LONGLONG llTime)
+{
+	return (LONGLONG)((GetCurrentTimerTicks() - llTime) / MILLI_100NANO);
+}
+//时间间隔差值(输入参数单位为100纳秒)
+__inline static LONGLONG SubtractTimerTicks(LONGLONG llTimeA, LONGLONG llTimeB)
+{
+	return (LONGLONG)((llTimeA - llTimeB) / MILLI_100NANO);
+}
+
+#if !defined(_DEBUG) && !defined(DEBUG)
+#define START_TIMER_TICKS(x)
+#define RESET_TIMER_TICKS(x)
+#define CLOSE_TIMER_TICKS(x)
+#else
+#define START_TIMER_TICKS(x) ULONGLONG ull##x = PPSHUAI::GetCurrentTimerTicks();
+#define RESET_TIMER_TICKS(x) ull##x = PPSHUAI::GetCurrentTimerTicks();
+#define CLOSE_TIMER_TICKS(x) printf(("%s %s: %s() %llu ms\r\n"), PPSHUAI::GetCurrentSystemTimeA().c_str(), #x, __FUNCTION__, (PPSHUAI::GetCurrentTimerTicks() - ull##x) / MILLI_100NANO);
+#endif
+
 __inline static size_t file_reader(std::string&data, std::string filename, std::string mode = "rb")
 {
 #define DATA_BASE_SIZE	0x200
@@ -866,33 +1290,33 @@ __inline static void LogErrorPrint(LPCTSTR lpszFormat, ...)
 
 #define LOG_ERROR_PRINT LogErrorPrint
 
-//初始化调试窗口显示
-__inline static void InitDebugConsole()
-{
-	FILE *pStdOut = stdout;
-	FILE *pStdIn = stdin;
-	FILE *pStdErr = stderr;
+////初始化调试窗口显示
+//__inline static void InitDebugConsole()
+//{
+//	FILE *pStdOut = stdout;
+//	FILE *pStdIn = stdin;
+//	FILE *pStdErr = stderr;
+//
+//	if (!AllocConsole())
+//	{
+//		_TCHAR tErrorInfos[16384] = { 0 };
+//		_sntprintf(tErrorInfos, sizeof(tErrorInfos) / sizeof(_TCHAR), _T("控制台生成失败! 错误代码:0x%X。"), GetLastError());
+//		MessageBox(NULL, tErrorInfos, _T("错误提示"), 0);
+//		return;
+//	}
+//	SetConsoleTitle(_T("TraceDebugWindow"));
+//
+//	pStdOut = _tfreopen(_T("CONOUT$"), _T("w"), stdout);
+//	pStdIn = _tfreopen(_T("CONIN$"), _T("r"), stdin);
+//	pStdErr = _tfreopen(_T("CONERR$"), _T("w"), stderr);
+//	_tsetlocale(LC_ALL, _T("chs"));
+//}
 
-	if (!AllocConsole())
-	{
-		_TCHAR tErrorInfos[16384] = { 0 };
-		_sntprintf(tErrorInfos, sizeof(tErrorInfos) / sizeof(_TCHAR), _T("控制台生成失败! 错误代码:0x%X。"), GetLastError());
-		MessageBox(NULL, tErrorInfos, _T("错误提示"), 0);
-		return;
-	}
-	SetConsoleTitle(_T("TraceDebugWindow"));
-
-	pStdOut = _tfreopen(_T("CONOUT$"), _T("w"), stdout);
-	pStdIn = _tfreopen(_T("CONIN$"), _T("r"), stdin);
-	pStdErr = _tfreopen(_T("CONERR$"), _T("w"), stderr);
-	_tsetlocale(LC_ALL, _T("chs"));
-}
-
-//释放掉调试窗口显示
-__inline static void ExitDebugConsole()
-{
-	FreeConsole();
-}
+////释放掉调试窗口显示
+//__inline static void ExitDebugConsole()
+//{
+//	FreeConsole();
+//}
 
 //	ANSI to Unicode
 __inline static std::wstring ANSIToUnicode(const std::string str)
