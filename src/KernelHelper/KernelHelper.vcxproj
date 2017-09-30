@@ -98,9 +98,9 @@
       <AdditionalLibraryDirectories>./thirdparty/curl/libcurl-7.53.1-static(ssl-ssh2-zlib-ipv6-sspi-idn)/lib/$(Configuration);</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\$(TargetName)$(TargetExt) /Y
-XCOPY $(SolutionDir)KernelHelper\thirdparty $(SolutionDir)KernelHelper-Publish\ /Y /E /R
-DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
+      <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\ /S /Y
+XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y
+DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -122,9 +122,9 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\$(TargetName)$(TargetExt) /Y
-XCOPY $(SolutionDir)KernelHelper\thirdparty $(SolutionDir)KernelHelper-Publish\ /Y /E /R
-DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
+      <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\ /S /Y
+XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y
+DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -151,9 +151,9 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
       <AdditionalLibraryDirectories>./thirdparty/curl/libcurl-7.53.1-static(ssl-ssh2-zlib-ipv6-sspi-idn)/lib/$(Configuration);</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\$(TargetName)$(TargetExt) /Y
-XCOPY $(SolutionDir)KernelHelper\thirdparty $(SolutionDir)KernelHelper-Publish\ /Y /E /R
-DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
+      <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\ /S /Y
+XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y
+DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -179,9 +179,9 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\$(TargetName)$(TargetExt) /Y
-XCOPY $(SolutionDir)KernelHelper\thirdparty $(SolutionDir)KernelHelper-Publish\ /Y /E /R
-DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.CPP</Command>
+      <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\ /S /Y
+XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y
+DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />

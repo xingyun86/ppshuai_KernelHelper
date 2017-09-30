@@ -1,4 +1,4 @@
-// Copyright 2007-2010 Baptiste Lepilleur
+// Copyright 2007-2010 Baptiste Lepilleur and The JsonCpp Authors
 // Distributed under MIT license, or public domain if desired and
 // recognized in your jurisdiction.
 // See file LICENSE for detail or copy at http://jsoncpp.sourceforge.net/LICENSE
@@ -15,10 +15,12 @@
 
 // Disable warning C4251: <data member>: <type> needs to have dll-interface to
 // be used by...
-#if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
+#if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING) && defined(_MSC_VER)
 #pragma warning(push)
 #pragma warning(disable : 4251)
 #endif // if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
+
+#pragma pack(push, 8)
 
 namespace Json {
 
@@ -138,7 +140,7 @@ public:
 /** \brief Abstract class for writers.
  * \deprecated Use StreamWriter. (And really, this is an implementation detail.)
  */
-class JSON_API Writer {
+class JSONCPP_DEPRECATED("Use StreamWriter instead") JSON_API Writer {
 public:
   virtual ~Writer();
 
@@ -154,8 +156,11 @@ public:
  * \sa Reader, Value
  * \deprecated Use StreamWriterBuilder.
  */
-class JSON_API FastWriter : public Writer {
-
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4996) // Deriving from deprecated class
+#endif
+class JSONCPP_DEPRECATED("Use StreamWriterBuilder instead") JSON_API FastWriter : public Writer {
 public:
   FastWriter();
   ~FastWriter() JSONCPP_OVERRIDE {}
@@ -182,6 +187,9 @@ private:
   bool dropNullPlaceholders_;
   bool omitEndingLineFeed_;
 };
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 /** \brief Writes a Value in <a HREF="http://www.json.org">JSON</a> format in a
  *human friendly way.
@@ -207,7 +215,11 @@ private:
  * \sa Reader, Value, Value::setComment()
  * \deprecated Use StreamWriterBuilder.
  */
-class JSON_API StyledWriter : public Writer {
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4996) // Deriving from deprecated class
+#endif
+class JSONCPP_DEPRECATED("Use StreamWriterBuilder instead") JSON_API StyledWriter : public Writer {
 public:
   StyledWriter();
   ~StyledWriter() JSONCPP_OVERRIDE {}
@@ -242,6 +254,9 @@ private:
   unsigned int indentSize_;
   bool addChildValues_;
 };
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 /** \brief Writes a Value in <a HREF="http://www.json.org">JSON</a> format in a
  human friendly way,
@@ -265,12 +280,18 @@ private:
  * If the Value have comments then they are outputed according to their
  #CommentPlacement.
  *
- * \param indentation Each level will be indented by this amount extra.
  * \sa Reader, Value, Value::setComment()
  * \deprecated Use StreamWriterBuilder.
  */
-class JSON_API StyledStreamWriter {
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4996) // Deriving from deprecated class
+#endif
+class JSONCPP_DEPRECATED("Use StreamWriterBuilder instead") JSON_API StyledStreamWriter {
 public:
+/**
+ * \param indentation Each level will be indented by this amount extra.
+ */
   StyledStreamWriter(JSONCPP_STRING indentation = "\t");
   ~StyledStreamWriter() {}
 
@@ -307,6 +328,9 @@ private:
   bool addChildValues_ : 1;
   bool indented_ : 1;
 };
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #if defined(JSON_HAS_INT64)
 JSONCPP_STRING JSON_API valueToString(Int value);
@@ -323,6 +347,8 @@ JSONCPP_STRING JSON_API valueToQuotedString(const char* value);
 JSON_API JSONCPP_OSTREAM& operator<<(JSONCPP_OSTREAM&, const Value& root);
 
 } // namespace Json
+
+#pragma pack(pop)
 
 #if defined(JSONCPP_DISABLE_DLL_INTERFACE_WARNING)
 #pragma warning(pop)
