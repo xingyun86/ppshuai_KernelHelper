@@ -9,6 +9,7 @@
 
 #pragma comment (lib, "GDI32.LIB")
 #pragma comment (lib, "USER32.LIB")
+#pragma comment (lib, "COMDLG32.LIB")
 #pragma comment (lib, "ADVAPI32.LIB")
 #pragma comment (lib, "WS2_32.lib")
 #pragma comment (lib, "MSWSOCK.lib")
