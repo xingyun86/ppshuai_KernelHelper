@@ -204,6 +204,44 @@ __inline static std::wstring ToLowerCaseW(LPCWSTR pW)
 {
 	return _wcsupr((LPWSTR)pW);
 }
+__inline static std::string str_xor(std::string s)
+{
+	std::string x(s);
+	size_t stIdx = 0;
+	size_t stNum = x.length();
+	for (stIdx = 0; stIdx < stNum; stIdx++)
+	{
+		x.at(stIdx) = (BYTE)(0xFF - x.at(stIdx));
+	}
+	return x;
+}
+
+__inline static std::string hex_to_str(std::string h)
+{
+	std::string s((""));
+	size_t i = 0;
+	size_t l = h.length();
+	for (i = 0; i < l; i++)
+	{
+		s.append(STRING_FORMAT_A("%02X", (BYTE)h.at(i)));
+	}
+	return s;
+}
+
+__inline static std::string str_to_hex(std::string s)
+{
+	std::string h((""));
+	size_t i = 0;
+	size_t l = s.length();
+	if (!(l % sizeof(WORD)))
+	{
+		for (i = 0; i < l; i += sizeof(WORD))
+		{
+			h.push_back((BYTE)strtoul(s.substr(i, sizeof(WORD)).c_str(), NULL, 0x10));
+		}
+	}
+	return h;
+}
 
 __inline static std::string GetFilePathDriveA(LPCSTR lpFileName)
 {
