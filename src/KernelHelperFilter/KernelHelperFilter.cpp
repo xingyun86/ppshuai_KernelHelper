@@ -26,7 +26,7 @@ int VisitHtmls(STRINGVECTORVECTOR & svvUrl, STRINGVECTORVECTOR & svvMobile, std:
 	STRINGVECTORVECTOR svv;
 	std::smatch smatch;
 
-	if (string_regex_find(strResult, svv, strRequestUrl + "/", "(.*?)://(.*?)/"))
+	if (PPSHUAI::String::string_regex_find(strResult, svv, strRequestUrl + "/", "(.*?)://(.*?)/"))
 	{
 		strUrl = svv.at(0).at(0) + "://" + svv.at(1).at(0);
 	}
@@ -35,20 +35,20 @@ int VisitHtmls(STRINGVECTORVECTOR & svvUrl, STRINGVECTORVECTOR & svvMobile, std:
 	
 	if (strJsonData.find("charset=utf-8") != std::string::npos)
 	{
-		strJsonData = UTF82ANSI(strJsonData);
+		strJsonData = PPSHUAI::Convert::UTF82ANSI(strJsonData);
 	}
 
 	//string_regex_replace_all(strResult, strJsonData, "", "\x09|\x0A|\x0D|\x20|\\\x2B|<!--(.*?)-->|<a (.*?)/a>");
 
 	//string_regex_replace_all(strResult, strJsonData, "", "\x09|\x0A|\x0D|\x20|\\\x2B|<!--(.*?)-->");
-	string_regex_replace_all(strResult, strJsonData, "href=\"http://", "href=\"//");
-	string_regex_replace_all(strResult, strJsonData, "href=\"" + strUrl + "/", "href=\"/");
+	PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "href=\"http://", "href=\"//");
+	PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "href=\"" + strUrl + "/", "href=\"/");
 
 	//file_writer(strJsonData, "d:\\aaa.html");
 
-	string_regex_find(strResult, svvUrl, (strJsonData), "href=\"(.*?)\"");
+	PPSHUAI::String::string_regex_find(strResult, svvUrl, (strJsonData), "href=\"(.*?)\"");
 
-	string_regex_find(strResult, svvMobile, (strJsonData), "(1[3|5|7|8]\\d{9})");
+	PPSHUAI::String::string_regex_find(strResult, svvMobile, (strJsonData), "(1[3|5|7|8]\\d{9})");
 
 	return nresult;
 }
@@ -121,7 +121,7 @@ int WriteToDatabse(std::string & result, CSqlite3DB * pdb, CSuburls suburls)
 	try
 	{
 		strDBCommand = "INSERT INTO `suburls`(url,from_url,update_time) VALUES('" + suburls.url + "','" + suburls.from_url + "',CURRENT_TIMESTAMP);";
-		pdb->execDML(ANSI2UTF8(strDBCommand).c_str());
+		pdb->execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 
 		nresult = 0;
 	}
@@ -143,7 +143,7 @@ int WriteToDatabse(std::string & result, CSqlite3DB * pdb, CPhone phone)
 		char cPhone[16] = { 0 };
 		_snprintf(cPhone, sizeof(cPhone) - 1, "%lld", phone.phone);
 		strDBCommand = std::string("INSERT INTO `phone`(phone,from_url,update_time) VALUES('") + cPhone + "','" + phone.from_url + "',CURRENT_TIMESTAMP);";
-		pdb->execDML(ANSI2UTF8(strDBCommand).c_str());
+		pdb->execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 
 		nresult = 0;
 	}
@@ -163,7 +163,7 @@ int UpdateToDatabse(std::string & result, CSqlite3DB * pdb, CSuburls suburls)
 	try
 	{
 		strDBCommand = "UPDATE `suburls` SET type=1,update_time=CURRENT_TIMESTAMP WHERE url='" + suburls.url + "';";
-		pdb->execDML(ANSI2UTF8(strDBCommand).c_str());
+		pdb->execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 
 		nresult = 0;
 	}
@@ -183,7 +183,7 @@ int UpdateToDatabse(std::string & result, CSqlite3DB * pdb, std::string url)
 	try
 	{
 		strDBCommand = std::string("UPDATE `urls` SET type=1,update_time=CURRENT_TIMESTAMP WHERE url='") + url + "';";
-		pdb->execDML(ANSI2UTF8(strDBCommand).c_str());
+		pdb->execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 
 		nresult = 0;
 	}
@@ -246,7 +246,7 @@ void StartCrawlProducer(CSqlite3DB & pdb)
 
 	try {
 		strDBCommand = "SELECT url FROM `urls` WHERE type=0 ORDER BY update_time ASC;";
-		query = pdb.execQuery(ANSI2UTF8(strDBCommand).c_str());
+		query = pdb.execQuery(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 
 		while (!query.eof())
 		{
@@ -279,7 +279,7 @@ void HandlerTasksThread(void * p)
 		{
 			try {
 				strDBCommand = "SELECT url,from_url FROM `suburls` WHERE type=0 ORDER BY update_time ASC;";
-				CSqlite3Query query = pdb->execQuery(ANSI2UTF8(strDBCommand).c_str());
+				CSqlite3Query query = pdb->execQuery(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 				while (!query.eof())
 				{
 					std::string url = query.getStringField(0);
@@ -342,9 +342,9 @@ void init_urls(CSqlite3DB * pdb, std::string strFileName)
 	STRINGVECTOR sv;
 	std::string strDBCommand = ("");
 
-	file_reader(data, strFileName);
-	string_replace_all(data, "\n", "\r\n");
-	string_split_to_vector(sv, data, "\n");
+	PPSHUAI::String::file_reader(data, strFileName);
+	PPSHUAI::String::string_replace_all(data, "\n", "\r\n");
+	PPSHUAI::String::string_split_to_vector(sv, data, "\n");
 	for (size_t stidx = 0; stidx < sv.size(); stidx++)
 	{
 		if (sv.at(stidx).find("://") != std::string::npos)
@@ -353,7 +353,7 @@ void init_urls(CSqlite3DB * pdb, std::string strFileName)
 			
 			try {
 				strDBCommand = "SELECT count(url) FROM `urls` WHERE url='" + sv.at(stidx) + "';";
-				if (pdb->execScalar(UTF82ANSI(strDBCommand).c_str()) > 0)
+				if (pdb->execScalar(PPSHUAI::Convert::UTF82ANSI(strDBCommand).c_str()) > 0)
 				{
 					continue;
 				}
@@ -364,7 +364,7 @@ void init_urls(CSqlite3DB * pdb, std::string strFileName)
 				printf("%s\n", strDBErrorText.c_str());
 			}
 			strDBCommand = "INSERT INTO urls(url) VALUES('" + sv.at(stidx) + "');";
-			pdb->execDML(ANSI2UTF8(strDBCommand).c_str());
+			pdb->execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 		}
 	}
 }
@@ -404,13 +404,13 @@ int main(int argc, char ** argv)
 		break;
 	}
 
-	file_reader(strFilter, strINIFileName);
-	file_reader(strData, strINFileName);
+	PPSHUAI::String::file_reader(strFilter, strINIFileName);
+	PPSHUAI::String::file_reader(strData, strINFileName);
 
-	string_replace_all(strData, "\n", "\r\n");
-	string_split_to_vector(sv, strData, "\n");
-	string_replace_all(strFilter, "\n", "\r\n");
-	string_split_to_vector(svINI, strFilter, "\n");
+	PPSHUAI::String::string_replace_all(strData, "\n", "\r\n");
+	PPSHUAI::String::string_split_to_vector(sv, strData, "\n");
+	PPSHUAI::String::string_replace_all(strFilter, "\n", "\r\n");
+	PPSHUAI::String::string_split_to_vector(svINI, strFilter, "\n");
 	strData.clear();
 	for (size_t stidx = 0; stidx < sv.size(); stidx++)
 	{
@@ -435,7 +435,7 @@ int main(int argc, char ** argv)
 	}
 	if (strData.length() > 0)
 	{
-		file_writer(strData, strOUTFileName);
+		PPSHUAI::String::file_writer(strData, strOUTFileName);
 	}
 	return 0;
 }

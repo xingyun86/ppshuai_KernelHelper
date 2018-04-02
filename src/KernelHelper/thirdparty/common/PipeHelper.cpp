@@ -1,7 +1,6 @@
 ﻿// PipeHelper.cpp : Defines the entry point for the console application.
 //
 
-#include "CommonHelper.h"
 #include "PipeHelper.h"
 
 CPipeHelper::CPipeHelper()
@@ -40,7 +39,7 @@ int CPipeHelper::Initialize(tstring tsAppProgName, tstring tsArguments, tstring 
 
 	SECURITY_ATTRIBUTES saAttr = {0};
 
-	DEBUG_TRACE(_T("\n->Start of parent execution.\n"));
+	//DEBUG_TRACE(_T("\n->Start of parent execution.\n"));
 
 	// Set the bInheritHandle flag so pipe handles are inherited.
 	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -50,7 +49,7 @@ int CPipeHelper::Initialize(tstring tsAppProgName, tstring tsArguments, tstring 
 	// Create a pipe for the child process's STDOUT.
 	if (!CreatePipe(&m_hStdOutReader, &m_hStdOutWriter, &saAttr, 0))
 	{
-		DEBUG_TRACE(_T("StdoutRd CreatePipe\r\n"));
+		//DEBUG_TRACE(_T("StdoutRd CreatePipe\r\n"));
 		//ErrorExit(TEXT("StdoutRd CreatePipe"));
 		return (-1);
 	}
@@ -58,14 +57,14 @@ int CPipeHelper::Initialize(tstring tsAppProgName, tstring tsArguments, tstring 
 	// Ensure the read handle to the pipe for STDOUT is not inherited.
 	if (!SetHandleInformation(m_hStdOutReader, HANDLE_FLAG_INHERIT, 0))
 	{
-		DEBUG_TRACE(_T("Stdout SetHandleInformation\r\n"));
+		//DEBUG_TRACE(_T("Stdout SetHandleInformation\r\n"));
 		//ErrorExit(TEXT("Stdout SetHandleInformation"));
 		return (-2);
 	}
 	// Create a pipe for the child process's STDIN.
 	if (!CreatePipe(&m_hStdInReader, &m_hStdInWriter, &saAttr, 0))
 	{
-		DEBUG_TRACE(_T("Stdin CreatePipe\r\n"));
+		//DEBUG_TRACE(_T("Stdin CreatePipe\r\n"));
 		//ErrorExit(TEXT("Stdin CreatePipe"));
 		return (-3);
 	}
@@ -73,7 +72,7 @@ int CPipeHelper::Initialize(tstring tsAppProgName, tstring tsArguments, tstring 
 	// Ensure the write handle to the pipe for STDIN is not inherited.
 	if (!SetHandleInformation(m_hStdInWriter, HANDLE_FLAG_INHERIT, 0))
 	{
-		DEBUG_TRACE(_T("Stdin SetHandleInformation\r\n"));
+		//DEBUG_TRACE(_T("Stdin SetHandleInformation\r\n"));
 		//ErrorExit(TEXT("Stdin SetHandleInformation"));
 		return (-4);
 	}
@@ -82,7 +81,7 @@ int CPipeHelper::Initialize(tstring tsAppProgName, tstring tsArguments, tstring 
 	result = CreateChildProcess(tsAppProgName, tsArguments, bNoUI, type, dwWaitTime);
 	if (result != 0)
 	{
-		DEBUG_TRACE(_T("CreateChildProcess Failed\r\n"));
+		//DEBUG_TRACE(_T("CreateChildProcess Failed\r\n"));
 		return (-5);
 	}
 
@@ -199,7 +198,7 @@ int CPipeHelper::CreateChildProcess(tstring tsAppProgName, tstring tsArguments/*
 	}
 	else
 	{
-        DEBUG_TRACE(_T("CreateProcess failed (%d).\n"), GetLastError());
+        //DEBUG_TRACE(_T("CreateProcess failed (%d).\n"), GetLastError());
 	}
 
 	return result;
@@ -281,7 +280,7 @@ tstring CPipeHelper::WritePipeAndReadPipe(tstring tsInputCommand)
 	DWORD dwBytesLeftThisMessage = 0;
 	CHAR chBuf[BUFFSIZE] = { 0 };
 	std::string strOutput = "";
-	std::string strInputCommand = TToA(tsInputCommand);
+	std::string strInputCommand = PPSHUAI::Convert::TToA(tsInputCommand);
 	strInputCommand.append("\r\n");
 	bSuccess = WriteFile(m_hStdInWriter, strInputCommand.c_str(), strInputCommand.length(), &dwWritten, NULL);
 	if (!bSuccess)
@@ -319,7 +318,7 @@ tstring CPipeHelper::WritePipeAndReadPipe(tstring tsInputCommand)
 		return _T("");
 	}
 
-	return AToT(strOutput);
+	return PPSHUAI::Convert::AToT(strOutput);
 }
 
 
@@ -360,7 +359,7 @@ void CPipeHelper::Exitialize()
 	}
 
 	// Exit process.
-	TerminateProcessByProcessId(m_dwProcessId);
+	PPSHUAI::SystemKernel::TerminateProcessByProcessId(m_dwProcessId);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -465,7 +464,7 @@ tstring CPipeHelper::ReadPipeFromInit()
 		return _T("");
 	}
 
-	return AToT(strOutput);
+	return PPSHUAI::Convert::AToT(strOutput);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////

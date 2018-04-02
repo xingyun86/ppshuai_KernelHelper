@@ -83,7 +83,7 @@ SOCKET Tcp_Init(const char * ptServerAddr, int nServerPort, DWORD dwSendTimeOut/
 	// Initialize Winsock
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0) {
-		LOG_DEBUG_PRINT(_T("WSAStartup failed with error: %d\n"), iResult);
+		//LOG_DEBUG_PRINT(_T("WSAStartup failed with error: %d\n"), iResult);
 		return INVALID_SOCKET;
 	}
 
@@ -129,7 +129,7 @@ SOCKET Tcp_Init(const char * ptServerAddr, int nServerPort, DWORD dwSendTimeOut/
 	connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (connectSocket == INVALID_SOCKET)
 	{
-		LOG_DEBUG_PRINT(_T("socket error !"));
+		//LOG_DEBUG_PRINT(_T("socket error !"));
 		return INVALID_SOCKET;
 	}
 
@@ -154,12 +154,12 @@ SOCKET Tcp_Init(const char * ptServerAddr, int nServerPort, DWORD dwSendTimeOut/
 	serverAddr.sin_addr.S_un.S_addr = inet_addr(ptServerAddr);
 	if (connect(connectSocket, (sockaddr *)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
 	{
-		LOG_DEBUG_PRINT(_T("connect error !"));
+		//LOG_DEBUG_PRINT(_T("connect error !"));
 		Tcp_Exit(connectSocket);
 		return INVALID_SOCKET;
 	}
 	if (connectSocket == INVALID_SOCKET) {
-		LOG_DEBUG_PRINT(_T("Unable to connect to server!\n"));
+		//LOG_DEBUG_PRINT(_T("Unable to connect to server!\n"));
 		Tcp_Exit(connectSocket);
 		return INVALID_SOCKET;
 	}
@@ -182,7 +182,7 @@ SOCKET Tcp_SockInitialize()
 	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 	if (iResult != 0)
     {
-		LOG_DEBUG_PRINT(_T("WSAStartup failed with error: %d\n"), iResult);
+		//LOG_DEBUG_PRINT(_T("WSAStartup failed with error: %d\n"), iResult);
 		return INVALID_SOCKET;
 	}
 
@@ -190,7 +190,7 @@ SOCKET Tcp_SockInitialize()
 	connectSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (connectSocket == INVALID_SOCKET)
 	{
-		LOG_DEBUG_PRINT(_T("socket error !"));
+		//LOG_DEBUG_PRINT(_T("socket error !"));
 		return INVALID_SOCKET;
 	}
 
@@ -233,11 +233,11 @@ SOCKET Tcp_Connect(SOCKET connectSocket, struct sockaddr_in & serverAddrIn)
 	SOCKET connectedSocket = connectSocket;
 	if (connect(connectedSocket, (sockaddr *)&serverAddrIn, sizeof(serverAddrIn)) == SOCKET_ERROR)
 	{
-		LOG_DEBUG_PRINT(_T("connect error !"));
+		//LOG_DEBUG_PRINT(_T("connect error !"));
 		return INVALID_SOCKET;
 	}
 	if (connectedSocket == INVALID_SOCKET) {
-		LOG_DEBUG_PRINT(_T("Unable to connect to server!\n"));
+		//LOG_DEBUG_PRINT(_T("Unable to connect to server!\n"));
 		return INVALID_SOCKET;
 	}
 
@@ -320,11 +320,11 @@ int Tcp_Send(SOCKET s, const char * data, int size)
 	iResult = send(s, data, size, 0);
 	if (iResult == SOCKET_ERROR)
     {
-		LOG_DEBUG_PRINT(_T("send failed with error: %d\n"), WSAGetLastError());
+		//LOG_DEBUG_PRINT(_T("send failed with error: %d\n"), WSAGetLastError());
 	}
 	else
     {
-        LOG_DEBUG_PRINT(_T("Bytes sent: %d\n"), iResult);
+        //LOG_DEBUG_PRINT(_T("Bytes sent: %d\n"), iResult);
     }
 
 #ifdef DEBUG
@@ -342,15 +342,15 @@ int Tcp_Recv(SOCKET s, char * data, int size)
     iResult = recv(s, data, size, 0);
     if (iResult > 0)
     {
-        LOG_DEBUG_PRINT(_T("Bytes received: %d\n"), iResult);
+        //LOG_DEBUG_PRINT(_T("Bytes received: %d\n"), iResult);
     }
     else if (iResult == 0)
     {
-        LOG_DEBUG_PRINT(_T("Connection closed with error: %d\n"), WSAGetLastError());
+        //LOG_DEBUG_PRINT(_T("Connection closed with error: %d\n"), WSAGetLastError());
     }
     else
     {
-        LOG_DEBUG_PRINT(_T("recv failed with error: %d\n"), WSAGetLastError());
+        //LOG_DEBUG_PRINT(_T("recv failed with error: %d\n"), WSAGetLastError());
     }
 
 	return iResult;

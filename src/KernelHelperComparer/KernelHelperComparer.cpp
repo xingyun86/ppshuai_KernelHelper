@@ -19,6 +19,7 @@ int main(int argc, char ** argv)
 	CSqlite3DB sqldb;
 	size_t stidx = 0;
 	CSqlite3Query query;
+	std::string strResult;
 	std::string strData;
 	std::string strFrom;
 	std::string strINFileName = "";
@@ -50,7 +51,7 @@ int main(int argc, char ** argv)
 	try {
 		sqldb.open(strDBFileName.c_str());
 
-		sqldb.execDML(ANSI2UTF8(strDBCommand).c_str());
+		sqldb.execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 	}
 	catch (CSqlite3Exception e)
 	{
@@ -59,19 +60,19 @@ int main(int argc, char ** argv)
 
 	try {
 		//strDBCommand = "SELECT p.phone,s.from_url FROM phone p,suburls s WHERE p.from_url==s.url GROUP BY phone ORDER BY p.update_time;";
-		file_reader(strData, strINFileName);
-		string_split_to_vector(sv, strData, "\r\n");
+		PPSHUAI::String::file_reader(strData, strINFileName);
+		PPSHUAI::String::string_split_to_vector(sv, strData, "\r\n");
 		strData = "";
 		for (stidx = 0; stidx < sv.size(); stidx++)
 		{
 			if (sv.at(stidx).at(0))
 			{
 				strDBCommand = "SELECT p.phone,s.from_url FROM phone p,suburls s WHERE p.from_url==s.url AND p.phone=" + sv.at(stidx) + " GROUP BY phone ORDER BY p.update_time;";
-				query = sqldb.execQuery(ANSI2UTF8(strDBCommand).c_str());
+				query = sqldb.execQuery(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 				if (!query.eof())
 				{
 					strFrom = query.getStringField(1);
-					string_regex_replace_all(strFrom, strFrom, "", "(.*?//.*?\\.)");
+					PPSHUAI::String::string_regex_replace_all(strResult, strFrom, "", "(.*?//.*?\\.)");
 					if (strFrom.find("/") != std::string::npos)
 					{
 						strFrom = strFrom.substr(0, strFrom.find("/"));
@@ -81,11 +82,11 @@ int main(int argc, char ** argv)
 			}
 		}
 		sv.clear();
-		string_split_to_vector(sv, strData, "\r\n");
+		PPSHUAI::String::string_split_to_vector(sv, strData, "\r\n");
 		printf("Output %ld resources!\n", sv.size());
 		if (strData.size())
 		{
-			file_writer(strData, strOutFileName);
+			PPSHUAI::String::file_writer(strData, strOutFileName);
 			printf("Write to file ok!\n");
 		}
 		

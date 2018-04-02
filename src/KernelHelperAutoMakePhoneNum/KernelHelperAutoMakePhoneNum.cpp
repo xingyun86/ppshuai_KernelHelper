@@ -146,7 +146,7 @@ void init_addr_list(std::string strFileName)
 	}
 	if (strData.length() > 0)
 	{
-		string_split_to_vector(sv, strData.c_str(), "\r\n");
+		PPSHUAI::String::string_split_to_vector(sv, strData.c_str(), "\r\n");
 		for (size_t stIdx = 0; stIdx < sv.size(); stIdx++)
 		{
 			pFile = fopen(std::string(sv.at(stIdx) + ".txt").c_str(), "a+b");
@@ -252,13 +252,13 @@ int VerifyMobileNumber(CMobileNumber & mn)
 		result = curlresult;
 		goto __LEAVE_CLOSE__;
 	}
-	string_replace_all(strJsonData, "", "<!-- <td width=\"138\" align=\"center\" noswap></td> -->");
-	string_replace_all(strJsonData, "", "<!-- <td></td> -->");
-	string_replace_all(strJsonData, ">", " noswap>");
+	PPSHUAI::String::string_replace_all(strJsonData, "", "<!-- <td width=\"138\" align=\"center\" noswap></td> -->");
+	PPSHUAI::String::string_replace_all(strJsonData, "", "<!-- <td></td> -->");
+	PPSHUAI::String::string_replace_all(strJsonData, ">", " noswap>");
 
 	strStart = "<TD width=\"138\" align=\"center\">";
 	strFinal = "</TD>";
-	stPos = string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
@@ -267,17 +267,17 @@ int VerifyMobileNumber(CMobileNumber & mn)
 
 	strStart = "<TD width=* align=\"center\" class=tdc2>";
 	strFinal = " <a href=";
-	stPos = string_reader(mn.strCallNumber, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(mn.strCallNumber, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
 	}
-	string_replace_all(mn.strCallNumber, "", "&nbsp;");
+	PPSHUAI::String::string_replace_all(mn.strCallNumber, "", "&nbsp;");
 	stIdxPos = stPos;
 
 	strStart = "<TD width=\"138\" align=\"center\">";
 	strFinal = "</TD>";
-	stPos = string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
@@ -286,30 +286,30 @@ int VerifyMobileNumber(CMobileNumber & mn)
 
 	strStart = "<td align=\"center\" class=tdc2>";
 	strFinal = "&nbsp";
-	stPos = string_reader(mn.strProvince, strJsonData, strStart, strFinal, stIdxPos);
-	string_replace_all(mn.strProvince, "", " ");
+	stPos = PPSHUAI::String::string_reader(mn.strProvince, strJsonData, strStart, strFinal, stIdxPos);
+	PPSHUAI::String::string_replace_all(mn.strProvince, "", " ");
 	if (stPos == std::string::npos || mn.strProvince.length() <= 0 || 
 		(mn.strProvince.find("TD") != std::string::npos) || 
 		(mn.strProvince.find("未知") != std::string::npos))
 	{
 		goto __LEAVE_CLOSE__;
 	}
-	string_replace_all(mn.strProvince, "", "&nbsp;");
+	PPSHUAI::String::string_replace_all(mn.strProvince, "", "&nbsp;");
 	stIdxPos = stPos;
 
 	strStart = ";";
 	strFinal = "</TD>";
-	stPos = string_reader(mn.strCity, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(mn.strCity, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
 	}
-	string_replace_all(mn.strCity, "", "&nbsp;");
+	PPSHUAI::String::string_replace_all(mn.strCity, "", "&nbsp;");
 	stIdxPos = stPos;
 
 	strStart = "<TD width=\"138\" align=\"center\">";
 	strFinal = "</TD>";
-	stPos = string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
@@ -318,7 +318,7 @@ int VerifyMobileNumber(CMobileNumber & mn)
 
 	strStart = "<TD align=\"center\" class=tdc2>";
 	strFinal = "</TD>";
-	stPos = string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
@@ -327,7 +327,7 @@ int VerifyMobileNumber(CMobileNumber & mn)
 
 	strStart = "<TD align=\"center\">";
 	strFinal = "</TD>";
-	stPos = string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
@@ -336,17 +336,17 @@ int VerifyMobileNumber(CMobileNumber & mn)
 
 	strStart = "<TD align=\"center\" class=tdc2>";
 	strFinal = "</TD>";
-	stPos = string_reader(mn.strAreaCode, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(mn.strAreaCode, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
 	}
-	string_replace_all(mn.strAreaCode, "", "&nbsp;");
+	PPSHUAI::String::string_replace_all(mn.strAreaCode, "", "&nbsp;");
 	stIdxPos = stPos;
 
 	strStart = "<TD align=\"center\">";
 	strFinal = "</TD>";
-	stPos = string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(strKeyData, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
@@ -355,29 +355,18 @@ int VerifyMobileNumber(CMobileNumber & mn)
 
 	strStart = "<TD align=\"center\" class=tdc2>";
 	strFinal = " <a href=";
-	stPos = string_reader(mn.strPostCode, strJsonData, strStart, strFinal, stIdxPos);
+	stPos = PPSHUAI::String::string_reader(mn.strPostCode, strJsonData, strStart, strFinal, stIdxPos);
 	if (stPos == std::string::npos)
 	{
 		goto __LEAVE_CLOSE__;
 	}
-	string_replace_all(mn.strPostCode, "", "&nbsp;");
+	PPSHUAI::String::string_replace_all(mn.strPostCode, "", "&nbsp;");
 	stIdxPos = stPos;
 
 	result = 0;
 
 __LEAVE_CLOSE__:
 	
-	return result;
-}
-#include <regex>
-int string_regex_replace_all(std::string & strData, std::string strReplace, std::string strPattern)
-{
-	int result = (-1);
-	strData = std::regex_replace(strData, std::regex(strPattern), strReplace, std::regex_constants::match_default);
-	if (strData.length() > 0)
-	{
-		result = strData.length();
-	}
 	return result;
 }
 
@@ -394,6 +383,7 @@ int VerifyMobileNumberEx(CMobileNumber & mn)
 {
 	int result = (-9);
 	int curlresult = (-1);
+	std::string strResult = ("");
 	std::string strStart = ("");
 	std::string strFinal = ("");
 	std::string strKeyData = ("");
@@ -420,7 +410,7 @@ int VerifyMobileNumberEx(CMobileNumber & mn)
 		result = curlresult;
 		goto __LEAVE_CLOSE__;
 	}
-	string_regex_replace_all(strJsonData, "", "\x09|\x0A|\x0D|\x20|\\\x2B|<!--(.*?)-->|<a (.*?)/a>");
+	PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "", "\x09|\x0A|\x0D|\x20|\\\x2B|<!--(.*?)-->|<a (.*?)/a>");
 
 	if (regex_search(strJsonData, searchmatch, std::regex("您查询的手机号码段(.*?)</TABLE>")))
 	{
@@ -431,12 +421,12 @@ int VerifyMobileNumberEx(CMobileNumber & mn)
 			strJsonData = searchmatch[stidx];
 
 			//string_regex_replace_all(strJsonData, "", "\x09|\x0A|\x0D|\x20|\\\x2B|<!--(.*?)-->|<a (.*?)/a>");
-			string_regex_replace_all(strJsonData, "<TABLE>", "<TABLE(.*?)>|<table(.*?)>");
-			string_regex_replace_all(strJsonData, "/TABLE>", "/TABLE>|/table>");
-			string_regex_replace_all(strJsonData, "<TD>", "<TD(.*?)>|<td(.*?)>");
-			string_regex_replace_all(strJsonData, "/TD>", "/TD>|/td>");
-			string_regex_replace_all(strJsonData, "<TR>", "<TR(.*?)>|<tr(.*?)>");
-			string_regex_replace_all(strJsonData, "/TR>", "/TR>|/tr>");
+			PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "<TABLE>", "<TABLE(.*?)>|<table(.*?)>");
+			PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "/TABLE>", "/TABLE>|/table>");
+			PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "<TD>", "<TD(.*?)>|<td(.*?)>");
+			PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "/TD>", "/TD>|/td>");
+			PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "<TR>", "<TR(.*?)>|<tr(.*?)>");
+			PPSHUAI::String::string_regex_replace_all(strResult, strJsonData, "/TR>", "/TR>|/tr>");
 
 			if (regex_search(strJsonData, searchmatch, std::regex("</TD><TD>(.*?)</TD></TR><TR><TD>卡号归属地</TD><TD>(.*?)&nbsp;(.*?)</TD></TR><TR><TD>卡&nbsp;类&nbsp;型</TD><TD>(.*?)</TD></TR><TR><TD>区号</TD><TD>(.*?)</TD></TR><TR><TD>邮编</TD><TD>(.*?)</TD></TR>")))
 			{
@@ -493,7 +483,7 @@ int WriteToDatabse(std::string & strResult, CSqlite3DB * pdb, CMobileNumber & mn
 		}
 		strDBCommand = "INSERT INTO `call`(call_number,section_number,city) VALUES('" + mn.strCallNumber + "','" + mn.strSectionNumber + "','" + mn.strCity + "');"
 			"INSERT INTO `area`(city, province, area_code, post_code) VALUES('" + mn.strCity + "','" + mn.strProvince + "','" + mn.strAreaCode + "','" + mn.strPostCode + "')";
-		pdb->execDML(ANSI2UTF8(strDBCommand).c_str());
+		pdb->execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 		strResult = "ok";
 		result = 0;
 	}
@@ -520,7 +510,7 @@ void HandlerThread(void * p)
 		tp.middler_number = (0);
 
 		try {
-			CSqlite3Query query = tp.pdb->execQuery(ANSI2UTF8(std::string("SELECT (max(call_number) - section_number * 10000) AS number FROM call WHERE call_number LIKE '") + cSectionNumber + "%'").c_str());
+			CSqlite3Query query = tp.pdb->execQuery(PPSHUAI::Convert::ANSI2UTF8(std::string("SELECT (max(call_number) - section_number * 10000) AS number FROM call WHERE call_number LIKE '") + cSectionNumber + "%'").c_str());
 			if (!query.eof())
 			{
 				tp.middler_number = query.getIntField(0);
@@ -565,7 +555,7 @@ int main(int argc, char ** argv)
 	try {
 		sqldb.open(strDBFileName.c_str());
 
-		sqldb.execDML(ANSI2UTF8(strDBCommand).c_str());
+		sqldb.execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 
 		strDBCommand =
 			"INSERT INTO `misp`(section_number,provider_name) VALUES"
@@ -573,7 +563,7 @@ int main(int argc, char ** argv)
 			"('130','联通'),('131','联通'),('132','联通'),('155','联通'),('156','联通'),('145','联通'),('185','联通'),('186','联通'),('176','联通'),('175','联通'),"
 			"('134','移动'),('135','移动'),('136','移动'),('137','移动'),('138','移动'),('139','移动'),('150','移动'),('151','移动'),('152','移动'),('157','移动'),('158','移动'),('159','移动'),('182','移动'),('183','移动'),('184','移动'),('187','移动'),('188','移动'),('147','移动'),('178','移动');";
 
-		sqldb.execDML(ANSI2UTF8(strDBCommand).c_str());
+		sqldb.execDML(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 	}
 	catch (CSqlite3Exception e)
 	{
@@ -582,7 +572,7 @@ int main(int argc, char ** argv)
 
 	try {
 		strDBCommand = "SELECT section_number FROM `misp` ORDER BY section_number ASC;";
-		CSqlite3Query query = sqldb.execQuery(ANSI2UTF8(strDBCommand).c_str());
+		CSqlite3Query query = sqldb.execQuery(PPSHUAI::Convert::ANSI2UTF8(strDBCommand).c_str());
 		
 		while (!query.eof())
 		{

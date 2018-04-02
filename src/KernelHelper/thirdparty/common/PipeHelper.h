@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include "CommonHelper.h"
+
 #define MAX_READ_TIMEOUT	WAIT_TIMEOUT	//默认300毫秒超时
 #define BUFFSIZE			0xFFFF	        //默认缓冲区大小
 
@@ -31,7 +33,7 @@ private:
 	//返回值:
 	//	0,		成功
 	//	(-1),	创建进程失败
-    int CreateChildProcess(tstring tsAppProgName, tstring tsArguments = _T(""), bool bNoUI = true, LAUNCHTYPE type = LTYPE_0, DWORD dwWaitTime = WAIT_TIMEOUT);
+	int CreateChildProcess(tstring tsAppProgName, tstring tsArguments = _T(""), bool bNoUI = true, LAUNCHTYPE type = LTYPE_0, DWORD dwWaitTime = WAIT_TIMEOUT);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	//函数功能:读取脚本命令执行结果
