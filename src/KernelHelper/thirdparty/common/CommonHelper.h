@@ -6,6 +6,7 @@
 #include <winsock2.h>
 #include <shlwapi.h>
 #include <tlhelp32.h>
+#include <commdlg.h>
 #include <io.h>
 #include <stdio.h>
 #include <fcntl.h>
