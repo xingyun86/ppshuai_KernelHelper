@@ -5,6 +5,7 @@
 
 #include <winsock2.h>
 #include <shlwapi.h>
+#include <shellapi.h>
 #include <tlhelp32.h>
 #include <commdlg.h>
 #include <io.h>

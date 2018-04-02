@@ -13,6 +13,7 @@
 #pragma comment (lib, "ADVAPI32.LIB")
 #pragma comment (lib, "WS2_32.LIB")
 #pragma comment (lib, "SHLWAPI.LIB")
+#pragma comment (lib, "SHELL32.LIB")
 #pragma comment (lib, "MSWSOCK.LIB")
 #pragma comment (lib, "WLDAP32.LIB")
 #pragma comment (lib, "CRYPT32.LIB")
