@@ -441,6 +441,9 @@ namespace CURLTOOL {
 		/* Time-out the read operation after this amount of seconds */
 		curl_easy_setopt(p_curl, CURLOPT_TIMEOUT, (0L));
 
+		/* Time-out the read operation after this amount of milliseconds */
+		curl_easy_setopt(p_curl, CURLOPT_TIMEOUT_MS, (0L));
+
 		/* If the CURLOPT_INFILE is used, this can be used to inform libcurl about
 		* how large the file being sent really is. That allows better error
 		* checking and better verifies that the upload was successful. -1 means
@@ -1327,8 +1330,7 @@ namespace CURLTOOL {
 		/* bitmask of allowed auth methods for connections to SOCKS5 proxies */
 		curl_easy_setopt(p_curl, CURLOPT_SOCKS5_AUTH, CURLAUTH_NONE);
 	}
-
-
+	
 	typedef int(*PFN_REQUEST_HANDLER)(CURL *, CALLBACKDATA *, CALLBACKDATA *, CALLBACKDATA *);
 	typedef int(*PFN_CURLOPT_HANDLER)(CURL *);
 	typedef int(*PFN_RESPONSE_HANDLER)(CURL *, CALLBACKDATA *, CALLBACKDATA *, CURLcode);
@@ -1336,9 +1338,9 @@ namespace CURLTOOL {
 	__inline static int request_handler(CURL * pCurl, CALLBACKDATA *pCBDRequrl, CALLBACKDATA * pCBDHeader, CALLBACKDATA * pCBDPostFields)
 	{
 		int result = 0;
-		char * pRequrl = "X";
-		char * pPostFields = "X";
-		char * pHeader = "X";
+		//har * pRequrl = "X";
+		//char * pPostFields = "X";
+		//char * pHeader = "X";
 
 		//pCBDRequrl->copy(pRequrl, strlen(pRequrl));
 		//pCBDPostFields->copy(pPostFields, strlen(pPostFields));
@@ -1350,11 +1352,33 @@ namespace CURLTOOL {
 	{
 		int result = 0;
 
+		curl_easy_setopt(p_curl, CURLOPT_FORBID_REUSE, (1L));
+		curl_easy_setopt(p_curl, CURLOPT_NOSIGNAL, (1L));
+
 		// send it verbose for max debuggaility
 		curl_easy_setopt(p_curl, CURLOPT_VERBOSE, (1L));
 
 		// set debug function callback
-		curl_easy_setopt(p_curl, CURLOPT_DEBUGFUNCTION, (1L));
+		curl_easy_setopt(p_curl, CURLOPT_DEBUGFUNCTION, (0L));
+		
+		// set accept encoding("'gzip,deflate'")
+		curl_easy_setopt(p_curl, CURLOPT_ACCEPT_ENCODING, (""));
+
+		// HTTP/2 please
+		curl_easy_setopt(p_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
+		// set timeout(one milliseconds)
+		curl_easy_setopt(p_curl, CURLOPT_TIMEOUT_MS, (0L));
+		curl_easy_setopt(p_curl, CURLOPT_TRANSFERTEXT, (1L));
+		curl_easy_setopt(p_curl, CURLOPT_FOLLOWLOCATION, (1L));
+		curl_easy_setopt(p_curl, CURLOPT_AUTOREFERER, (1L));
+
+		// we use a self-signed test server, skip verification during debugging
+		curl_easy_setopt(p_curl, CURLOPT_SSL_VERIFYPEER, (0L));
+		curl_easy_setopt(p_curl, CURLOPT_SSL_VERIFYHOST, (2L));
+		curl_easy_setopt(p_curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_DEFAULT);
+
+		curl_easy_setopt(p_curl, CURLOPT_POST, (0L));
 
 		return result;
 	}
@@ -1426,24 +1450,6 @@ namespace CURLTOOL {
 			pcbd_resp_header = (CALLBACKDATA *)CALLBACKDATA::startup();
 			pcbd_resp_data = (CALLBACKDATA *)CALLBACKDATA::startup();
 
-			curl_easy_setopt(p_curl, CURLOPT_FORBID_REUSE, 1L);
-			curl_easy_setopt(p_curl, CURLOPT_NOSIGNAL, 1L);
-
-			// send it verbose for max debuggaility
-			curl_easy_setopt(p_curl, CURLOPT_VERBOSE, 1L);
-
-			// set debug function callback
-			curl_easy_setopt(p_curl, CURLOPT_DEBUGFUNCTION, debug_callback);
-
-			// set accept encoding("'gzip,deflate'")
-			curl_easy_setopt(p_curl, CURLOPT_ACCEPT_ENCODING, (""));
-
-			// HTTP/2 please
-			curl_easy_setopt(p_curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-
-			// set timeout(one milliseconds)
-			curl_easy_setopt(p_curl, CURLOPT_TIMEOUT_MS, 1000L);
-
 			// write header and body data		
 			curl_easy_setopt(p_curl, CURLOPT_WRITEFUNCTION, write_native_data_callback);
 			curl_easy_setopt(p_curl, CURLOPT_WRITEHEADER, (void *)pcbd_resp_header);
@@ -1456,37 +1462,21 @@ namespace CURLTOOL {
 			//curl_easy_setopt(p_curl, CURLOPT_WRITEHEADER, (void *)&str_header);
 			//curl_easy_setopt(p_curl, CURLOPT_WRITEDATA, (void *)&str_data);
 
-			curl_easy_setopt(p_curl, CURLOPT_TRANSFERTEXT, 1L);
-			curl_easy_setopt(p_curl, CURLOPT_FOLLOWLOCATION, 1L);
-			curl_easy_setopt(p_curl, CURLOPT_AUTOREFERER, 1L);
-
-			// we use a self-signed test server, skip verification during debugging
-			curl_easy_setopt(p_curl, CURLOPT_SSL_VERIFYPEER, 0L);
-			curl_easy_setopt(p_curl, CURLOPT_SSL_VERIFYHOST, 2L);
-			curl_easy_setopt(p_curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1);
-
 			if (request_handler)
 			{
 				result = request_handler(p_curl, pcbd_req_url, pcbd_req_header, pcbd_req_postfields);
 			}
 
-			// set request url
-			curl_easy_setopt(p_curl, CURLOPT_URL, pcbd_req_url->p);
-
 			// set http header list data
 			p_curl_slist_header = curl_slist_append(p_curl_slist_header, pcbd_req_header->p);
 			curl_easy_setopt(p_curl, CURLOPT_HTTPHEADER, p_curl_slist_header);
 
+			// set request url
+			curl_easy_setopt(p_curl, CURLOPT_URL, pcbd_req_url->p);
+
 			// post data
-			if (pcbd_req_postfields && *pcbd_req_postfields->p)
-			{
-				curl_easy_setopt(p_curl, CURLOPT_POST, 1L);
-				curl_easy_setopt(p_curl, CURLOPT_POSTFIELDS, pcbd_req_postfields->p);
-			}
-			else
-			{
-				curl_easy_setopt(p_curl, CURLOPT_POST, 0L);
-			}
+			curl_easy_setopt(p_curl, CURLOPT_POSTFIELDS, pcbd_req_postfields->p);
+
 
 			if (curlopt_handler)
 			{
