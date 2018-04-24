@@ -31,7 +31,7 @@ int VisitHtmls(STRINGVECTORVECTOR & svvUrl, STRINGVECTORVECTOR & svvMobile, std:
 		strUrl = svv.at(0).at(0) + "://" + svv.at(1).at(0);
 	}
 	
-	nresult = curl_http_get_data(strJsonData, strRequestUrl, strHeaderData);
+	nresult = PPSHUAI::CURLTOOL::curl_http_get_data(strJsonData, strRequestUrl, strHeaderData);
 	
 	if (strJsonData.find("charset=utf-8") != std::string::npos)
 	{

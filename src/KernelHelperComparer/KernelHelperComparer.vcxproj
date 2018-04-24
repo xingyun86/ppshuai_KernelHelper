@@ -80,7 +80,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -93,7 +93,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -110,7 +110,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
@@ -129,7 +129,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>

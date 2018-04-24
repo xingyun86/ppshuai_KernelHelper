@@ -1,4 +1,10 @@
+#ifndef __MACROS_H_
+#define __MACROS_H_
 
+#pragma once
+
+#include <map>
+#include <vector>
 #include <string>
 
 #define __MY_A(V)				#V
@@ -61,3 +67,5 @@ typedef enum LaunchType {
 	LTYPE_1 = 1, //直等
 	LTYPE_2 = 2, //延迟(设定等待时间)
 }LAUNCHTYPE;
+
+#endif //__MACROS_H_

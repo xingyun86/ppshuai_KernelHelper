@@ -493,6 +493,7 @@ bool isSameDay(time_t t1, time_t t2)
     tm tm1 = timeToTm(t1);
     tm tm2 = timeToTm(t2);
     if ( tm1.tm_year == tm2.tm_year
+        && tm1.tm_mon == tm2.tm_mon
         && tm1.tm_yday == tm2.tm_yday)
     {
         return true;

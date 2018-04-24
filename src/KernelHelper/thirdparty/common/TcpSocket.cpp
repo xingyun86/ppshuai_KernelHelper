@@ -165,7 +165,7 @@ SOCKET Tcp_Init(const char * ptServerAddr, int nServerPort, DWORD dwSendTimeOut/
 	}
 
 #ifdef DEBUG
-	printf("Connected to %s!\n", cServerAddr);
+	printf("Connected to %s!\n", ptServerAddr);
 #endif // DEBUG
 
 	return connectSocket;

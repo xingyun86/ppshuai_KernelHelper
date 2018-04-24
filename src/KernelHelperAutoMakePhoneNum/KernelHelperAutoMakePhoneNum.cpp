@@ -246,7 +246,7 @@ int VerifyMobileNumber(CMobileNumber & mn)
 		"Accept-Encoding: gzip, deflate, sdch\r\n"
 		"Accept-Language: zh-CN,zh;q=0.8";
 	std::string strPostFields = "";
-	curlresult = curl_http_get_data(strJsonData, strRequestUrl, strHeaderData, strPostFields);
+	curlresult = PPSHUAI::CURLTOOL::curl_http_get_data(strJsonData, strRequestUrl, strHeaderData, strPostFields);
 	if (curlresult != 0)
 	{
 		result = curlresult;
@@ -404,7 +404,7 @@ int VerifyMobileNumberEx(CMobileNumber & mn)
 		"Accept-Encoding: gzip, deflate, sdch\r\n"
 		"Accept-Language: zh-CN,zh;q=0.8";
 	std::string strPostFields = "";
-	curlresult = curl_http_get_data(strJsonData, strRequestUrl, strHeaderData, strPostFields);
+	curlresult = PPSHUAI::CURLTOOL::curl_http_get_data(strJsonData, strRequestUrl, strHeaderData, strPostFields);
 	if (curlresult != 0)
 	{
 		result = curlresult;

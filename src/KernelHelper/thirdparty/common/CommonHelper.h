@@ -20,6 +20,7 @@
 #include <iconv.h>
 
 #include "MACROS.h"
+#include "UNDOCAPI.h"
 
 namespace PPSHUAI{
 
@@ -2027,7 +2028,11 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 				wsv.push_back(wstrTemp);
 			}
 		}
-
+#if !defined(UNICODE) && !defined(_UNICODE)
+#define TSTRING_SPLIT_TO_VECTOR string_split_to_vector
+#else
+#define TSTRING_SPLIT_TO_VECTOR wstring_split_to_vector
+#endif
 		//////////////////////////////////////////////////////////////////////////
 		// 函数说明：选择读取数据行从文件中
 		// 参    数：输出的文件行内容数据、过滤后缀名、过滤的前缀字符
@@ -3218,5 +3223,14 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		}
 	}
 }
+
+#include "PEFileInfo.h"
+#include "WindowHeader.h"
+#include "MemoryHeader.h"
+#include "ListCtrlData.h"
+#include "SystemDataInfo.h"
+#include "CryptyHeader.h"
+#include "CommonWindow.h"
+#include "Network.h"
 
 #endif //__COMMONHELPER_H_
