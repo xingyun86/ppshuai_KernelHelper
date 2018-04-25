@@ -22,6 +22,7 @@
 #pragma comment (lib, "MSIMG32.lib")
 #pragma comment (lib, "OLEAUT32.lib")
 #pragma comment (lib, "OLE32.lib")
+#pragma comment (lib, "OLEACC.lib")
 #pragma comment (lib, "GDIPLUS.LIB")
 #pragma comment (lib, "COMCTL32.lib")
 #pragma comment (lib, "libeay32.lib")

@@ -8,6 +8,9 @@
 #include <atlwin.h>
 #include <tchar.h>
 #include <math.h>
+#include <atlbase.h>
+#include <oleacc.h>
+//#pragma comment(lib, "oleacc.lib")
 
 #include <gdiplus.h>
 
@@ -3900,7 +3903,135 @@ namespace GUI{
 	}
 	
 	///////////////////////////////////////////////////////////////////////////////
-	
+
+	__inline static std::wstring GetName(__in CComPtr<IAccessible> pAcc, __in CComVariant varChild)
+	{
+		if (!pAcc)
+			return L"";
+		CComBSTR bstrName;
+		HRESULT hr = pAcc->get_accName(varChild, &bstrName);
+		if (FAILED(hr))
+			return L"";
+		if (!bstrName.m_str)
+			return L"<NULL>";
+		return bstrName.m_str;
+	}
+
+	__inline static std::wstring GetRole(__in CComPtr<IAccessible> pAcc, __in CComVariant varChild)
+	{
+		if (!pAcc)
+			return L"";
+		CComVariant varRoleID;
+		HRESULT hr = pAcc->get_accRole(varChild, &varRoleID);
+		if (FAILED(hr))
+			return L"";
+		WCHAR sRoleBuff[1024] = { 0 };
+		hr = ::GetRoleText(varRoleID.lVal, sRoleBuff, 1024);
+		if (FAILED(hr))
+			return L"";
+		return sRoleBuff;
+	}
+	__inline static std::wstring GetValue(__in CComPtr<IAccessible> pAcc, __in CComVariant varChild)
+	{
+		if (!pAcc)
+			return L"";
+		CComBSTR bstrName;
+		HRESULT hr = pAcc->get_accValue(varChild, &bstrName);
+		if (FAILED(hr))
+			return L"";
+		if (!bstrName.m_str)
+			return L"<NULL>";
+		return bstrName.m_str;
+	}
+	__inline static std::wstring GetDescription(__in CComPtr<IAccessible> pAcc, __in CComVariant varChild)
+	{
+		if (!pAcc)
+			return L"";
+		CComBSTR bstrName;
+		HRESULT hr = pAcc->get_accDescription(varChild, &bstrName);
+		if (FAILED(hr))
+			return L"";
+		if (!bstrName.m_str)
+			return L"<NULL>";
+		return bstrName.m_str;
+	}
+
+	__inline static HRESULT WalkTreeWithAccessibleChildren(__in CComPtr<IAccessible> pAcc, __in int depth)
+	{
+		long childCount = 0;
+		long returnCount = 0;
+
+		HRESULT hr = pAcc->get_accChildCount(&childCount);
+
+		if (childCount == 0)
+			return S_FALSE;
+
+		CComVariant* pArray = new CComVariant[childCount];
+		hr = ::AccessibleChildren(pAcc, 0L, childCount, pArray, &returnCount);
+		if (FAILED(hr))
+			return hr;
+
+		// Iterate through children.
+		for (int x = 0; x < returnCount; x++)
+		{
+			CComVariant vtChild = pArray[x];
+			// If it's an accessible object, get the IAccessible, and recurse.
+			if (vtChild.vt == VT_DISPATCH)
+			{
+				CComPtr<IDispatch> pDisp = vtChild.pdispVal;
+				CComQIPtr<IAccessible> pAccChild = pDisp;
+				if (!pAccChild)
+					continue;
+
+				// Print current accessible element
+				std::wcout << std::endl;
+				for (int y = 0; y < depth; y++)
+				{
+					std::wcout << L"    ";
+				}
+				std::wcout << L"* " << GetName(pAccChild, CHILDID_SELF).data() << L"  |  " << GetRole(pAccChild, CHILDID_SELF).data() << L" (Object) | " << GetValue(pAccChild, CHILDID_SELF).data() << L" | " << GetDescription(pAccChild, CHILDID_SELF).data();
+
+				WalkTreeWithAccessibleChildren(pAccChild, depth + 1);
+			}
+			// Else it's a child element so we have to call accNavigate on the parent,
+			//   and we do not recurse because child elements can't have children.
+			else
+			{
+				// Print current accessible element
+				std::wcout << std::endl;
+				for (int y = 0; y < depth; y++)
+				{
+					std::wcout << L"    ";
+				}
+				std::wcout << L"* " << GetName(pAcc, vtChild.lVal).data() << L"  |  " << GetRole(pAcc, vtChild.lVal).data() << " (Child) | " << GetValue(pAcc, vtChild.lVal).data() << L" | " << GetDescription(pAcc, vtChild.lVal).data();
+			}
+		}
+		delete[] pArray;
+		return S_OK;
+	}
+
+	__inline static int Explorer(HWND hWnd)
+	{
+		int result = 0;
+
+		CComPtr<IAccessible> pAccMain;
+		if (hWnd)
+		{
+			_tsetlocale(LC_ALL, _T("chs"));
+
+			CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+			::AccessibleObjectFromWindow(hWnd, OBJID_CLIENT, IID_IAccessible, (void**)(&pAccMain));
+
+			WalkTreeWithAccessibleChildren(pAccMain, 0);
+
+			CoUninitialize();
+		}
+
+		return result;
+	}
+
+	///////////////////////////////////////////////////////////////////////////////
 	__inline static INT_PTR CALLBACK DlgWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (uMsg)

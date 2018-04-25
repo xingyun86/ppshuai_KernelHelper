@@ -3225,6 +3225,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 }
 
 #include "PEFileInfo.h"
+#include "ThreadHelper.h"
 #include "WindowHeader.h"
 #include "MemoryHeader.h"
 #include "ListCtrlData.h"
