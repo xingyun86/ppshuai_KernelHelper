@@ -1,9 +1,8 @@
 #pragma once
 
-#ifndef __THREADHEADER_H_
-#define __THREADHEADER_H_
+#ifndef __THREADHELPER_H_
+#define __THREADHELPER_H_
 
-#include <string>
 #include <iostream>
 #include <windows.h>
 #include <assert.h>
@@ -216,60 +215,51 @@ inline bool operator!=(const CAtomicSmartPtr<T>& a, const CAtomicSmartPtr<T>& b)
 
 class CThreadHelper{
 public:
-	enum TREADSTATE_TYPE{
-		TSTYPE_MINIMUM = 0L,
-		TSTYPE_NULLPTR = TSTYPE_MINIMUM,
-		TSTYPE_STARTED = 1L,
-		TSTYPE_SUSPEND = 2L,
-		TSTYPE_RUNNING = 3L,
-		TSTYPE_STOPPED = 4L,
-		TSTYPE_MAXIMUM = MAXULONG_PTR,
-	};
 
-	CThreadHelper()
+	enum THREADSTATUS_TYPE{
+		TSTYPE_MINIMUM = (0L),
+		TSTYPE_NULLPTR = (0L),
+		TSTYPE_STARTED = (1L),
+		TSTYPE_SUSPEND = (2L),
+		TSTYPE_RUNNING = (4L),
+		TSTYPE_STOPPED = (8L),
+		TSTYPE_MAXIMUM = TSTYPE_NULLPTR | TSTYPE_STARTED | TSTYPE_SUSPEND | TSTYPE_RUNNING | TSTYPE_STOPPED,
+	};
+	enum THREADEXITCALL_TYPE{
+		TECTYPE_SSYNCHRONOUS = (0L),
+		TECTYPE_ASYNCHRONOUS = (1L),
+	};
+	
+	CThreadHelper(
+		LPTHREAD_START_ROUTINE fnThreadStartRoutine = (0L),
+		LPVOID lpThreadParameters = (0L),
+		DWORD dwThreadCreationFlags = (0L),
+		SIZE_T dwThreadStackSize = (0L),
+		LPSECURITY_ATTRIBUTES lpThreadSecurityAttributes = (0L),
+		THREADEXITCALL_TYPE nThreadExitCall = TECTYPE_SSYNCHRONOUS
+		)
 	{
-		Startup();
+		Startup(fnThreadStartRoutine, lpThreadParameters, dwThreadCreationFlags, dwThreadStackSize, lpThreadSecurityAttributes, nThreadExitCall);
 	}
-	CThreadHelper(LPTHREAD_START_ROUTINE _fnThreadStartRoutine, LPVOID _lpThreadParameter = NULL)
-	{
-		Startup();
-		lpThreadParameter(_lpThreadParameter);
-		fnThreadStartRoutine(_fnThreadStartRoutine);
-	}
+
 	~CThreadHelper()
 	{
 		Cleanup();
-		Startup();
 	}
-	static DWORD WINAPI ThreadStartRoutine(LPVOID _lpThreadParameter)
+	static DWORD WINAPI ThreadStartRoutine(LPVOID _lpThreadParameters)
 	{
 		DWORD dwResult = 0L;
 		LPTHREAD_START_ROUTINE fnThreadStartRoutine = NULL;
-		CThreadHelper * pTH = (CThreadHelper *)_lpThreadParameter;
+		CThreadHelper * pTH = (CThreadHelper *)_lpThreadParameters;
 		if (pTH)
 		{
-			pTH->SetState(TSTYPE_RUNNING);
-			if (pTH->fnThreadStartRoutine())
+			while (pTH->GetThreadStartRoutine())
 			{
-				fnThreadStartRoutine = pTH->fnThreadStartRoutine();
-			}
-			while (fnThreadStartRoutine)
-			{
-				switch (pTH->GetState())
+				switch (pTH->GetThreadStatus())
 				{
 				case TSTYPE_RUNNING:
-				{					
-					fnThreadStartRoutine(pTH->lpThreadParameter());
-				}
-				break;
-				case TSTYPE_STOPPED:
 				{
-					goto __LEAVE_CLEAN__;
-				}
-				break;
-				case TSTYPE_SUSPEND:
-				{
-					Sleep(WAIT_TIMEOUT);
+					pTH->GetThreadStartRoutine()(pTH);
 				}
 				break;
 				default:
@@ -279,103 +269,224 @@ public:
 				break;
 				}
 			}
+
+		__LEAVE_CLEAN__:
+
+			::PostThreadMessage(pTH->GetMsgThreadId(), pTH->GetThreadExitCode(), (WPARAM)(0L), (LPARAM)(0L));
 		}
-__LEAVE_CLEAN__:
+
 		return dwResult;
 	}
 
-	BOOL Start()
+	VOID Start()
 	{
-		SetState(TSTYPE_STARTED);
-		m_hThread = CreateThread(NULL, NULL, CThreadHelper::ThreadStartRoutine, this, NULL, &m_dwThreadId);
-		return (m_hThread ? TRUE : FALSE);
+		if (m_hThread && m_dwThreadId && m_dwThreadExitCode)
+		{
+			SetThreadStatus(TSTYPE_STARTED);
+			Resumed();
+		}
+		else
+		{
+			Cleanup();
+		}
 	}
-	void Suspend()
+	VOID Suspend()
 	{
-		SuspendThread(m_hThread);
-		SetState(TSTYPE_SUSPEND);
+		::SuspendThread(m_hThread);
+		SetThreadStatus(TSTYPE_SUSPEND);
 	}
-	void Resumed()
+	VOID Resumed()
 	{
-		ResumeThread(m_hThread);
-		SetState(TSTYPE_RUNNING);
+		::ResumeThread(m_hThread);
+		SetThreadStatus(TSTYPE_RUNNING);
 	}
-	void Close()
+	VOID Stopped()
+	{
+		Clear();
+	}
+
+	VOID SSyncWait()
+	{
+		MSG msg = { 0 }; while (::GetMessage(&msg, 0, 0, 0) && (msg.message != m_dwThreadExitCode)){/*::TranslateMessage(&msg);::DispatchMessage(&msg);*/ }; 
+	}
+
+	VOID ASyncWait()
+	{
+		MSG msg = { 0 };while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) || (msg.message != m_dwThreadExitCode)){/*::TranslateMessage(&msg);::DispatchMessage(&msg);*/}; 
+	}
+	VOID Clear()
+	{
+		if (m_hThread != (0L))
+		{
+			CloseHandle(m_hThread);
+			m_hThread = (0L);
+		}
+		if (GetThreadStatus() == TSTYPE_RUNNING)
+		{
+			m_dwMsgThreadId = ::GetCurrentThreadId();
+			SetThreadStatus(TSTYPE_STOPPED);
+			if (m_dwThreadId != m_dwMsgThreadId)
+			{
+				if (m_dwThreadExitCode >= (WM_USER + WM_QUIT))
+				{
+					switch (m_nThreadExitCall)
+					{
+					case CThreadHelper::TECTYPE_SSYNCHRONOUS:
+						SSyncWait();
+						break;
+					case CThreadHelper::TECTYPE_ASYNCHRONOUS:
+						ASyncWait();
+						break;
+					default:
+						break;
+					}
+				}
+			}
+		}
+	}
+	VOID Close()
 	{
 		Cleanup();
 	}
-
-	void Startup()
+	VOID Reset()
 	{
-		m_hThread = NULL;
-		m_dwThreadId = (0L);		
-		SetState(TSTYPE_NULLPTR);
-		SetPointer(&m_lpThreadParameter, NULL);
-		SetPointer((LPVOID volatile *)&m_fnThreadStartRoutine, NULL);
-	}
-	void Cleanup()
-	{
-		SetState(TSTYPE_STOPPED);
-		Sleep(WAIT_TIMEOUT);
+		memset(&m_ThreadSecurityAttributes, 0, sizeof(m_ThreadSecurityAttributes));
+		m_dwThreadStackSize = (0L);
+		m_fnThreadStartRoutine = (0L);
+		m_lpThreadParameters = (0L);
+		m_dwThreadCreationFlags = (0L);
 		m_dwThreadId = (0L);
-		if (m_hThread)
+		m_hThread = (0L);
+		m_dwThreadExitCode = (0L);
+		m_nThreadStatus = TSTYPE_NULLPTR;
+		m_nThreadExitCall = TECTYPE_SSYNCHRONOUS;		
+	}
+	VOID Startup(
+		LPTHREAD_START_ROUTINE fnThreadStartRoutine = (0L),
+		LPVOID lpThreadParameters = (0L),
+		DWORD dwThreadCreationFlags = (0L),
+		SIZE_T dwThreadStackSize = (0L),
+		LPSECURITY_ATTRIBUTES lpThreadSecurityAttributes = (0L),
+		THREADEXITCALL_TYPE nThreadExitCall = TECTYPE_SSYNCHRONOUS
+		)
+	{
+				
+		if (lpThreadSecurityAttributes != (0L))
 		{
-			CloseHandle(m_hThread);
-			m_hThread = NULL;
+			memcpy(&m_ThreadSecurityAttributes, lpThreadSecurityAttributes, sizeof(m_ThreadSecurityAttributes));
+		}
+		else
+		{
+			memset(&m_ThreadSecurityAttributes, 0, sizeof(m_ThreadSecurityAttributes));
+		}
+		
+		m_hThread = (0L);
+		
+		m_dwThreadStackSize = dwThreadStackSize;
+		m_fnThreadStartRoutine = fnThreadStartRoutine;
+		m_lpThreadParameters = lpThreadParameters;
+		m_dwThreadCreationFlags = dwThreadCreationFlags | CREATE_SUSPENDED;
+		m_dwThreadId = (0L);
+
+		m_dwMsgThreadId = (0L);
+		m_dwThreadExitCode = (0L);
+		m_nThreadStatus = TSTYPE_NULLPTR;
+		m_nThreadExitCall = nThreadExitCall;
+
+		m_hThread = CreateThread(&m_ThreadSecurityAttributes, m_dwThreadStackSize, &CThreadHelper::ThreadStartRoutine, this, m_dwThreadCreationFlags, &m_dwThreadId);
+		if (m_hThread && m_dwThreadId)
+		{
+			m_dwThreadExitCode = (WM_USER + WM_QUIT + m_dwThreadId);
 		}
 	}
-	void SetState(TREADSTATE_TYPE tsType)
+	VOID Cleanup()
 	{
-		_InterlockedExchange((long volatile *)&m_nFlag, (long)tsType);
+		Clear();
+		Reset();
 	}
 
-	TREADSTATE_TYPE AndState()
+	VOID SetThreadStatus(THREADSTATUS_TYPE nThreadStatus = TSTYPE_NULLPTR)
 	{
-		return (TREADSTATE_TYPE)_InterlockedAnd((long volatile *)&m_nFlag, (long)MAXULONG_PTR);
+		m_nThreadStatus = (THREADSTATUS_TYPE)(nThreadStatus | TSTYPE_MINIMUM);
 	}
 
-	TREADSTATE_TYPE GetState()
+	THREADSTATUS_TYPE GetThreadStatus()
 	{
-		return AndState();
+		return (THREADSTATUS_TYPE)(m_nThreadStatus & TSTYPE_MAXIMUM);
+	}
+	
+	VOID SetThreadExitCall(THREADEXITCALL_TYPE nThreadExitCall= TECTYPE_SSYNCHRONOUS)
+	{
+		m_nThreadExitCall = nThreadExitCall;
 	}
 
-	void PrintState()
+	THREADEXITCALL_TYPE GetThreadExitCall()
 	{
+		return m_nThreadExitCall;
 	}
 
-	void SetPointer(LPVOID volatile * pTarget, LPVOID lpValues)
+	VOID SetThreadPriority(INT nPriority)
 	{
-		_InterlockedExchange((long volatile *)pTarget, (long)lpValues);
-	}
-	LPVOID GetPointer(LPVOID volatile * pTarget)
-	{
-		return (LPVOID)_InterlockedAnd((long volatile *)pTarget, MAXULONG_PTR);
+		::SetThreadPriority(m_hThread, nPriority);
 	}
 
-	void lpThreadParameter(LPVOID _lpThreadParameter)
+	INT GetThreadPriority()
 	{
-		SetPointer(&m_lpThreadParameter, _lpThreadParameter);
+		return ::GetThreadPriority(m_hThread);
 	}
-	LPVOID lpThreadParameter()
+	BOOL IsThreadRunning()
 	{
-		return GetPointer(&m_lpThreadParameter);
-	}
-	void fnThreadStartRoutine(LPTHREAD_START_ROUTINE _fnThreadStartRoutine)
-	{
-		SetPointer((LPVOID volatile *)&m_fnThreadStartRoutine, (LPVOID)_fnThreadStartRoutine);
-	}
-	LPTHREAD_START_ROUTINE fnThreadStartRoutine()
-	{
-		return (LPTHREAD_START_ROUTINE)GetPointer((LPVOID volatile *)&m_fnThreadStartRoutine);
+		return ((GetThreadStatus() & TSTYPE_RUNNING) == TSTYPE_RUNNING);
 	}
 
+	LPTHREAD_START_ROUTINE GetThreadStartRoutine()
+	{
+		return m_fnThreadStartRoutine;
+	}
+	LPVOID GetThreadParameters()
+	{
+		return m_lpThreadParameters;
+	}
+
+	DWORD GetThreadId()
+	{
+		return m_dwThreadId;
+	}
+	DWORD GetThreadCreationFlags()
+	{
+		return m_dwThreadCreationFlags;
+	}
+	SIZE_T GetThreadStackSize()
+	{
+		return m_dwThreadStackSize;
+	}
+	LPSECURITY_ATTRIBUTES GetThreadSecurityAttributes()
+	{
+		return &m_ThreadSecurityAttributes;
+	}
+	DWORD GetMsgThreadId()
+	{
+		return m_dwMsgThreadId;
+	}
+	DWORD GetThreadExitCode()
+	{
+		return m_dwThreadExitCode;
+	}
+	
 private:
 
-	HANDLE m_hThread;
+	HANDLE m_hThread;	
+	DWORD m_dwMsgThreadId;
+	DWORD m_dwThreadExitCode;
+	THREADSTATUS_TYPE m_nThreadStatus;
+	THREADEXITCALL_TYPE m_nThreadExitCall;
+
+	LPTHREAD_START_ROUTINE m_fnThreadStartRoutine;
+	LPVOID m_lpThreadParameters;
+	DWORD m_dwThreadCreationFlags;
+	SIZE_T m_dwThreadStackSize;
+	SECURITY_ATTRIBUTES m_ThreadSecurityAttributes;
 	DWORD m_dwThreadId;
-	LONG volatile m_nFlag;
-	LPVOID volatile m_lpThreadParameter;
-	LPTHREAD_START_ROUTINE volatile m_fnThreadStartRoutine;
 };
 
 DWORD WINAPI TestRun(LPVOID lpParameter)
@@ -406,4 +517,184 @@ __inline static void test()
 	return;
 }
 
-#endif //__THREADHEADER_H_
+DWORD WINAPI ThreadSample_1(LPVOID lpParams)
+{
+	DWORD dwResult = (0L);
+	CThreadHelper * pTh = (CThreadHelper *)lpParams;
+	if (pTh)
+	{
+		while (pTh->IsThreadRunning())
+		{
+			if (dwResult++ > 20)
+			{
+				break;
+			}
+		}
+	}
+
+	Sleep(1000);
+
+	return dwResult;
+}
+
+DWORD WINAPI ThreadSample_2(LPVOID lpParams)
+{
+	DWORD dwResult = (0L);
+	CThreadHelper * pTh = (CThreadHelper *)lpParams;
+	CThreadHelper * pThTT = (CThreadHelper *)pTh->GetThreadParameters();
+	if (pTh && pThTT && pThTT->GetThreadStatus() == CThreadHelper::TSTYPE_RUNNING)
+	{
+		Sleep(1000);
+		pThTT->Suspend();
+		Sleep(2000);
+
+		pThTT->Resumed();
+		Sleep(3000);
+
+		pThTT->Suspend();
+		Sleep(4000);
+
+		pThTT->Resumed();
+		Sleep(5000);
+
+		pThTT->Stopped();
+
+		//pTh->Stopped();
+	}
+
+	Sleep(1000);
+
+	return dwResult;
+}
+
+
+DWORD WINAPI ThreadSample_3(LPVOID lpParams)
+{
+	DWORD dwResult = (0L);
+	CThreadHelper * pTh = (CThreadHelper *)lpParams;
+	if (pTh)
+	{
+		while (pTh->IsThreadRunning())
+		{
+			if (dwResult++ > (DWORD)pTh->GetThreadParameters())
+			{
+				break;
+			}
+			printf("tid=%ld--%ld\r\n", pTh->GetThreadId(), dwResult);
+			Sleep(1000);
+		}
+
+		pTh->Close();
+	}
+
+	Sleep(100);
+
+	return dwResult;
+}
+#include <map>
+static std::map<DWORD, std::string> G_SSMap;
+static std::map<std::string, CThreadHelper*> G_STMap;
+
+DWORD WINAPI PrintStatusThread(LPVOID lpParams)
+{
+	DWORD dwResult = (0L);
+	CThreadHelper * pTh = (CThreadHelper *)lpParams;
+	if (pTh)
+	{
+		DWORD dwLeft = 0;
+		std::map<DWORD, std::string> * pDS = &G_SSMap;
+		std::map<std::string, CThreadHelper*> * pST = &G_STMap;
+		if (pST && pDS)
+		{
+			for (auto it = pST->begin(); it != pST->end(); it++)
+			{
+				//printf("\ttid=%s(%08d) status=%s(%08d)\r\n", \
+									it.first.c_str(), it.second->GetThreadId(), \
+									pDS->at(it.second->GetThreadStatus()).c_str(), \
+									it.second->GetThreadStatus());
+				if (!it->second->IsThreadRunning())
+				{
+					printf("\t%s已退出!\r\n", it->first.c_str());
+				}
+				else
+				{
+					dwLeft++;
+				}
+			}
+			printf("状态线程(%08d)-线程个数=%ld-活动线程个数=%ld!\r\n", GetCurrentThreadId(), pST->size(), dwLeft);
+			printf("=============================================================================\r\n");
+		}
+		else
+		{
+			pTh->Stopped();
+		}
+	}
+
+	Sleep(100);
+
+	return dwResult;
+}
+int ThreadTestSample()
+{
+	int nResult = (0L);
+	size_t stNumber = 20;
+	CThreadHelper * pTH = NULL;
+	CThreadHelper th(PrintStatusThread);
+	G_SSMap.insert(std::map<DWORD, std::string>::value_type(CThreadHelper::TSTYPE_NULLPTR, "未启动"));
+	G_SSMap.insert(std::map<DWORD, std::string>::value_type(CThreadHelper::TSTYPE_STARTED, "已启动"));
+	G_SSMap.insert(std::map<DWORD, std::string>::value_type(CThreadHelper::TSTYPE_SUSPEND, "已挂起"));
+	G_SSMap.insert(std::map<DWORD, std::string>::value_type(CThreadHelper::TSTYPE_RUNNING, "运行中"));
+	G_SSMap.insert(std::map<DWORD, std::string>::value_type(CThreadHelper::TSTYPE_STOPPED, "已停止"));
+
+	th.Start();
+
+	for (size_t i = 0; i < stNumber; i++)
+	{
+		char ch[128] = { 0 };
+		pTH = new CThreadHelper(ThreadSample_1);
+		sprintf(ch, "子线程%03d(%ld)", i, pTH->GetThreadId());
+		G_STMap.insert(std::map<std::string, CThreadHelper*>::value_type(ch, pTH));
+	}
+	auto it = G_STMap.begin();
+	for (size_t i = stNumber; i < stNumber * 2; i++, it++)
+	{
+		char ch[128] = { 0 };
+		pTH = new CThreadHelper(ThreadSample_2, it->second);
+		sprintf(ch, "子线程%03d(%ld)", i, pTH->GetThreadId());
+		G_STMap.insert(std::map<std::string, CThreadHelper*>::value_type(ch, pTH));
+	}
+
+	for (size_t i = stNumber * 2; i < stNumber * 3; i++)
+	{
+		char ch[128] = { 0 };
+		pTH = new CThreadHelper(ThreadSample_3, (LPVOID)(i));
+		sprintf(ch, "子线程%03d(%ld)", i, pTH->GetThreadId());
+		G_STMap.insert(std::map<std::string, CThreadHelper*>::value_type(ch, pTH));
+	}
+
+	for each (auto it in G_STMap)
+	{
+		it.second->Start();
+	}
+
+	getchar();
+
+	for each (auto it in G_STMap)
+	{
+		it.second->Close();
+	}
+
+	for each (auto it in G_STMap)
+	{
+		delete it.second;
+		it.second = NULL;
+	}
+
+	th.Close();
+
+	G_STMap.clear();
+
+	return nResult;
+}
+
+#endif //__THREADHELPER_H_

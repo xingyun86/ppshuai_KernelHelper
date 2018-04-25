@@ -99,8 +99,13 @@
     </Link>
     <PostBuildEvent>
       <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\ /Y
-XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y
-DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT
+ECHO .cpp &gt;&gt; $(OutDir)EXCLUDE.TXT
+ECHO .c &gt;&gt; $(OutDir)EXCLUDE.TXT
+ECHO .cc &gt;&gt; $(OutDir)EXCLUDE.TXT
+XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y /EXCLUDE:$(OutDir)EXCLUDE.TXT
+@REM DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -127,8 +132,13 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
     </Link>
     <PostBuildEvent>
       <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\ /Y
-XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y
-DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT
+ECHO .cpp &gt;&gt; $(OutDir)EXCLUDE.TXT
+ECHO .c &gt;&gt; $(OutDir)EXCLUDE.TXT
+ECHO .cc &gt;&gt; $(OutDir)EXCLUDE.TXT
+XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y /EXCLUDE:$(OutDir)EXCLUDE.TXT
+@REM DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -159,8 +169,13 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
     </Link>
     <PostBuildEvent>
       <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\ /Y
-XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y
-DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT
+ECHO .cpp &gt;&gt; $(OutDir)EXCLUDE.TXT
+ECHO .c &gt;&gt; $(OutDir)EXCLUDE.TXT
+ECHO .cc &gt;&gt; $(OutDir)EXCLUDE.TXT
+XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y /EXCLUDE:$(OutDir)EXCLUDE.TXT
+@REM DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -190,8 +205,13 @@ DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
     </Link>
     <PostBuildEvent>
       <Command>COPY $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)KernelHelper\thirdparty\lib\$(Platform)\$(Configuration)\ /Y
-XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y
-DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*</Command>
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT
+ECHO .cpp &gt;&gt; $(OutDir)EXCLUDE.TXT
+ECHO .c &gt;&gt; $(OutDir)EXCLUDE.TXT
+ECHO .cc &gt;&gt; $(OutDir)EXCLUDE.TXT
+XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y /EXCLUDE:$(OutDir)EXCLUDE.TXT
+@REM DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
