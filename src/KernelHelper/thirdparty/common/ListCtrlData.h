@@ -1,3 +1,7 @@
+#pragma once
+
+#ifndef __LISTCTRLDATA_H_
+#define __LISTCTRLDATA_H_
 
 #include <windows.h>
 #include <commctrl.h>
@@ -157,3 +161,5 @@ __inline static int GetListCtrlDataEx(HWND hWndListCtrl)
 	}
 	return 0;
 }
+
+#endif //__LISTCTRLDATA_H_

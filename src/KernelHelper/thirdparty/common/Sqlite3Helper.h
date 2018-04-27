@@ -30,8 +30,11 @@
 //						-Added int64 functions to CSqlite3Query
 //						-Added Name based parameter binding to CSqlite3Statement.
 ////////////////////////////////////////////////////////////////////////////////
-#ifndef _CSQLITE3HELPER_H_
-#define _CSQLITE3HELPER_H_
+
+#pragma once
+
+#ifndef __CSQLITE3HELPER_H_
+#define __CSQLITE3HELPER_H_
 
 #include <sqlite3.h>
 
@@ -324,4 +327,4 @@ private:
     int mnBusyTimeoutMs;
 };
 
-#endif //_CSQLITE3HELPER_H_
+#endif //__CSQLITE3HELPER_H_

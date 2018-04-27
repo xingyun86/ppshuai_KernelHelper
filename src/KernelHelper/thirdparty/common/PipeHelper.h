@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#ifndef __PIPEHELPER_H_
+#define __PIPEHELPER_H_
+
 #include "CommonHelper.h"
 
 #define MAX_READ_TIMEOUT	WAIT_TIMEOUT	//默认300毫秒超时
@@ -33,7 +36,7 @@ private:
 	//返回值:
 	//	0,		成功
 	//	(-1),	创建进程失败
-	int CreateChildProcess(tstring tsAppProgName, tstring tsArguments = _T(""), bool bNoUI = true, LAUNCHTYPE type = LTYPE_0, DWORD dwWaitTime = WAIT_TIMEOUT);
+	int CreateChildProcess(tstring tsAppProgName, tstring tsArguments = _T(""), LPCTSTR lpWorkPath = NULL, bool bNoUI = true, LAUNCHTYPE type = LTYPE_0, DWORD dwWaitTime = WAIT_TIMEOUT);
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	//函数功能:读取脚本命令执行结果
@@ -134,3 +137,4 @@ public:
 	static tstring RunCmd(tstring tsAppProgName, tstring tsArguments, DWORD dwReadTimeout = MAX_READ_TIMEOUT, bool bNoUI = true, LAUNCHTYPE type = LTYPE_0, DWORD dwWaitTime = WAIT_TIMEOUT);
 };
 
+#endif //__PIPEHELPER_H_

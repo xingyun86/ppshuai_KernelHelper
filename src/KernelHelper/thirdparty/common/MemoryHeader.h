@@ -1,3 +1,7 @@
+#pragma once
+
+#ifndef __MEMORYHEADER_H_
+#define __MEMORYHEADER_H_
 
 #include "MACROS.h"
 
@@ -746,3 +750,5 @@ namespace PPSHUAI{
 		}
 	}
 }
+
+#endif //__MEMORYHEADER_H_

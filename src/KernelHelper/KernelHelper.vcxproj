@@ -105,7 +105,9 @@ ECHO .c &gt;&gt; $(OutDir)EXCLUDE.TXT
 ECHO .cc &gt;&gt; $(OutDir)EXCLUDE.TXT
 XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y /EXCLUDE:$(OutDir)EXCLUDE.TXT
 @REM DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*
-DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
+@ECHO OFF
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT
+@ECHO ON</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -138,7 +140,9 @@ ECHO .c &gt;&gt; $(OutDir)EXCLUDE.TXT
 ECHO .cc &gt;&gt; $(OutDir)EXCLUDE.TXT
 XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y /EXCLUDE:$(OutDir)EXCLUDE.TXT
 @REM DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*
-DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
+@ECHO OFF
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT
+@ECHO ON</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -175,7 +179,9 @@ ECHO .c &gt;&gt; $(OutDir)EXCLUDE.TXT
 ECHO .cc &gt;&gt; $(OutDir)EXCLUDE.TXT
 XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y /EXCLUDE:$(OutDir)EXCLUDE.TXT
 @REM DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*
-DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
+@ECHO OFF
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT
+@ECHO ON</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -211,7 +217,9 @@ ECHO .c &gt;&gt; $(OutDir)EXCLUDE.TXT
 ECHO .cc &gt;&gt; $(OutDir)EXCLUDE.TXT
 XCOPY $(SolutionDir)KernelHelper\thirdparty\* $(SolutionDir)KernelHelper-Publish\ /E /R /S /Y /EXCLUDE:$(OutDir)EXCLUDE.TXT
 @REM DEL /S /Q $(SolutionDir)KernelHelper-Publish\*.C*
-DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
+@ECHO OFF
+DEL /F /S /Q $(OutDir)EXCLUDE.TXT
+@ECHO ON</Command>
     </PostBuildEvent>
     <ProjectReference />
     <Lib />
@@ -224,6 +232,7 @@ DEL /F /S /Q $(OutDir)EXCLUDE.TXT</Command>
     <ClCompile Include="thirdparty\base64\base64.cpp" />
     <ClCompile Include="thirdparty\common\CryptHelper.cpp" />
     <ClCompile Include="thirdparty\common\CurlHelper.cpp" />
+    <ClCompile Include="thirdparty\common\MiniDump.cpp" />
     <ClCompile Include="thirdparty\common\PipeHelper.cpp" />
     <ClCompile Include="thirdparty\common\SocketHelper.cpp" />
     <ClCompile Include="thirdparty\common\Sqlite3Helper.cpp" />

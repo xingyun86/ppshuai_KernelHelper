@@ -1,3 +1,7 @@
+#pragma once
+
+#ifndef __UNDOCAPI_H_
+#define __UNDOCAPI_H_
 
 #include <windows.h>
 
@@ -575,3 +579,5 @@ namespace PPSHUAI{
 			}
 		}
 }
+
+#endif //__UNDOCAPI_H_

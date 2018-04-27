@@ -1,7 +1,8 @@
-#ifndef __MACROS_H_
-#define __MACROS_H_
 
 #pragma once
+
+#ifndef __MACROS_H_
+#define __MACROS_H_
 
 #include <map>
 #include <vector>

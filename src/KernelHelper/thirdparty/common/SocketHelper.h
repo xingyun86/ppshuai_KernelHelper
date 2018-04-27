@@ -1,5 +1,7 @@
-#ifndef _SOCKETHELPER_H__
-#define _SOCKETHELPER_H__
+#pragma once
+
+#ifndef __SOCKETHELPER_H__
+#define __SOCKETHELPER_H__
 
 #include <string>
 #include <winsock.h>
@@ -83,4 +85,4 @@ private:
 	bool m_bReConnecting;//是否正在重连，true-是，false-否
 };
 
-#endif // _SOCKETHELPER_H__
+#endif // __SOCKETHELPER_H__

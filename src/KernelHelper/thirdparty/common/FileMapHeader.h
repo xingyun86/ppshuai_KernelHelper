@@ -1,3 +1,8 @@
+#pragma once
+
+#ifndef __FILEMAPHEADER_H_
+#define __FILEMAPHEADER_H_
+
 #include <windows.h>
 #include <tchar.h>
 #include <stdio.h>
@@ -122,3 +127,4 @@ __inline static void my_tmain(void)
 	UnmapViewOfFile(pBuf);
 	CloseHandle(hMapFile);
 }
+#endif //__FILEMAPHEADER_H_

@@ -1,3 +1,7 @@
+#pragma once
+
+#ifndef __CURLHELPER_H_
+#define __CURLHELPER_H_
 
 #define CURL_STATICLIB
 #include <curl/curl.h>
@@ -1708,6 +1712,724 @@ namespace PPSHUAI{
 			_TCHAR	m_tzUserAgent[INTERNET_MAX_URL_LENGTH];		// 用户代理
 		};
 
+		// WinInet Http同步封装类
+		typedef HRESULT(*LPCALLMETHOD)(LPVOID, LPVOID);
+
+		typedef struct tagInternetSessionA{
+			_Inout_	CHAR tzRequestCanonicalizeUrl[INTERNET_MAX_URL_LENGTH];
+			_Inout_	DWORD dwRequestCanonicalizeUrl;
+			_Inout_	DWORD dwRequestCanonicalizeUrlLength;
+			_In_	DWORD dwInternetCanonicalizeUrlFlags;//ICU_ENCODE_SPACES_ONLY
+
+			_In_	CHAR tzUserAgent[INTERNET_MAX_HOST_NAME_LENGTH];//INTERNET/1.X		
+			_In_	DWORD dwAccessType;//INTERNET_OPEN_TYPE_PRECONFIG
+			_In_	CHAR tzProxy[INTERNET_MAX_PATH_LENGTH];
+			_In_	CHAR tzProxyBypass[INTERNET_MAX_PATH_LENGTH];
+			_In_	DWORD dwInternetOpenFlags;
+
+			_In_	CHAR tzRequestUrl[INTERNET_MAX_URL_LENGTH];
+			_In_	CHAR tzRequestHeaders[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+			_In_	DWORD dwRequestHeadersLength;
+			_In_	DWORD dwInternetOpenUrlFlags; //INTERNET_FLAG_NO_UI|INTERNET_FLAG_NO_AUTH|INTERNET_FLAG_PRAGMA_NOCACHE|INTERNET_FLAG_NO_CACHE_WRITE
+			_In_	DWORD_PTR dwContext;
+
+			_In_	LPBYTE lpRequestData;//MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+			_In_	DWORD dwRequestDataLength;
+			_Out_	DWORD dwRequestSusseedDataLength;
+
+			_Out_	CHAR tzResponseHeaders[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+			_Inout_	DWORD dwResponseHeadersLength;
+			_Inout_	DWORD dwQueryIndex;//0
+			_Out_	LPBYTE lpResponseData;//MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+			_Out_	DWORD dwResponseDataLength;// > 0
+			_Out_	DWORD dwResponseDataAllocateCapacity;//If lpResponseData Allocate Capacity, this key is valid.
+			_In_	CHAR tzOutputFileName[MAX_PATH];
+			_In_	LPCALLMETHOD lpCallMethod;
+		}INTERNET_SESSIONA, *PINTERNET_SESSIONA, *LPINTERNET_SESSIONA;
+
+		typedef struct tagInternetSessionW{
+			_Inout_	WCHAR tzRequestCanonicalizeUrl[INTERNET_MAX_URL_LENGTH];
+			_Inout_	DWORD dwRequestCanonicalizeUrl;
+			_Inout_	DWORD dwRequestCanonicalizeUrlLength;
+			_In_	DWORD dwInternetCanonicalizeUrlFlags;//ICU_ENCODE_SPACES_ONLY
+
+			_In_	WCHAR tzUserAgent[INTERNET_MAX_HOST_NAME_LENGTH];//INTERNET/1.X		
+			_In_	DWORD dwAccessType;//INTERNET_OPEN_TYPE_PRECONFIG
+			_In_	WCHAR tzProxy[INTERNET_MAX_PATH_LENGTH];
+			_In_	WCHAR tzProxyBypass[INTERNET_MAX_PATH_LENGTH];
+			_In_	DWORD dwInternetOpenFlags;
+
+			_In_	WCHAR tzRequestUrl[INTERNET_MAX_URL_LENGTH];
+			_In_	WCHAR tzRequestHeaders[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+			_In_	DWORD dwRequestHeadersLength;
+			_In_	DWORD dwInternetOpenUrlFlags; //INTERNET_FLAG_NO_UI|INTERNET_FLAG_NO_AUTH|INTERNET_FLAG_PRAGMA_NOCACHE|INTERNET_FLAG_NO_CACHE_WRITE
+			_In_	DWORD_PTR dwContext;
+
+			_In_	LPBYTE lpRequestData;//MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+			_In_	DWORD dwRequestDataLength;
+			_Out_	DWORD dwRequestSusseedDataLength;
+
+			_Out_	WCHAR tzResponseHeaders[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+			_Inout_	DWORD dwResponseHeadersLength;
+			_Inout_	DWORD dwQueryIndex;//0
+			_Out_	LPBYTE lpResponseData;//MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+			_Out_	DWORD dwResponseDataLength;// > 0
+			_Out_	DWORD dwResponseDataAllocateCapacity;//If lpResponseData Allocate Capacity, this key is valid.
+			_In_	WCHAR tzOutputFileName[MAX_PATH];
+			_In_	LPCALLMETHOD lpCallMethod;
+		}INTERNET_SESSIONW, *PINTERNET_SESSIONW, *LPINTERNET_SESSIONW;
+
+		typedef struct tagInternetSession{
+			_Inout_	_TCHAR tzRequestCanonicalizeUrl[INTERNET_MAX_URL_LENGTH];
+			_Inout_	DWORD dwRequestCanonicalizeUrl;
+			_Inout_	DWORD dwRequestCanonicalizeUrlLength;
+			_In_	DWORD dwInternetCanonicalizeUrlFlags;//ICU_ENCODE_SPACES_ONLY
+
+			_In_	_TCHAR tzUserAgent[INTERNET_MAX_HOST_NAME_LENGTH];//INTERNET/1.X		
+			_In_	DWORD dwAccessType;//INTERNET_OPEN_TYPE_PRECONFIG
+			_In_	_TCHAR tzProxy[INTERNET_MAX_PATH_LENGTH];
+			_In_	_TCHAR tzProxyBypass[INTERNET_MAX_PATH_LENGTH];
+			_In_	DWORD dwInternetOpenFlags;
+
+			_In_	_TCHAR tzRequestUrl[INTERNET_MAX_URL_LENGTH];
+			_In_	_TCHAR tzRequestHeaders[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+			_In_	DWORD dwRequestHeadersLength;
+			_In_	DWORD dwInternetOpenUrlFlags; //INTERNET_FLAG_NO_UI|INTERNET_FLAG_NO_AUTH|INTERNET_FLAG_PRAGMA_NOCACHE|INTERNET_FLAG_NO_CACHE_WRITE
+			_In_	DWORD_PTR dwContext;
+
+			_In_	LPBYTE lpRequestData;//MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+			_In_	DWORD dwRequestDataLength;
+			_Out_	DWORD dwRequestSusseedDataLength;
+
+			_Out_	_TCHAR tzResponseHeaders[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+			_Inout_	DWORD dwResponseHeadersLength;
+			_Inout_	DWORD dwQueryIndex;//0
+			_Out_	LPBYTE lpResponseData;//MAXIMUM_REPARSE_DATA_BUFFER_SIZE
+			_Out_	DWORD dwResponseDataLength;// > 0
+			_Out_	DWORD dwResponseDataAllocateCapacity;//If lpResponseData Allocate Capacity, this key is valid.
+			_In_	_TCHAR tzOutputFileName[MAX_PATH];
+			LPCALLMETHOD lpCallMethod;
+		}INTERNET_SESSION, *PINTERNET_SESSION, *LPINTERNET_SESSION;
+
+		// 获取HTTP信息数据长度
+		__inline static BOOL QueryHttpInfoDataLengthA(HINTERNET hInternetRequest, DWORD & dwHttpDataInfoSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
+		{
+			return (!::HttpQueryInfoA(hInternetRequest, dwInfoLevel, (LPVOID)NULL, &dwHttpDataInfoSize, pdwIndex) && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+		}
+		// 获取HTTP信息数据
+		__inline static BOOL QueryHttpInfoDataA(HINTERNET hInternetRequest, LPVOID pHttpInfoData, DWORD dwHttpInfoDataSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
+		{
+			return (::HttpQueryInfoA(hInternetRequest, dwInfoLevel, (LPVOID)pHttpInfoData, &dwHttpInfoDataSize, pdwIndex));
+		}
+		// 获取HTTP信息数据长度
+		__inline static BOOL QueryHttpInfoDataLengthW(HINTERNET hInternetRequest, DWORD & dwHttpDataInfoSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
+		{
+			return (!::HttpQueryInfoW(hInternetRequest, dwInfoLevel, (LPVOID)NULL, &dwHttpDataInfoSize, pdwIndex) && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+		}
+		// 获取HTTP信息数据
+		__inline static BOOL QueryHttpInfoDataW(HINTERNET hInternetRequest, LPVOID pHttpInfoData, DWORD dwHttpInfoDataSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
+		{
+			return (::HttpQueryInfoW(hInternetRequest, dwInfoLevel, (LPVOID)pHttpInfoData, &dwHttpInfoDataSize, pdwIndex));
+		}
+		// 获取HTTP信息数据长度
+		__inline static BOOL QueryHttpInfoDataLength(HINTERNET hInternetRequest, DWORD & dwHttpDataInfoSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
+		{
+			return (!::HttpQueryInfo(hInternetRequest, dwInfoLevel, (LPVOID)NULL, &dwHttpDataInfoSize, pdwIndex) && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER);
+		}
+		// 获取HTTP信息数据
+		__inline static BOOL QueryHttpInfoData(HINTERNET hInternetRequest, LPVOID pHttpInfoData, DWORD dwHttpInfoDataSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
+		{
+			return (::HttpQueryInfo(hInternetRequest, dwInfoLevel, (LPVOID)pHttpInfoData, &dwHttpInfoDataSize, pdwIndex));
+		}
+
+		//传入URL和要保存的文件名称下载文件
+		__inline static HRESULT SynchromousInternetStartupA(LPINTERNET_SESSIONA lpInternetSession)
+		{
+			BOOL bResult = FALSE;
+			LPVOID lpData = NULL;
+			LPCSTR lpProxy = NULL;
+			LPCSTR lpHeaders = NULL;
+			HRESULT hResult = S_FALSE;
+			LPCSTR lpProxyBypass = NULL;
+			DWORD dwSucceedNumber = (0L);
+			HINTERNET hInternetSession = NULL;
+			HINTERNET hInternetRequest = NULL;
+			HANDLE hFileHandle = INVALID_HANDLE_VALUE;
+			BYTE btByteData[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = { 0 };
+
+			if (lpInternetSession->dwRequestCanonicalizeUrlLength)
+			{
+				lpInternetSession->dwRequestCanonicalizeUrlLength = sizeof(lpInternetSession->tzRequestCanonicalizeUrl) / sizeof(*(lpInternetSession->tzRequestCanonicalizeUrl));
+				bResult = ::InternetCanonicalizeUrlA(lpInternetSession->tzRequestUrl, lpInternetSession->tzRequestCanonicalizeUrl, &lpInternetSession->dwRequestCanonicalizeUrlLength, lpInternetSession->dwInternetCanonicalizeUrlFlags);
+				if (!bResult)
+				{
+					hResult = (-1L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (*lpInternetSession->tzProxy)
+			{
+				lpProxy = lpInternetSession->tzProxy;
+			}
+
+			if (*lpInternetSession->tzProxyBypass)
+			{
+				lpProxyBypass = lpInternetSession->tzProxyBypass;
+			}
+
+			hInternetSession = ::InternetOpenA(lpInternetSession->tzUserAgent, lpInternetSession->dwAccessType, lpProxy, lpProxyBypass, lpInternetSession->dwInternetOpenFlags);
+			if (!hInternetSession)
+			{
+				hResult = (-2L);
+				goto __LEAVE_CLEAN__;
+			}
+
+			if (lpInternetSession->dwRequestHeadersLength > 0)
+			{
+				lpHeaders = lpInternetSession->tzRequestHeaders;
+			}
+			hInternetRequest = ::InternetOpenUrlA(hInternetSession, lpInternetSession->tzRequestUrl, lpHeaders, lpInternetSession->dwRequestHeadersLength, lpInternetSession->dwInternetOpenUrlFlags, lpInternetSession->dwContext);
+			if (!hInternetRequest)
+			{
+				hResult = (-3L);
+				goto __LEAVE_CLEAN__;
+			}
+
+			if (lpInternetSession->lpCallMethod)
+			{
+				hResult = lpInternetSession->lpCallMethod(hInternetRequest, lpInternetSession);
+				if (hResult != S_OK)
+				{
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (lpInternetSession->dwRequestDataLength > 0)
+			{
+				lpInternetSession->dwRequestSusseedDataLength = (0L);
+				while (lpInternetSession->dwRequestSusseedDataLength < lpInternetSession->dwRequestDataLength)
+				{
+					bResult = ::InternetWriteFile(hInternetRequest, (LPCVOID)((LPBYTE)lpInternetSession->lpRequestData + lpInternetSession->dwRequestSusseedDataLength), ((lpInternetSession->dwRequestDataLength - lpInternetSession->dwRequestSusseedDataLength) > MAXIMUM_REPARSE_DATA_BUFFER_SIZE ? MAXIMUM_REPARSE_DATA_BUFFER_SIZE : (lpInternetSession->dwRequestDataLength - lpInternetSession->dwRequestSusseedDataLength)), &dwSucceedNumber);
+					lpInternetSession->dwRequestSusseedDataLength += dwSucceedNumber;
+				}
+				if (!bResult)
+				{
+					hResult = (-4L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (lpInternetSession->dwResponseHeadersLength > 0)
+			{
+				lpInternetSession->dwResponseHeadersLength = sizeof(lpInternetSession->tzResponseHeaders) / sizeof(*(lpInternetSession->tzResponseHeaders));
+				bResult = ::HttpQueryInfoA(hInternetRequest, HTTP_QUERY_RAW_HEADERS_CRLF, (LPVOID)lpInternetSession->tzResponseHeaders, &lpInternetSession->dwResponseHeadersLength, &lpInternetSession->dwQueryIndex);
+				if (!bResult)
+				{
+					hResult = (-5L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (*lpInternetSession->tzOutputFileName)
+			{
+				hFileHandle = ::CreateFileA(
+					lpInternetSession->tzOutputFileName,
+					GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE,
+					FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+					NULL,
+					CREATE_ALWAYS,
+					FILE_ATTRIBUTE_NORMAL,
+					NULL);
+				if (hFileHandle == INVALID_HANDLE_VALUE)
+				{
+					hResult = (-6L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+			if (lpInternetSession->dwResponseDataLength > 0)
+			{
+				if (lpInternetSession->dwResponseDataAllocateCapacity <= 0)
+				{
+					lpData = lpInternetSession->lpResponseData = (LPBYTE)::LocalAlloc(LMEM_FIXED | LMEM_MOVEABLE | LMEM_ZEROINIT, lpInternetSession->dwResponseDataLength * sizeof(BYTE));
+				}
+				else
+				{
+					lpData = lpInternetSession->lpResponseData;
+				}
+			}
+			if (*lpInternetSession->tzOutputFileName || (lpInternetSession->dwResponseDataLength > 0))
+			{
+				lpInternetSession->dwResponseDataLength = (0L);
+				while (bResult = ::InternetReadFile(hInternetRequest, btByteData, sizeof(btByteData) / sizeof(*btByteData), &dwSucceedNumber) && dwSucceedNumber > 0)
+				{
+					if (lpData && lpInternetSession->lpResponseData)
+					{
+						if (lpInternetSession->dwResponseDataAllocateCapacity < (lpInternetSession->dwResponseDataLength + dwSucceedNumber))
+						{
+							lpData = lpInternetSession->lpResponseData;
+							lpInternetSession->lpResponseData = (LPBYTE)::LocalReAlloc(lpData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber), LMEM_FIXED | LMEM_MOVEABLE | LMEM_MODIFY);
+							if (GetLastError() != ERROR_SUCCESS)
+							{
+								if (lpData)
+								{
+									::LocalFree(lpData);
+									lpData = (0L);
+								}
+								lpInternetSession->dwResponseDataAllocateCapacity = (0L);
+							}
+							else
+							{
+								memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+								lpInternetSession->dwResponseDataAllocateCapacity = (lpInternetSession->dwResponseDataLength + dwSucceedNumber);
+							}
+						}
+						else
+						{
+							memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);	
+						}						
+					}
+
+					if (hFileHandle != INVALID_HANDLE_VALUE)
+					{
+						WriteFile(hFileHandle, btByteData, dwSucceedNumber, &dwSucceedNumber, NULL);
+					}
+
+					lpInternetSession->dwResponseDataLength += dwSucceedNumber;
+				}
+			}
+
+			//读取返回数据结果
+			hResult = bResult ? S_OK : (-7L);
+
+		__LEAVE_CLEAN__:
+
+			if (hFileHandle != INVALID_HANDLE_VALUE)
+			{
+				CloseHandle(hFileHandle);
+				hFileHandle = NULL;
+			}
+
+			if (hInternetRequest)
+			{
+				::InternetCloseHandle(hInternetRequest);
+				hInternetRequest = NULL;
+			}
+
+			if (hInternetSession)
+			{
+				::InternetCloseHandle(hInternetSession);
+				hInternetSession = NULL;
+			}
+
+			return hResult;
+		}
+
+		//传入URL和要保存的文件名称下载文件
+		__inline static HRESULT SynchromousInternetStartupW(LPINTERNET_SESSIONW lpInternetSession)
+		{
+			BOOL bResult = FALSE;
+			LPVOID lpData = NULL;
+			LPCWSTR lpProxy = NULL;
+			LPCWSTR lpHeaders = NULL;
+			HRESULT hResult = S_FALSE;
+			LPCWSTR lpProxyBypass = NULL;
+			DWORD dwSucceedNumber = (0L);
+			HINTERNET hInternetSession = NULL;
+			HINTERNET hInternetRequest = NULL;
+			HANDLE hFileHandle = INVALID_HANDLE_VALUE;
+			BYTE btByteData[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = { 0 };
+
+			if (lpInternetSession->dwRequestCanonicalizeUrlLength)
+			{
+				lpInternetSession->dwRequestCanonicalizeUrlLength = sizeof(lpInternetSession->tzRequestCanonicalizeUrl) / sizeof(*(lpInternetSession->tzRequestCanonicalizeUrl));
+				bResult = ::InternetCanonicalizeUrlW(lpInternetSession->tzRequestUrl, lpInternetSession->tzRequestCanonicalizeUrl, &lpInternetSession->dwRequestCanonicalizeUrlLength, lpInternetSession->dwInternetCanonicalizeUrlFlags);
+				if (!bResult)
+				{
+					hResult = (-1L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (*lpInternetSession->tzProxy)
+			{
+				lpProxy = lpInternetSession->tzProxy;
+			}
+
+			if (*lpInternetSession->tzProxyBypass)
+			{
+				lpProxyBypass = lpInternetSession->tzProxyBypass;
+			}
+
+			hInternetSession = ::InternetOpenW(lpInternetSession->tzUserAgent, lpInternetSession->dwAccessType, lpProxy, lpProxyBypass, lpInternetSession->dwInternetOpenFlags);
+			if (!hInternetSession)
+			{
+				hResult = (-2L);
+				goto __LEAVE_CLEAN__;
+			}
+
+			if (lpInternetSession->dwRequestHeadersLength > 0)
+			{
+				lpHeaders = lpInternetSession->tzRequestHeaders;
+			}
+			hInternetRequest = ::InternetOpenUrlW(hInternetSession, lpInternetSession->tzRequestUrl, lpHeaders, lpInternetSession->dwRequestHeadersLength, lpInternetSession->dwInternetOpenUrlFlags, lpInternetSession->dwContext);
+			if (!hInternetRequest)
+			{
+				hResult = (-3L);
+				goto __LEAVE_CLEAN__;
+			}
+
+			if (lpInternetSession->lpCallMethod)
+			{
+				hResult = lpInternetSession->lpCallMethod(hInternetRequest, lpInternetSession);
+				if (hResult != S_OK)
+				{
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (lpInternetSession->dwRequestDataLength > 0)
+			{
+				lpInternetSession->dwRequestSusseedDataLength = (0L);
+				while (lpInternetSession->dwRequestSusseedDataLength < lpInternetSession->dwRequestDataLength)
+				{
+					bResult = ::InternetWriteFile(hInternetRequest, (LPCVOID)((LPBYTE)lpInternetSession->lpRequestData + lpInternetSession->dwRequestSusseedDataLength), ((lpInternetSession->dwRequestDataLength - lpInternetSession->dwRequestSusseedDataLength) > MAXIMUM_REPARSE_DATA_BUFFER_SIZE ? MAXIMUM_REPARSE_DATA_BUFFER_SIZE : (lpInternetSession->dwRequestDataLength - lpInternetSession->dwRequestSusseedDataLength)), &dwSucceedNumber);
+					lpInternetSession->dwRequestSusseedDataLength += dwSucceedNumber;
+				}
+				if (!bResult)
+				{
+					hResult = (-4L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (lpInternetSession->dwResponseHeadersLength > 0)
+			{
+				lpInternetSession->dwResponseHeadersLength = sizeof(lpInternetSession->tzResponseHeaders) / sizeof(*(lpInternetSession->tzResponseHeaders));
+				bResult = ::HttpQueryInfoW(hInternetRequest, HTTP_QUERY_RAW_HEADERS_CRLF, (LPVOID)lpInternetSession->tzResponseHeaders, &lpInternetSession->dwResponseHeadersLength, &lpInternetSession->dwQueryIndex);
+				if (!bResult)
+				{
+					hResult = (-5L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (*lpInternetSession->tzOutputFileName)
+			{
+				hFileHandle = ::CreateFileW(
+					lpInternetSession->tzOutputFileName,
+					GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE,
+					FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+					NULL,
+					CREATE_ALWAYS,
+					FILE_ATTRIBUTE_NORMAL,
+					NULL);
+				if (hFileHandle == INVALID_HANDLE_VALUE)
+				{
+					hResult = (-6L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+			if (lpInternetSession->dwResponseDataLength > 0)
+			{
+				lpData = lpInternetSession->lpResponseData = (LPBYTE)::LocalAlloc(LMEM_FIXED | LMEM_MOVEABLE | LMEM_ZEROINIT, lpInternetSession->dwResponseDataLength * sizeof(BYTE));
+			}
+			if (*lpInternetSession->tzOutputFileName || (lpInternetSession->dwResponseDataLength > 0))
+			{
+				lpInternetSession->dwResponseDataLength = (0L);
+				while (bResult = ::InternetReadFile(hInternetRequest, btByteData, sizeof(btByteData) / sizeof(*btByteData), &dwSucceedNumber) && dwSucceedNumber > 0)
+				{
+					if (lpData && lpInternetSession->lpResponseData)
+					{
+						if (lpInternetSession->dwResponseDataAllocateCapacity < (lpInternetSession->dwResponseDataLength + dwSucceedNumber))
+						{
+							lpData = lpInternetSession->lpResponseData;
+							lpInternetSession->lpResponseData = (LPBYTE)::LocalReAlloc(lpData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber), LMEM_FIXED | LMEM_MOVEABLE | LMEM_MODIFY);
+							if (GetLastError() != ERROR_SUCCESS)
+							{
+								if (lpData)
+								{
+									::LocalFree(lpData);
+									lpData = (0L);
+								}
+								lpInternetSession->dwResponseDataAllocateCapacity = (0L);
+							}
+							else
+							{
+								memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+								lpInternetSession->dwResponseDataAllocateCapacity = (lpInternetSession->dwResponseDataLength + dwSucceedNumber);
+							}
+						}
+						else
+						{
+							memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+						}
+					}
+
+					if (hFileHandle != INVALID_HANDLE_VALUE)
+					{
+						WriteFile(hFileHandle, btByteData, dwSucceedNumber, &dwSucceedNumber, NULL);
+					}
+
+					lpInternetSession->dwResponseDataLength += dwSucceedNumber;
+				}
+			}
+
+			//读取返回数据结果
+			hResult = bResult ? S_OK : (-7L);
+
+		__LEAVE_CLEAN__:
+
+			if (hFileHandle != INVALID_HANDLE_VALUE)
+			{
+				CloseHandle(hFileHandle);
+				hFileHandle = NULL;
+			}
+
+			if (hInternetRequest)
+			{
+				::InternetCloseHandle(hInternetRequest);
+				hInternetRequest = NULL;
+			}
+
+			if (hInternetSession)
+			{
+				::InternetCloseHandle(hInternetSession);
+				hInternetSession = NULL;
+			}
+
+			return hResult;
+		}
+		
+		//传入URL和要保存的文件名称下载文件
+		__inline static HRESULT SynchromousInternetStartup(LPINTERNET_SESSION lpInternetSession)
+		{
+			BOOL bResult = FALSE;
+			LPVOID lpData = NULL;
+			LPCTSTR lpProxy = NULL;
+			LPCTSTR lpHeaders = NULL;
+			HRESULT hResult = S_FALSE;			
+			LPCTSTR lpProxyBypass = NULL;
+			DWORD dwSucceedNumber = (0L);
+			HINTERNET hInternetSession = NULL;
+			HINTERNET hInternetRequest = NULL;
+			HANDLE hFileHandle = INVALID_HANDLE_VALUE;
+			BYTE btByteData[MAXIMUM_REPARSE_DATA_BUFFER_SIZE] = { 0 };
+
+			if (lpInternetSession->dwRequestCanonicalizeUrlLength)
+			{
+				lpInternetSession->dwRequestCanonicalizeUrlLength = sizeof(lpInternetSession->tzRequestCanonicalizeUrl) / sizeof(*(lpInternetSession->tzRequestCanonicalizeUrl));
+				bResult = ::InternetCanonicalizeUrl(lpInternetSession->tzRequestUrl, lpInternetSession->tzRequestCanonicalizeUrl, &lpInternetSession->dwRequestCanonicalizeUrlLength, lpInternetSession->dwInternetCanonicalizeUrlFlags);
+				if (!bResult)
+				{
+					hResult = (-1L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (*lpInternetSession->tzProxy)
+			{
+				lpProxy = lpInternetSession->tzProxy;
+			}
+
+			if (*lpInternetSession->tzProxyBypass)
+			{
+				lpProxyBypass = lpInternetSession->tzProxyBypass;
+			}
+
+			hInternetSession = ::InternetOpen(lpInternetSession->tzUserAgent, lpInternetSession->dwAccessType, lpProxy, lpProxyBypass, lpInternetSession->dwInternetOpenFlags);
+			if (!hInternetSession)
+			{
+				hResult = (-2L);
+				goto __LEAVE_CLEAN__;
+			}
+
+			if (lpInternetSession->dwRequestHeadersLength > 0)
+			{
+				lpHeaders = lpInternetSession->tzRequestHeaders;
+			}
+			hInternetRequest = ::InternetOpenUrl(hInternetSession, lpInternetSession->tzRequestUrl, lpHeaders, lpInternetSession->dwRequestHeadersLength, lpInternetSession->dwInternetOpenUrlFlags, lpInternetSession->dwContext);
+			if (!hInternetRequest)
+			{
+				hResult = (-3L);
+				goto __LEAVE_CLEAN__;
+			}
+
+			if (lpInternetSession->lpCallMethod)
+			{
+				hResult = lpInternetSession->lpCallMethod(hInternetRequest, lpInternetSession);
+				if (hResult != S_OK)
+				{
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (lpInternetSession->dwRequestDataLength > 0)
+			{
+				lpInternetSession->dwRequestSusseedDataLength = (0L);
+				while (lpInternetSession->dwRequestSusseedDataLength < lpInternetSession->dwRequestDataLength)
+				{
+					bResult = ::InternetWriteFile(hInternetRequest, (LPCVOID)((LPBYTE)lpInternetSession->lpRequestData + lpInternetSession->dwRequestSusseedDataLength), ((lpInternetSession->dwRequestDataLength - lpInternetSession->dwRequestSusseedDataLength) > MAXIMUM_REPARSE_DATA_BUFFER_SIZE ? MAXIMUM_REPARSE_DATA_BUFFER_SIZE : (lpInternetSession->dwRequestDataLength - lpInternetSession->dwRequestSusseedDataLength)), &dwSucceedNumber);
+					lpInternetSession->dwRequestSusseedDataLength += dwSucceedNumber;
+				}
+				if (!bResult)
+				{
+					hResult = (-4L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (lpInternetSession->dwResponseHeadersLength > 0)
+			{
+				lpInternetSession->dwResponseHeadersLength = sizeof(lpInternetSession->tzResponseHeaders) / sizeof(*(lpInternetSession->tzResponseHeaders));
+				bResult = ::HttpQueryInfo(hInternetRequest, HTTP_QUERY_RAW_HEADERS_CRLF, (LPVOID)lpInternetSession->tzResponseHeaders, &lpInternetSession->dwResponseHeadersLength, &lpInternetSession->dwQueryIndex);
+				if (!bResult)
+				{
+					hResult = (-5L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+
+			if (*lpInternetSession->tzOutputFileName)
+			{
+				hFileHandle = ::CreateFile(
+					lpInternetSession->tzOutputFileName,
+					GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE,
+					FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+					NULL,
+					CREATE_ALWAYS,
+					FILE_ATTRIBUTE_NORMAL,
+					NULL);
+				if (hFileHandle == INVALID_HANDLE_VALUE)
+				{
+					hResult = (-6L);
+					goto __LEAVE_CLEAN__;
+				}
+			}
+			if (lpInternetSession->dwResponseDataLength > 0)
+			{
+				lpData = lpInternetSession->lpResponseData = (LPBYTE)::LocalAlloc(LMEM_FIXED | LMEM_MOVEABLE | LMEM_ZEROINIT, lpInternetSession->dwResponseDataLength * sizeof(BYTE));
+			}
+			if (*lpInternetSession->tzOutputFileName || (lpInternetSession->dwResponseDataLength > 0))
+			{
+				lpInternetSession->dwResponseDataLength = (0L);
+				while (bResult = ::InternetReadFile(hInternetRequest, btByteData, sizeof(btByteData) / sizeof(*btByteData), &dwSucceedNumber) && dwSucceedNumber > 0)
+				{
+					if (lpData && lpInternetSession->lpResponseData)
+					{
+						if (lpInternetSession->dwResponseDataAllocateCapacity < (lpInternetSession->dwResponseDataLength + dwSucceedNumber))
+						{
+							lpData = lpInternetSession->lpResponseData;
+							lpInternetSession->lpResponseData = (LPBYTE)::LocalReAlloc(lpData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber), LMEM_FIXED | LMEM_MOVEABLE | LMEM_MODIFY);
+							if (GetLastError() != ERROR_SUCCESS)
+							{
+								if (lpData)
+								{
+									::LocalFree(lpData);
+									lpData = (0L);
+								}
+								lpInternetSession->dwResponseDataAllocateCapacity = (0L);
+							}
+							else
+							{
+								memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+								lpInternetSession->dwResponseDataAllocateCapacity = (lpInternetSession->dwResponseDataLength + dwSucceedNumber);
+							}
+						}
+						else
+						{
+							memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+						}
+					}
+
+					if (hFileHandle != INVALID_HANDLE_VALUE)
+					{
+						WriteFile(hFileHandle, btByteData, dwSucceedNumber, &dwSucceedNumber, NULL);
+					}
+
+					lpInternetSession->dwResponseDataLength += dwSucceedNumber;
+				}
+			}
+
+			//读取返回数据结果
+			hResult = bResult ? S_OK : (-7L);
+
+		__LEAVE_CLEAN__:
+
+			if (hFileHandle != INVALID_HANDLE_VALUE)
+			{
+				CloseHandle(hFileHandle);
+				hFileHandle = NULL;
+			}
+			
+			if (hInternetRequest)
+			{
+				::InternetCloseHandle(hInternetRequest);
+				hInternetRequest = NULL;
+			}
+
+			if (hInternetSession)
+			{
+				::InternetCloseHandle(hInternetSession);
+				hInternetSession = NULL;
+			}
+
+			return hResult;
+		}
+		__inline static void SynchromousInternetCleanupA(LPINTERNET_SESSIONA lpInternetSession)
+		{
+			if (lpInternetSession && lpInternetSession->lpResponseData)
+			{
+				::LocalFree(lpInternetSession->lpResponseData);
+				lpInternetSession->lpResponseData = NULL;
+			}
+			lpInternetSession->dwResponseDataAllocateCapacity = (0L);
+		}
+		__inline static void SynchromousInternetCleanupW(LPINTERNET_SESSIONW lpInternetSession)
+		{
+			if (lpInternetSession && lpInternetSession->lpResponseData)
+			{
+				::LocalFree(lpInternetSession->lpResponseData);
+				lpInternetSession->lpResponseData = NULL;
+			}
+			lpInternetSession->dwResponseDataAllocateCapacity = (0L);
+		}
+		__inline static void SynchromousInternetCleanup(LPINTERNET_SESSION lpInternetSession)
+		{
+			if (lpInternetSession && lpInternetSession->lpResponseData)
+			{
+				::LocalFree(lpInternetSession->lpResponseData);
+				lpInternetSession->lpResponseData = NULL;
+			}
+			lpInternetSession->dwResponseDataAllocateCapacity = (0L);
+		}
+		__inline static void DownloadSamples1()
+		{
+			INTERNET_SESSIONA is = { 0 };
+
+			memset(&is, 0, sizeof(is));
+			lstrcpyA(is.tzUserAgent, "INTERNET/1.X");
+			lstrcpyA(is.tzOutputFileName, std::string("D:\\logo_pc.png").c_str());
+			lstrcpyA(is.tzRequestUrl, ("http://www.ppsbbs.tech/plugin/xn_nav_2/view/img/logo_pc.png"));
+			SynchromousInternetStartupA(&is);
+			
+			memset(&is, 0, sizeof(is));
+			lstrcpyA(is.tzUserAgent, "INTERNET/1.X");
+			lstrcpyA(is.tzRequestUrl, ("http://hq.sinajs.cn/rn=9obrh&list=sh603596,sh600555,sh603348,sh603733,sh603876"));
+			is.dwResponseDataLength = 1L;
+			SynchromousInternetStartupA(&is);
+			if(is.lpResponseData)
+			{
+				
+			}
+			SynchromousInternetStartupA(&is);
+			if (is.lpResponseData)
+			{
+
+			}
+
+			SynchromousInternetCleanupA(&is);
+		}
 		/////////////////////////////////////////////////////////////////////////////////////////
 		//
 
@@ -1957,3 +2679,5 @@ namespace PPSHUAI{
 			);
 	}
 }
+
+#endif //__CURLHELPER_H_

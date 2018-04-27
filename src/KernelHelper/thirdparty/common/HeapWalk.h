@@ -1,3 +1,8 @@
+#pragma once
+
+#ifndef __HEAPWALK_H_
+#define __HEAPWALK_H_
+
 // crt_heapwalk.c  
 
 // This program "walks" the heap, starting  
@@ -63,3 +68,5 @@ void heapdump(void)
 		break;
 	}
 }
+
+#endif // __HEAPWALK_H_

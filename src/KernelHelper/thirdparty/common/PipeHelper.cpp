@@ -78,7 +78,7 @@ int CPipeHelper::Initialize(tstring tsAppProgName, tstring tsArguments, tstring 
 	}
 
 	// Create the child process.
-	result = CreateChildProcess(tsAppProgName, tsArguments, bNoUI, type, dwWaitTime);
+	result = CreateChildProcess(tsAppProgName, tsArguments, NULL, bNoUI, type, dwWaitTime);
 	if (result != 0)
 	{
 		//DEBUG_TRACE(_T("CreateChildProcess Failed\r\n"));
@@ -104,7 +104,7 @@ int CPipeHelper::Initialize(tstring tsAppProgName, tstring tsArguments, tstring 
 //返回值:
 //	0,		成功
 //	(-1),	创建进程失败
-int CPipeHelper::CreateChildProcess(tstring tsAppProgName, tstring tsArguments/* = _T("")*/, bool bNoUI/* = true*/, LAUNCHTYPE type/* = LTYPE_0*/, DWORD dwWaitTime/* = WAIT_TIMEOUT*/)
+int CPipeHelper::CreateChildProcess(tstring tsAppProgName, tstring tsArguments/* = _T("")*/, LPCTSTR lpWorkPath/* = NULL*/, bool bNoUI/* = true*/, LAUNCHTYPE type/* = LTYPE_0*/, DWORD dwWaitTime/* = WAIT_TIMEOUT*/)
 // Create a child process that uses the previously created pipes for STDIN and STDOUT.
 {
     int result = (-1);
@@ -154,7 +154,7 @@ int CPipeHelper::CreateChildProcess(tstring tsAppProgName, tstring tsArguments/*
 		TRUE,          // handles are inherited
 		dwCreateFlags, // creation flags
 		NULL,          // use parent's environment
-		NULL,          // use parent's current directory
+		lpWorkPath,    // use parent's current directory
 		&siStartInfo,  // STARTUPINFO pointer
 		&piProcInfo);  // receives PROCESS_INFORMATION
 					   // If an error occurs, exit the application.

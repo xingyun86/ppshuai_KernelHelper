@@ -5,6 +5,9 @@
 
 #pragma once
 
+#ifndef __CRYPTHELPER_H_
+#define __CRYPTHELPER_H_
+
 
 #include <Base64.h>
 #include <Rijndael.h>
@@ -29,3 +32,5 @@ string encrypt_cbc(std::string in);
 //返回值:
 //		加密后的字符串
 string encrypt_ecb(std::string in);
+
+#endif //__CRYPTHELPER_H_

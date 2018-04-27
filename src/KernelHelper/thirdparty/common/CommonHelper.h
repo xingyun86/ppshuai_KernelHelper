@@ -2366,6 +2366,131 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 				lppi
 				);
 		}
+		__inline static BOOL CreateAdvanceProcessAsUser(
+			LPCTSTR lpApplicationName,
+			LPTSTR lpCommandLine,
+			DWORD dwCreateFlags,
+			LPCTSTR lpCurrentDirectory = NULL,
+			LPSTARTUPINFO lpStartupInfo = NULL,
+			LPPROCESS_INFORMATION lpProcessInformation = NULL,
+			LPVOID lpEnvironment = NULL,
+			LPSECURITY_ATTRIBUTES lpProcessAttributes = NULL,
+			LPSECURITY_ATTRIBUTES lpThreadAttributes = NULL,
+			BOOL bInheritHandles = FALSE,
+			HANDLE hToken = NULL)
+		{
+			STARTUPINFO si = { 0 };
+			PROCESS_INFORMATION pi = { 0 };
+			LPSTARTUPINFO lpsi = &si;
+			LPPROCESS_INFORMATION lppi = &pi;
+
+			if (lpStartupInfo)
+			{
+				lpsi = lpStartupInfo;
+			}
+			if (lpProcessInformation)
+			{
+				lppi = lpProcessInformation;
+			}
+
+			return CreateProcessAsUser(
+				hToken,
+				lpApplicationName,
+				lpCommandLine,
+				lpProcessAttributes,
+				lpThreadAttributes,
+				bInheritHandles,
+				dwCreateFlags,
+				lpEnvironment,
+				lpCurrentDirectory,
+				lpsi,
+				lppi
+				);
+		}
+		//获取进程用户函数：
+		__inline static BOOL GetProcessUserName(TSTRING & strUser, DWORD dwID) // 进程ID 
+		{
+			HANDLE hToken = NULL;
+			BOOL bResult = FALSE;
+			DWORD dwSize = 0;
+
+			TCHAR szUserName[256] = { 0 };
+			TCHAR szDomain[256] = { 0 };
+			DWORD dwDomainSize = 256;
+			DWORD dwNameSize = 256;
+
+			SID_NAME_USE    SNU;
+			PTOKEN_USER pTokenUser = NULL;
+
+			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, dwID);
+
+			strUser = _T("SYSTEM");
+			if (hProcess == NULL)
+			{
+				switch (GetLastError())
+				{
+				case ERROR_ACCESS_DENIED:
+					strUser = _T("SYSTEM");
+					break;
+				default:
+					strUser = _T("SYSTEM");
+					break;
+				}
+				return bResult;
+			}
+			__try
+			{
+				if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken))
+				{
+					bResult = FALSE;
+					__leave;
+				}
+
+				if (!GetTokenInformation(hToken, TokenUser, pTokenUser, dwSize, &dwSize))
+				{
+					if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+					{
+						bResult = FALSE;
+						__leave;
+					}
+				}
+
+				pTokenUser = NULL;
+				pTokenUser = (PTOKEN_USER)malloc(dwSize);
+				if (pTokenUser == NULL)
+				{
+					bResult = FALSE;
+					__leave;
+				}
+
+				if (!GetTokenInformation(hToken, TokenUser, pTokenUser, dwSize, &dwSize))
+				{
+					bResult = FALSE;
+					__leave;
+				}
+
+				if (LookupAccountSid(NULL, pTokenUser->User.Sid, szUserName, &dwNameSize, szDomain, &dwDomainSize, &SNU) != 0)
+				{
+					strUser = szUserName;
+					if (pTokenUser != NULL)
+					{
+						free(pTokenUser);
+						pTokenUser = NULL;
+					}
+					return TRUE;
+				}
+			}
+			__finally
+			{
+				if (pTokenUser != NULL)
+				{
+					free(pTokenUser);
+					pTokenUser = NULL;
+				}
+			}
+
+			return FALSE;
+		}
 		//获取Windows系统信息
 		__inline static VOID GetNativeSystemInformation(SYSTEM_INFO * psi)
 		{
@@ -2452,84 +2577,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 
 			return bResult;
 		}
-
-		//获取进程用户函数：
-		__inline static BOOL GetProcessUserName(TSTRING & strUser, DWORD dwID) // 进程ID 
-		{
-			HANDLE hToken = NULL;
-			BOOL bResult = FALSE;
-			DWORD dwSize = 0;
-
-			TCHAR szUserName[256] = { 0 };
-			TCHAR szDomain[256] = { 0 };
-			DWORD dwDomainSize = 256;
-			DWORD dwNameSize = 256;
-
-			SID_NAME_USE    SNU;
-			PTOKEN_USER pTokenUser = NULL;
-
-			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, dwID);
-
-			strUser = _T("SYSTEM");
-			if (hProcess == NULL)
-			{
-				switch (GetLastError())
-				{
-				case ERROR_ACCESS_DENIED:
-					strUser = _T("SYSTEM");
-					break;
-				default:
-					strUser = _T("SYSTEM");
-					break;
-				}
-				return bResult;
-			}
-			__try
-			{
-				if (!OpenProcessToken(hProcess, TOKEN_QUERY, &hToken))
-				{
-					bResult = FALSE;
-					__leave;
-				}
-
-				if (!GetTokenInformation(hToken, TokenUser, pTokenUser, dwSize, &dwSize))
-				{
-					if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-					{
-						bResult = FALSE;
-						__leave;
-					}
-				}
-
-				pTokenUser = NULL;
-				pTokenUser = (PTOKEN_USER)malloc(dwSize);
-				if (pTokenUser == NULL)
-				{
-					bResult = FALSE;
-					__leave;
-				}
-
-				if (!GetTokenInformation(hToken, TokenUser, pTokenUser, dwSize, &dwSize))
-				{
-					bResult = FALSE;
-					__leave;
-				}
-
-				if (LookupAccountSid(NULL, pTokenUser->User.Sid, szUserName, &dwNameSize, szDomain, &dwDomainSize, &SNU) != 0)
-				{
-					strUser = szUserName;
-					return TRUE;
-				}
-			}
-			__finally
-			{
-				if (pTokenUser != NULL)
-					free(pTokenUser);
-			}
-
-			return FALSE;
-		}
-
+				
 		///////////////////////////////////////////////////////////////////////
 		//获取进程映像名称
 		//Windows 2000		= GetModuleFileName()
@@ -2848,8 +2896,8 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 				NULL,           // Thread handle not inheritable
 				FALSE,          // Set handle inheritance to FALSE
 				dwCreateFlags,              // No creation flags
-				NULL,           // Use parent's environment block
-				NULL,           // Use parent's starting directory
+				lpEnvironment,           // Use parent's environment block
+				lpCurrentDirectory,           // Use parent's starting directory
 				pSI,            // Pointer to STARTUPINFO structure
 				pPI);           // Pointer to PROCESS_INFORMATION structure
 			if (bRet)
@@ -2892,7 +2940,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		}
 
 		//传入应用程序文件名称、参数、启动类型及等待时间启动程序
-		__inline static BOOL LaunchAppProg(tstring tsAppProgName, tstring tsArguments = _T(""), bool bNoUI = true, LAUNCHTYPE type = LTYPE_0, DWORD dwWaitTime = WAIT_TIMEOUT)
+		__inline static BOOL LaunchAppProg(tstring tsAppProgName, tstring tsArguments = _T(""), LPCTSTR lpWorkPath = NULL, bool bNoUI = true, LAUNCHTYPE type = LTYPE_0, DWORD dwWaitTime = WAIT_TIMEOUT)
 		{
 			BOOL bRet = FALSE;
 			STARTUPINFO si = { 0 };
@@ -2922,7 +2970,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 				FALSE,          // Set handle inheritance to FALSE
 				dwCreateFlags,              // No creation flags
 				NULL,           // Use parent's environment block
-				NULL,           // Use parent's starting directory
+				lpWorkPath,           // Use parent's starting directory
 				&si,            // Pointer to STARTUPINFO structure
 				&pi);           // Pointer to PROCESS_INFORMATION structure
 			if (bRet)
@@ -2963,7 +3011,108 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 			}
 			return bRet;
 		}
+		
+		//传入应用程序文件名称、参数、启动类型及等待时间启动程序
+		__inline static BOOL StartupProgram(LPCTSTR lpAppProgName = NULL, LPTSTR lpArguments = NULL, STARTUPINFO * pStartupInfo = NULL, PROCESS_INFORMATION * pProcessInformation = NULL, DWORD dwFlags = CREATE_NEW_CONSOLE, LPVOID lpEnvironment = NULL, LPCTSTR lpCurrentDirectory = NULL, LAUNCHTYPE type = LTYPE_0, DWORD dwWaitTime = WAIT_TIMEOUT)
+		{
+			BOOL bRet = FALSE;
+			STARTUPINFO si = { 0 };
+			PROCESS_INFORMATION pi = { 0 };
+			DWORD dwCreateFlags = dwFlags;
+			STARTUPINFO * pSI = &si;
+			PROCESS_INFORMATION * pPI = &pi;
 
+			if (pStartupInfo)
+			{
+				pSI = pStartupInfo;
+			}
+			if (pProcessInformation)
+			{
+				pPI = pProcessInformation;
+			}
+				
+
+			pSI->cb = sizeof(STARTUPINFO);
+
+			// Start the child process.
+			bRet = CreateProcess(lpAppProgName,   // No module name (use command line)
+				lpArguments,        // Command line
+				NULL,           // Process handle not inheritable
+				NULL,           // Thread handle not inheritable
+				FALSE,          // Set handle inheritance to FALSE
+				dwCreateFlags,              // No creation flags
+				lpEnvironment,           // Use parent's environment block
+				lpCurrentDirectory,           // Use parent's starting directory
+				pSI,            // Pointer to STARTUPINFO structure
+				pPI);           // Pointer to PROCESS_INFORMATION structure
+			if (bRet)
+			{
+				switch (type)
+				{
+				case LTYPE_0:
+				{
+					// No wait until child process exits.
+				}
+				break;
+				case LTYPE_1:
+				{
+					// Wait until child process exits.
+					WaitForSingleObject(pPI->hProcess, INFINITE);
+				}
+				break;
+				case LTYPE_2:
+				{
+					// Wait until child process exits.
+					WaitForSingleObject(pPI->hProcess, dwWaitTime);
+				}
+				break;
+				default:
+					break;
+				}
+
+				// Close process and thread handles.
+				//CloseHandle(pPI->hProcess);
+				//CloseHandle(pPI->hThread);
+
+				// Exit process.
+				//TerminateProcessByProcessId(pPI->dwProcessId);
+			}
+			else
+			{
+				//DEBUG_TRACE(_T("CreateProcess failed (%d).\n"), GetLastError());
+			}
+			return bRet;
+		}
+		
+		__inline static BOOL StartAppProg(LPCTSTR lpFilename = NULL, LPTSTR lpArgument = NULL, BOOL bSynchronous = TRUE, LPCTSTR lpStartingDirectory = NULL, LPVOID lpEnvironmentBlock = NULL)
+		{
+			BOOL bResult = FALSE;
+			PROCESS_INFORMATION pi = { 0 };
+			STARTUPINFO si = { 0 };
+
+			memset(&si, 0, sizeof(si));
+			si.cb = sizeof(si);
+			bResult = CreateProcess(lpFilename,   // No module name (use command line)
+				lpArgument,      // Command line
+				NULL,           // Process handle not inheritable
+				NULL,           // Thread handle not inheritable
+				FALSE,          // Set handle inheritance to FALSE
+				CREATE_NO_WINDOW | NORMAL_PRIORITY_CLASS, // No creation flags
+				lpEnvironmentBlock,           // Use parent's environment block
+				lpStartingDirectory,           // Use parent's starting directory
+				&si,            // Pointer to STARTUPINFO structure
+				&pi);           // Pointer to PROCESS_INFORMATION structure
+
+			//异步执行时，执行后不删除分解后的文件;同步执行时，执行后删除分解后的文件
+			if (bSynchronous)  //同步执行
+			{
+				WaitForSingleObject(pi.hProcess, INFINITE);
+			}
+
+			//_tunlink(pFilename);
+
+			return bResult;
+		}
 		//////////////////////////////////////////////////////////////////////////
 		// 函数说明：阻塞式启动程序或脚本
 		// 参    数：文件名、参数、运行目录
@@ -3222,6 +3371,136 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 			}
 		}
 	}
+
+	class CUsuallyUtility
+	{
+	public:
+
+		CUsuallyUtility()
+		{
+		}
+
+		~CUsuallyUtility()
+		{
+		}
+
+	public:
+		//	ANSI to WIDE
+		static LONG AToW(WCHAR ** pW, const CHAR * pA, UINT uCodePage)
+		{
+			LONG nWSize = 0;
+			LONG nASize = lstrlenA(pA);
+
+			if (nASize > 0)
+			{
+				nWSize = ::MultiByteToWideChar(uCodePage, 0, pA, -1, NULL, 0);
+				(*pW) = (WCHAR *)malloc((nWSize + 1) * sizeof(WCHAR));
+				::MultiByteToWideChar(uCodePage, 0, pA, -1, (*pW), nWSize);
+			}
+			return nWSize;
+		}
+		//	WIDE to ANSI
+		static LONG WToA(CHAR ** pA, const WCHAR * pW, UINT uCodePage)
+		{
+			LONG nASize = 0;
+			LONG nWSize = lstrlenW(pW);
+			if (nWSize > 0)
+			{
+				nASize = ::WideCharToMultiByte(uCodePage, 0, pW, -1, NULL, 0, 0, 0);
+				(*pA) = (CHAR *)malloc((nASize + 1) * sizeof(CHAR));
+				::WideCharToMultiByte(uCodePage, 0, pW, -1, (*pA), nASize, 0, 0);
+			}
+			return nASize;
+		}
+		//	ANSI to WIDE
+		static LONG AToW(WCHAR ** pW, const CHAR * pA)
+		{
+			return AToW(pW, pA, CP_ACP);
+		}
+		//	WIDE to ANSI
+		static LONG WToA(CHAR ** pA, const WCHAR * pW)
+		{
+			return WToA(pA, pW, CP_ACP);
+		}
+		//	ANSI to TCHAR
+		static LONG AToT(_TCHAR ** pT, const CHAR * pA)
+		{
+			LONG nTSize = 0;
+#if !defined(_UNICODE) && !defined(UNICODE)
+			nTSize = lstrlenA(pA);
+			(*pT) = (_TCHAR *)malloc((nTSize + 1) * sizeof(_TCHAR));
+			lstrcpynA((*pT), pA, nTSize);
+#else
+			nTSize = AToW(pT, pA);
+#endif
+			return nTSize;
+		}
+		//	TCHAR to ANSI
+		static LONG WToT(_TCHAR ** pT, const WCHAR * pW)
+		{
+			LONG nTSize = 0;
+#if !defined(_UNICODE) && !defined(UNICODE)
+			nTSize = WToA(pT, pW);
+#else
+			nTSize = lstrlenW(pW);
+			(*pT) = (_TCHAR *)malloc((nTSize + 1) * sizeof(_TCHAR));
+			lstrcpynW((*pT), pW, nTSize);
+#endif
+			return nTSize;
+		}
+		//	TCHAR to ANSI
+		static LONG TToA(CHAR ** pA, const _TCHAR * pT)
+		{
+			LONG nTSize = 0;
+#if !defined(_UNICODE) && !defined(UNICODE)
+			nTSize = lstrlenA(pT);
+			(*pA) = (CHAR *)malloc((nTSize + 1) * sizeof(CHAR));
+			lstrcpynA((*pA), pT, nTSize);
+#else
+			nTSize = WToA(pA, pT);
+#endif
+			return nTSize;
+		}
+		//	TCHAR to WIDE
+		static LONG TToW(WCHAR ** pW, const _TCHAR * pT)
+		{
+			LONG nTSize = 0;
+#if !defined(_UNICODE) && !defined(UNICODE)
+			nTSize = AToW(pW, pT);
+#else
+			nTSize = lstrlenW(pT);
+			(*pW) = (WCHAR *)malloc((nTSize + 1) * sizeof(WCHAR));
+			lstrcpynW((*pW), pT, nTSize);
+#endif
+			return nTSize;
+		}
+
+		static void FreeA(CHAR ** pA)
+		{
+			if (pA && (*pA))
+			{
+				free((*pA));
+				(*pA) = 0;
+			}
+		}
+
+		static void FreeW(WCHAR ** pW)
+		{
+			if (pW && (*pW))
+			{
+				free((*pW));
+				(*pW) = 0;
+			}
+		}
+		static void FreeT(_TCHAR ** pT)
+		{
+			if (pT && (*pT))
+			{
+				free((*pT));
+				(*pT) = 0;
+			}
+		}
+	};
 }
 
 #include "PEFileInfo.h"

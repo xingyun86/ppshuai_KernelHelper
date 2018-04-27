@@ -1,4 +1,9 @@
 
+#pragma once
+
+#ifndef __WINDOWHEADER_H_
+#define __WINDOWHEADER_H_
+
 #include <windows.h>
 #include <commctrl.h>
 #include <olectl.h>
@@ -1224,7 +1229,255 @@ namespace GUI{
 			ListView_SetItem(hListViewWnd, &lvi);
 		}
 	}
-	
+
+	typedef struct COLORVALUE
+	{
+		COLORREF clrText;//字体颜色
+		COLORREF clrTextBk;//字体背景颜色
+	}ColorValue;
+	static const ColorValue GLOBAL_COLORVALUEARRAY[] = {
+#define SINGLE_LINE 0
+	{ RGB(0, 0, 0), RGB(255, 255, 0) },
+#define DOUBLE_LINE 1
+	{ RGB(0, 0, 0), RGB(0, 255, 0) },
+	};
+	//排序结构
+	typedef struct SORTDATA
+	{
+		HWND hwnd;
+		int column;
+		int sortorder;
+	}SortData;
+
+	SortData Global_SortData = { 0 };
+
+	typedef LRESULT(CALLBACK * HEADERWNDPROC)(HWND, UINT, WPARAM, LPARAM);
+	typedef struct HEADERREDRAW
+	{
+		float gradient; // 画立体背景，渐变系数
+		float headerheight; //表头高度倍数
+		int fontheight; //字体高度
+		int fontwidth;//字体宽度
+		int bkmode;//背景模式
+		COLORREF clrbk;//背景颜色
+		COLORREF clrtext;//字体颜色
+	}HeaderRedraw;
+	HeaderRedraw Global_DlgHeaderRedraw = {
+		1.5,
+		1,
+		12,
+		0,
+		TRANSPARENT,
+		RGB(255, 0, 0),
+		RGB(0, 255, 0)
+	};
+	_TCHAR Global_AlignFormat[] = _T("1111");//对齐格式
+	_TCHAR *Global_ColumnContext[] = { _T("名称"), _T("句柄"), _T("状态"), _T("类名") };
+
+	// Message handler for header ctrl.
+	__inline static INT_PTR CALLBACK HeaderDlgProc(HWND hHeaderWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		UNREFERENCED_PARAMETER(lParam);
+		PAINTSTRUCT ps;
+		HDC hdc;
+		switch (message)
+		{
+		case WM_PAINT:
+		{
+			hdc = BeginPaint(hHeaderWnd, &ps);
+			// TODO: Add any drawing code here...
+			int nItem;
+			nItem = Header_GetItemCount(hHeaderWnd);//得到有几个单元
+			float m_R = (float)((Global_DlgHeaderRedraw.clrbk & 0x000000ff) >> 0),
+				m_G = (float)((Global_DlgHeaderRedraw.clrbk & 0x0000ff00) >> 8),
+				m_B = (float)((Global_DlgHeaderRedraw.clrbk & 0x00ff0000) >> 16);
+			for (int i = 0; i<nItem; i++)
+			{
+				RECT tRect;
+				Header_GetItemRect(hHeaderWnd, i, &tRect);//得到Item的尺寸
+				float R = m_R, G = m_G, B = m_B;
+				RECT nRect;//拷贝尺寸到新的容器中
+				memcpy(&nRect, &tRect, sizeof(RECT));
+				nRect.left++;//留出分割线的地方
+				//绘制立体背景
+				for (int j = tRect.top; j <= tRect.bottom; j++)
+				{
+					nRect.bottom = nRect.top + 1;
+					HBRUSH hBrush;
+					hBrush = CreateSolidBrush(RGB(R, G, B));//创建画刷
+					FillRect(hdc, &nRect, hBrush); //填充背景
+					DeleteObject(hBrush); //释放画刷
+					R -= Global_DlgHeaderRedraw.gradient;
+					G -= Global_DlgHeaderRedraw.gradient;
+					B -= Global_DlgHeaderRedraw.gradient;
+					if (R<0)R = 0;
+					if (G<0)G = 0;
+					if (B<0)B = 0;
+					nRect.top = nRect.bottom;
+				}
+				SetBkMode(hdc, Global_DlgHeaderRedraw.bkmode);
+				HFONT hFont, hOldFont;
+				SetTextColor(hdc, Global_DlgHeaderRedraw.clrtext);
+				hFont = CreateFont(
+					Global_DlgHeaderRedraw.fontheight,
+					Global_DlgHeaderRedraw.fontwidth,
+					0,
+					0,
+					0,
+					FALSE,
+					FALSE,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					_T("MS Shell Dlg"));//创建字体
+				hOldFont = (HFONT)SelectObject(hdc, hFont);
+
+				UINT nFormat = 1;
+				if (Global_AlignFormat[i] == _T('0'))
+				{
+					nFormat = DT_LEFT;
+					tRect.left += 3;
+				}
+				else if (Global_AlignFormat[i] == _T('1'))
+				{
+					nFormat = DT_CENTER;
+				}
+				else if (Global_AlignFormat[i] == _T('2'))
+				{
+					nFormat = DT_RIGHT;
+					tRect.right -= 3;
+				}
+				TEXTMETRIC metric;
+				GetTextMetrics(hdc, &metric);
+				int offset = 0;
+				offset = tRect.bottom - tRect.top - metric.tmHeight;
+				OffsetRect(&tRect, 0, offset / 2);
+				DrawText(hdc, Global_ColumnContext[i], lstrlen(Global_ColumnContext[i]), &tRect, nFormat);
+				SelectObject(hdc, hOldFont);
+				DeleteObject(hFont); //释放字体
+			}
+			//画头部剩余部分
+			RECT rtRect;
+			RECT clientRect;
+			Header_GetItemRect(hHeaderWnd, nItem - 1, &rtRect);
+			GetClientRect(hHeaderWnd, &clientRect);
+			rtRect.left = rtRect.right + 1;
+			rtRect.right = clientRect.right;
+			float R = m_R, G = m_G, B = m_B;
+			RECT nRect;
+			memcpy(&nRect, &rtRect, sizeof(RECT));
+			//绘制立体背景
+			for (int j = rtRect.top; j <= rtRect.bottom; j++)
+			{
+				nRect.bottom = nRect.top + 1;
+				HBRUSH hBrush;
+				hBrush = CreateSolidBrush(RGB(R, G, B));//创建画刷
+				FillRect(hdc, &nRect, hBrush); //填充背景
+				DeleteObject(hBrush); //释放画刷
+				R -= Global_DlgHeaderRedraw.gradient;
+				G -= Global_DlgHeaderRedraw.gradient;
+				B -= Global_DlgHeaderRedraw.gradient;
+				if (R<0)R = 0;
+				if (G<0)G = 0;
+				if (B<0)B = 0;
+				nRect.top = nRect.bottom;
+			}
+			EndPaint(hHeaderWnd, &ps);
+		}
+		break;
+		default:
+			return ::CallWindowProc((WNDPROC)::GetWindowLongPtr(hHeaderWnd, GWLP_USERDATA), hHeaderWnd, message, wParam, lParam);
+		}
+		return (INT_PTR)FALSE;
+	}
+	//重置窗口大小
+	int ResizeWindow(HWND hParentWnd, DWORD dwID)
+	{
+		int result = 0;
+		HWND hDataListCtrl = GetDlgItem(hParentWnd, dwID);
+		if (hDataListCtrl)
+		{
+			RECT rc = { 0 };
+			int column = 0;
+			HWND hHeaderWnd = 0;
+			GetClientRect(hParentWnd, &rc);
+			SetWindowPos(hDataListCtrl, HWND_TOP, rc.left, rc.top, rc.right, rc.bottom, SWP_NOMOVE | SWP_NOZORDER | SWP_NOREDRAW);
+			InvalidateRect(hParentWnd, &rc, FALSE);
+			hHeaderWnd = ListView_GetHeader(hDataListCtrl);
+			if (hHeaderWnd)
+			{
+				column = Header_GetItemCount(hHeaderWnd);
+				for (int i = 0; i < column; i++)
+				{
+					ListView_SetColumnWidth(hDataListCtrl, i, rc.right / column);
+				}
+			}
+		}
+		return result;
+	}
+	//对话框初始化ListCtrl控件
+	INT_PTR OnInitDataList(HWND hDlg, DWORD dwID, LPTSTR * pHeaderTitles, DWORD dwHeaderNumber)
+	{
+		INT_PTR iresult = 0;
+		HWND hDataListCtrl = GetDlgItem(hDlg, dwID);
+		if (hDataListCtrl)
+		{
+			int colnum = 0;
+			LV_COLUMN lvc = { 0 };
+			RECT rc = { 0 };
+			LONG lstyle = 0;
+			DWORD dwstyle = 0;
+
+			lstyle = GetWindowLong(hDataListCtrl, GWL_STYLE);//获取当前窗口style
+			lstyle &= ~LVS_TYPEMASK; //清除显示方式位
+			lstyle |= LVS_REPORT; //设置style
+			//lstyle |= LVS_SORTASCENDING; //设置排序
+			lstyle |= LVS_SINGLESEL; //设置单选
+			lstyle |= LVS_SHOWSELALWAYS; //设置一直选择
+			lstyle |= LVS_AUTOARRANGE; //设置自动浮动
+			SetWindowLong(hDataListCtrl, GWL_STYLE, lstyle);//设置style
+
+			dwstyle = ListView_GetExtendedListViewStyle(hDataListCtrl);
+			dwstyle |= LVS_EX_FULLROWSELECT;//选中某行使整行高亮（只适用与report风格的listctrl）
+			dwstyle |= LVS_EX_GRIDLINES;//网格线（只适用与report风格的listctrl）
+			dwstyle |= LVS_EX_CHECKBOXES;//item前生成checkbox控件
+			dwstyle |= LVS_EX_TRACKSELECT;//
+			dwstyle |= LVS_EX_HEADERDRAGDROP;//列头可拖拽
+			dwstyle |= LVS_EX_ONECLICKACTIVATE;//单击激活
+			dwstyle |= LVS_EX_FLATSB;//平滑进度条
+			dwstyle |= LVS_EX_REGIONAL;//
+			dwstyle |= LVS_EX_INFOTIP;//
+			dwstyle |= LVS_EX_UNDERLINEHOT;//下划线
+			dwstyle |= LVS_EX_LABELTIP;//
+			ListView_SetExtendedListViewStyle(hDataListCtrl, dwstyle); //设置扩展风格
+
+			GetClientRect(hDataListCtrl, &rc);
+
+			lvc.mask = LVCF_TEXT | LVCF_WIDTH;
+			for (DWORD dwColnum = 0; dwColnum < dwHeaderNumber; dwColnum++)
+			{
+				lvc.pszText = pHeaderTitles[dwColnum];
+				ListView_InsertColumn(hDataListCtrl, dwColnum++, &lvc);
+			}
+
+			for (int i = 0; i < ListView_GetItemCount(hDataListCtrl); i++)
+			{
+				ListView_RedrawItems(hDataListCtrl, i, i);
+			}
+			HWND hHeaderWnd = ListView_GetHeader(hDataListCtrl);
+			if (hHeaderWnd)
+			{
+				::SetWindowLongPtr(hHeaderWnd, GWLP_USERDATA, (LONG_PTR)(WNDPROC)::GetWindowLongPtr(hHeaderWnd, GWLP_WNDPROC));
+				::SetWindowLongPtr(hHeaderWnd, GWLP_WNDPROC, (LONG_PTR)(HeaderDlgProc));
+			}
+
+			ResizeWindow(hDlg, dwID);
+		}
+		return iresult;
+	}
 	__inline static LONG_PTR ListCtrlSetSortDataInfo(HWND hListCtrlWnd, SORTDATAINFO * pSDI)
 	{
 		return SetWindowUserData(ListView_GetHeader(hListCtrlWnd), (LONG_PTR)pSDI);
@@ -1333,6 +1586,171 @@ namespace GUI{
 		}
 
 		return 0;
+	}
+	//对话框通知消息处理函数
+	__inline static INT_PTR OnNotify(HWND hDlg, DWORD dwID, LPARAM lParam)
+	{
+		UNREFERENCED_PARAMETER(lParam);
+
+		INT_PTR iresult = 0;
+
+		if (((NMHDR *)lParam)->idFrom == dwID)
+		{
+			switch (((NMHDR *)lParam)->code)
+			{
+			case NM_CLICK:
+			{
+				LVHITTESTINFO lvinfo = { 0 };
+				DWORD dwposition = GetMessagePos();
+				HWND hDataListCtrl = GetDlgItem(hDlg, dwID);
+				if (hDataListCtrl)
+				{
+					lvinfo.pt.x = LOWORD(dwposition);
+					lvinfo.pt.y = HIWORD(dwposition);
+					ScreenToClient(hDataListCtrl, &lvinfo.pt);
+					ListView_HitTest(hDataListCtrl, &lvinfo);
+
+					//判断是否点在CheckBox上
+					if (lvinfo.flags == LVHT_ONITEMSTATEICON)
+					{
+						//::MessageBox(hDlg, _T("点击ListCtrl中CheckBox"), _T("提示"), MB_OK);
+						if (ListView_GetCheckState(hDataListCtrl, lvinfo.iItem))
+						{
+							ListView_SetItemState(hDataListCtrl, lvinfo.iItem, 0, LVIS_SELECTED | LVIS_FOCUSED);
+						}
+						else
+						{
+							ListView_SetItemState(hDataListCtrl, lvinfo.iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+						}
+					}
+					else
+					{
+						if (ListView_GetCheckState(hDataListCtrl, lvinfo.iItem))
+						{
+							ListView_SetCheckState(hDataListCtrl, lvinfo.iItem, FALSE);
+							ListView_SetItemState(hDataListCtrl, lvinfo.iItem, 0, LVIS_SELECTED | LVIS_FOCUSED);
+						}
+						else
+						{
+							ListView_SetCheckState(hDataListCtrl, lvinfo.iItem, TRUE);
+							ListView_SetItemState(hDataListCtrl, lvinfo.iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+						}
+					}
+				}
+			}
+			break;
+			case NM_CUSTOMDRAW:
+			{
+				HWND hDataListCtrl = GetDlgItem(hDlg, dwID);
+				if (hDataListCtrl)
+				{
+					NMLVCUSTOMDRAW * pnmlcd = (NMLVCUSTOMDRAW *)lParam;
+					iresult = CDRF_DODEFAULT;
+					switch (pnmlcd->nmcd.dwDrawStage)//判断步骤
+					{
+					case CDDS_PREPAINT:
+					{
+						iresult = CDRF_NOTIFYITEMDRAW;
+					}
+					break;
+					case CDDS_ITEMPREPAINT://如果为画ITEM之前就要进行颜色的改变
+					{
+						/*if(pnmlcd->nmcd.dwItemSpec % 2)
+						{
+						pnmlcd->clrText = GLOBAL_COLORVALUEARRAY[SINGLE_LINE].clrText;
+						pnmlcd->clrTextBk = GLOBAL_COLORVALUEARRAY[SINGLE_LINE].clrTextBk;
+						}
+						else
+						{
+						pnmlcd->clrText = GLOBAL_COLORVALUEARRAY[DOUBLE_LINE].clrText;
+						pnmlcd->clrTextBk = GLOBAL_COLORVALUEARRAY[DOUBLE_LINE].clrTextBk;
+						}
+						iresult = CDRF_DODEFAULT;//使用此代码，每行颜色可一致
+						*/
+						iresult = CDRF_NOTIFYSUBITEMDRAW;//使用此代码，每个单元格颜色可一致
+					}
+					break;
+					case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
+					{
+						printf("%d,%d\r\n", pnmlcd->nmcd.dwItemSpec, pnmlcd->iSubItem);
+						if (pnmlcd->nmcd.dwItemSpec % 2 && pnmlcd->iSubItem % 2)
+						{
+							pnmlcd->clrText = GLOBAL_COLORVALUEARRAY[DOUBLE_LINE].clrText;
+							pnmlcd->clrTextBk = GLOBAL_COLORVALUEARRAY[DOUBLE_LINE].clrTextBk;
+						}
+						else if (pnmlcd->nmcd.dwItemSpec % 2 && !(pnmlcd->iSubItem % 2))
+						{
+							pnmlcd->clrText = GLOBAL_COLORVALUEARRAY[SINGLE_LINE].clrText;
+							pnmlcd->clrTextBk = GLOBAL_COLORVALUEARRAY[SINGLE_LINE].clrTextBk;
+						}
+						else if (!(pnmlcd->nmcd.dwItemSpec % 2) && pnmlcd->iSubItem % 2)
+						{
+							pnmlcd->clrText = GLOBAL_COLORVALUEARRAY[SINGLE_LINE].clrText;
+							pnmlcd->clrTextBk = GLOBAL_COLORVALUEARRAY[SINGLE_LINE].clrTextBk;
+						}
+						else
+						{
+							pnmlcd->clrText = GLOBAL_COLORVALUEARRAY[DOUBLE_LINE].clrText;
+							pnmlcd->clrTextBk = GLOBAL_COLORVALUEARRAY[DOUBLE_LINE].clrTextBk;
+						}
+						/*if(pnmlcd->iSubItem % 2)
+						{
+						pnmlcd->clrTextBk =  GLOBAL_COLORVALUEARRAY[SINGLE_LINE].clrTextBk;
+						}
+						else
+						{
+						pnmlcd->clrTextBk =  GLOBAL_COLORVALUEARRAY[DOUBLE_LINE].clrTextBk;
+						}*/
+						iresult = CDRF_DODEFAULT;
+					}
+					break;
+					default:
+					{
+						iresult = CDRF_DODEFAULT;
+					}
+					break;
+					}
+				}
+			}
+			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, iresult);
+			break;
+			default:
+			{
+				switch (((NMLISTVIEW *)lParam)->hdr.code)
+				{
+				case LVN_COLUMNCLICK:
+				{
+					HWND hDataListCtrl = GetDlgItem(hDlg, dwID);
+					if (hDataListCtrl)
+					{
+						NM_LISTVIEW * pnmlv = (NM_LISTVIEW *)lParam;
+						//设置排序方式
+						if (pnmlv->iSubItem == Global_SortData.column)
+						{
+							Global_SortData.sortorder = !Global_SortData.sortorder;
+						}
+						else
+						{
+							Global_SortData.sortorder = 1;
+							Global_SortData.column = pnmlv->iSubItem;
+						}
+						Global_SortData.hwnd = hDataListCtrl;
+						//调用排序函数
+						ListView_SortItemsEx(hDataListCtrl, ListCtrlCompareProcess, (LPARAM)&Global_SortData);
+					}
+				}
+				break;
+				default:
+				{
+				}
+				break;
+				}
+			}
+			break;
+			}
+		}
+
+		return iresult;
 	}
 
 	__inline static void RegisterDropFilesEvent(HWND hWnd)
@@ -4457,20 +4875,20 @@ namespace GUI{
 		return pbData;
 	}
 
-	__inline static INT_PTR CreateDialogBoxTTT()
+	__inline static INT_PTR ShowDialogBoxSample1()
 	{
 		HINSTANCE hInstance = NULL;
 #pragma pack(push,1)
 		struct TDlgItemTemplate { DWORD s, ex; short x, y, cx, cy; WORD id; };
 		struct TDlgTemplate { DWORD s, ex; WORD cdit; short x, y, cx, cy; };
 		struct TDlgItem1 { TDlgItemTemplate dli; WCHAR wclass[7]; WCHAR title[7]; WORD cdat; };
-		struct TDlgItem2 { TDlgItemTemplate dli; WCHAR wclass[18]; WCHAR title[1]; WORD cdat; };
+		struct TDlgItem2 { TDlgItemTemplate dli; WCHAR wclass[18]; WCHAR title[13]; WORD cdat; };
 		struct TDlgData  { TDlgTemplate dlt; WORD menu; WCHAR wclass[1]; WCHAR title[8]; WORD fontsize; WCHAR font[14]; TDlgItem1 i1; TDlgItem2 i2; };
 		TDlgData dtp = {
 			{ DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 0, 2, 0, 0, 278, 54 },
 			0, L"", L"Zipping", 8, L"MS Sans Serif",
 			{ { BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, 113, 32, 50, 14, IDCANCEL }, L"BUTTON", L"Cancel", 0 },
-			{ { WS_CHILD | WS_VISIBLE, 0, 7, 7, 264, 18, 1 }, L"msctls_progress32", L"", 0 } };
+			{ { WS_CHILD | WS_VISIBLE, 0, 7, 7, 264, 18, 1 }, L"msctls_progress32", L"ProgressBar", 0 } };
 #pragma pack(pop)
 
 		hInstance = GetModuleHandle(NULL);
@@ -4482,7 +4900,7 @@ namespace GUI{
 		return DialogBoxIndirectParam(hInstance, (DLGTEMPLATE*)&dtp, 0, (DLGPROC)DlgWindowProc, (LPARAM)NULL);
 	}
 
-	__inline static INT_PTR CreateDialogBox()
+	__inline static INT_PTR ShowDialogBoxSample2()
 	{
 		INT_PTR nRet = 0;
 		SIZE_T stSize = 0;
@@ -4498,7 +4916,7 @@ namespace GUI{
 			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0)));
 		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0, 
-			7, 7, 264, 18, 1, PROGRESS_CLASS, _T(""), 0)));
+			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)));
 		sdtmap.insert(std::map<SIZE_T, CDlgTemplate>::value_type(sdtmap.size(),
 			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_VISIBLE, 0, 
 			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), &sditmap)));
@@ -4524,7 +4942,7 @@ namespace GUI{
 		return nRet;
 	}
 
-	__inline static INT_PTR CreateDialogBoxEx()
+	__inline static INT_PTR ShowDialogBoxSample3()
 	{
 		INT_PTR nResult = 0;
 		HINSTANCE hInstance = NULL;
@@ -4542,7 +4960,7 @@ namespace GUI{
 			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0)));
 		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0, 
-			7, 7, 264, 18, 1, PROGRESS_CLASS, _T(""), 0)));
+			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)));
 		sdtmap.insert(std::map<SIZE_T, CDlgTemplate>::value_type(sdtmap.size(),
 			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 0, 
 			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), &sditmap)));
@@ -4567,6 +4985,116 @@ namespace GUI{
 		}
 
 		return nResult;
+	}
+	__inline static INT_PTR ShowDialogBoxSample4(DLGPROC dlgproc = DlgWindowProc)
+	{
+		INT_PTR nRet = 0;
+		SIZE_T stSize = 0;
+		VOID * pbData = NULL;
+		HINSTANCE hInstance = NULL;
+		std::map<SIZE_T, CDlgTemplate> sdtmap;
+		std::map<SIZE_T, CDlgItemTemplate> sditmap;
+		std::map<SIZE_T, CDlgTemplate>::iterator itSDTEnd;
+		std::map<SIZE_T, CDlgTemplate>::iterator itSDTIdx;
+
+		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
+			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0)));
+		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0,
+			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)));
+		sdtmap.insert(std::map<SIZE_T, CDlgTemplate>::value_type(sdtmap.size(),
+			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_VISIBLE, 0,
+			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), &sditmap)));
+
+		itSDTEnd = sdtmap.end();
+		itSDTIdx = sdtmap.begin();
+		for (; itSDTIdx != itSDTEnd; itSDTIdx++)
+		{
+			itSDTIdx->second.wCDIT = itSDTIdx->second.SDITMAP.size();
+		}
+
+		InitCommonControls();
+
+		pbData = InitDlgData(&stSize, &sdtmap);
+
+		hInstance = GetModuleHandle(NULL);
+
+		InitCommonControls();
+
+		nRet = DialogBoxIndirectParam(hInstance, (DLGTEMPLATE*)pbData, 0, (DLGPROC)dlgproc, (LPARAM)NULL);
+
+		free(pbData);
+		pbData = NULL;
+
+		return nRet;
+	}
+
+	__inline static INT_PTR ShowDialogBoxSample5(DLGPROC dlgproc = DlgWindowProc)
+	{
+		INT_PTR nResult = 0;
+		HINSTANCE hInstance = NULL;
+		std::string strDlgData((""));
+		std::map<SIZE_T, CDlgTemplate> sdtmap;
+		std::map<SIZE_T, CDlgItemTemplate> sditmap;
+		std::map<SIZE_T, CDlgTemplate>::iterator itSDTEnd;
+		std::map<SIZE_T, CDlgTemplate>::iterator itSDTIdx;
+
+		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
+			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+			63, 32, 50, 14, IDOK, WC_BUTTON, _T("Ok"), 0)));
+		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
+			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0)));
+		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0,
+			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)));
+		sdtmap.insert(std::map<SIZE_T, CDlgTemplate>::value_type(sdtmap.size(),
+			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 0,
+			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), &sditmap)));
+
+		itSDTEnd = sdtmap.end();
+		itSDTIdx = sdtmap.begin();
+		for (; itSDTIdx != itSDTEnd; itSDTIdx++)
+		{
+			itSDTIdx->second.wCDIT = itSDTIdx->second.SDITMAP.size();
+		}
+
+		InitCommonControls();
+
+		strDlgData = InitDlgData(&sdtmap);
+
+		hInstance = GetModuleHandle(NULL);
+
+		InitCommonControls();
+
+		nResult = DialogBoxIndirectParam(hInstance, (DLGTEMPLATE*)strDlgData.c_str(), 0, (DLGPROC)dlgproc, (LPARAM)NULL);
+		if (nResult != IDCANCEL)
+		{
+			//nResult = DialogBoxIndirectParam(hInstance, (DLGTEMPLATE*)strDlgData.c_str(), 0, (DLGPROC)dlgproc, (LPARAM)NULL);
+		}
+
+		return nResult;
+	}
+
+	__inline static INT_PTR DisplayDialogBox(DLGTEMPLATE * pdlgtemplate, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
+	{
+		return ::DialogBoxIndirectParam((HINSTANCE)hInstance, (DLGTEMPLATE*)pdlgtemplate, (HWND)hWndParent, (DLGPROC)dlgproc, (LPARAM)lparam);
+	}
+
+	__inline static INT_PTR DisplayDialogBox(std::map<SIZE_T, CDlgTemplate> * psdtmap, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
+	{
+		return DisplayDialogBox((DLGTEMPLATE*)InitDlgData(psdtmap).c_str(), (DLGPROC)dlgproc, (HWND)hWndParent, (LPARAM)lparam, (HINSTANCE)hInstance);
+	}
+
+	__inline static HWND CreateDialogBox(DLGTEMPLATE * pdlgtemplate, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
+	{
+		return ::CreateDialogIndirectParam((HINSTANCE)hInstance, (DLGTEMPLATE*)pdlgtemplate, (HWND)hWndParent, (DLGPROC)dlgproc, (LPARAM)lparam);
+	}
+
+	__inline static HWND CreateDialogBox(std::map<SIZE_T, CDlgTemplate> * psdtmap, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
+	{
+		return CreateDialogBox((DLGTEMPLATE*)InitDlgData(psdtmap).c_str(), (DLGPROC)dlgproc, (HWND)hWndParent, (LPARAM)lparam, (HINSTANCE)hInstance);
 	}
 
 	__inline static BOOL WindowClassesRegister(HINSTANCE hInstance,
@@ -4659,6 +5187,35 @@ namespace GUI{
 			::DispatchMessage(&msg);
 		}
 
+		// The program return-value is 0 - The value that PostQuitMessage() gave
+		return msg.wParam;
+	}
+	
+	__inline static UINT_PTR StartupWindowsAsynchromous(HWND hWnd, INT nCmdShow)
+	{
+		MSG msg = { 0 };
+
+		// Make the window visible on the screen
+		::ShowWindow(hWnd, nCmdShow);
+
+		// Update the window visible on the screen
+		::UpdateWindow(hWnd);
+
+		// Run the message loop. It will run until PeekMessage() returns 0
+		while (1)
+		{
+			if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			{
+				// Translate virtual-key messages into character messages
+				::TranslateMessage(&msg);
+				// Send message to WindowProcedure
+				::DispatchMessage(&msg);
+			}
+			else
+			{
+				// Do something
+			}
+		}
 		// The program return-value is 0 - The value that PostQuitMessage() gave
 		return msg.wParam;
 	}
@@ -5064,7 +5621,7 @@ namespace GUI{
 
 			//DisplayWebpage(_T("http://localhost:8888/"));
 		}
-		__inline HRESULT SetWebBrowserProperty( DWORD dwAddFlags = (0L), DWORD dwRemFlags = (0L), BOOL bAllowContextMenu = FALSE)
+		__inline HRESULT SetWebBrowserProperty(DWORD dwFlags = (DOCHOSTUIFLAG_NO3DBORDER | DOCHOSTUIFLAG_ENABLE_FORMS_AUTOCOMPLETE | DOCHOSTUIFLAG_THEME | DOCHOSTUIFLAG_SCROLL_NO | DOCHOSTUIFLAG_DIALOG), VARIANT_BOOL bAllowContextMenu = VARIANT_FALSE)
 		{
 			CComPtr<IAxWinAmbientDispatch> axAmbientDispatch;
 			HRESULT hResult = QueryHost(m_hWnd, IID_IAxWinAmbientDispatch, (LPVOID*)&axAmbientDispatch);
@@ -5072,12 +5629,34 @@ namespace GUI{
 			{
 				//////////////////////////////////////////////////////////////////////////////////////////
 				//禁止右键菜单
-				axAmbientDispatch->put_AllowContextMenu(bAllowContextMenu ? VARIANT_TRUE : VARIANT_FALSE);
+				axAmbientDispatch->put_AllowContextMenu(bAllowContextMenu);
 				//////////////////////////////////////////////////////////////////////////////////////////
 				//DOCHOSTUIFLAG_SCROLL_NO   没有滚动条
 				//DOCHOSTUIFLAG_DIALOG		像对话框一样，网页上的东西不可选择
 				//DOCHOSTUIFLAG_THEME		XP风格
-				axAmbientDispatch->put_DocHostFlags(DOCHOSTUIFLAG_NO3DBORDER | DOCHOSTUIFLAG_ENABLE_FORMS_AUTOCOMPLETE | DOCHOSTUIFLAG_THEME | DOCHOSTUIFLAG_SCROLL_NO | DOCHOSTUIFLAG_DIALOG | dwAddFlags & dwRemFlags);
+				axAmbientDispatch->put_DocHostFlags(dwFlags);
+				axAmbientDispatch.Release();
+			}
+			return hResult;
+		}
+		__inline HRESULT GetWebBrowserProperty(DWORD & dwFlags, VARIANT_BOOL * pbAllowContextMenu = NULL)
+		{
+			CComPtr<IAxWinAmbientDispatch> axAmbientDispatch;
+			HRESULT hResult = QueryHost(m_hWnd, IID_IAxWinAmbientDispatch, (LPVOID*)&axAmbientDispatch);
+			if (SUCCEEDED(hResult))
+			{
+				if (pbAllowContextMenu)
+				{
+					//////////////////////////////////////////////////////////////////////////////////////////
+					//获取右键菜单可用状态
+					axAmbientDispatch->get_AllowContextMenu(pbAllowContextMenu);
+				}
+				
+				//////////////////////////////////////////////////////////////////////////////////////////
+				//DOCHOSTUIFLAG_SCROLL_NO   没有滚动条
+				//DOCHOSTUIFLAG_DIALOG		像对话框一样，网页上的东西不可选择
+				//DOCHOSTUIFLAG_THEME		XP风格
+				axAmbientDispatch->get_DocHostFlags(&dwFlags);
 				axAmbientDispatch.Release();
 			}
 			return hResult;
@@ -5209,10 +5788,10 @@ namespace GUI{
 		}
 
 	private:
-		HWND m_hWnd;
+		HWND m_hWnd;//IWebBrowser2句柄
 		CComPtr<IWebBrowser2> m_IWebBrowser2;//IWebBrowser2句柄
-		CComPtr<IAxWinAmbientDispatch> m_AxAmbientDispatch;//IAxWinAmbientDispatch句柄
 	};
 }
 }
 
+#endif //#ifndef __WINDOWHEADER_H_

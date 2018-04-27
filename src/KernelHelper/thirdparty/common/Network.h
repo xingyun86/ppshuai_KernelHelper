@@ -1,3 +1,8 @@
+#pragma once
+
+#ifndef __NETWORK_H_
+#define __NETWORK_H_
+
 #include "MACROS.h"
 
 #if !defined(_MSC_VER)
@@ -215,3 +220,5 @@ namespace PPSHUAI
 		}
 	}
 }
+
+#endif //__NETWORK_H_

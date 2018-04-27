@@ -1,3 +1,7 @@
+#pragma once
+
+#ifndef __PEFILEINFO_H_
+#define __PEFILEINFO_H_
 
 #include <windows.h>
 #include <tchar.h>
@@ -399,3 +403,5 @@ namespace PPSHUAI{
 
 	}
 }
+
+#endif //__PEFILEINFO_H_
