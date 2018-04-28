@@ -14,7 +14,7 @@
     #define tcsplitpath _splitpath
 #endif
 
-const int USER_DATA_BUFFER_SIZE = 4096;
+#define _USER_DATA_BUFFER_SIZE_ 4096
 
 //-----------------------------------------------------------------------------
 // GLOBALS
@@ -49,7 +49,7 @@ CMiniDumper::CMiniDumper(bool bPromptUserForMiniDump/* = true*/)
 	// that is not being debugged, and the exception makes it to the 
 	// unhandled exception filter, that filter will call the exception 
 	// filter function specified by the lpTopLevelExceptionFilter parameter.
-	::SetUnhandledExceptionFilter(unhandledExceptionHandler);
+	::SetUnhandledExceptionFilter(UnhandledExceptionHandler);
 
 	// Since DBGHELP.dll is not inherently thread-safe, making calls into it 
 	// from more than one thread simultaneously may yield undefined behavior. 
@@ -79,121 +79,97 @@ CMiniDumper::~CMiniDumper( void )
 }
 
 //-----------------------------------------------------------------------------
-// Name: unhandledExceptionHandler()
+// Name: UnhandledExceptionHandler()
 // Desc: Call-back filter function for unhandled exceptions
 //-----------------------------------------------------------------------------
-LONG CMiniDumper::unhandledExceptionHandler( _EXCEPTION_POINTERS *pExceptionInfo )
+LONG CMiniDumper::UnhandledExceptionHandler( _EXCEPTION_POINTERS *pExceptionInfo )
 {
 	if (!G_pMiniDumper)
 	{
 		return EXCEPTION_CONTINUE_SEARCH;
 	}
-	return G_pMiniDumper->writeMiniDump(pExceptionInfo);
+	return G_pMiniDumper->WriteMiniDump(pExceptionInfo);
 }
 
 //-----------------------------------------------------------------------------
-// Name: setMiniDumpFileName()
+// Name: SetMiniDumpFileName()
 // Desc: 
 //-----------------------------------------------------------------------------
-void CMiniDumper::setMiniDumpFileName( void )
+void CMiniDumper::SetMiniDumpFileName(time_t tt/* = time(0)*/)
 {
-    time_t currentTime = 0;
-	time(&currentTime);
-    _tcssprintf( m_szMiniDumpPath,
-                 _T( "%s%s.%ld.dmp" ),
-                 m_szAppPath,
-                 m_szAppBaseName,
-                 currentTime );
+	_tcssprintf(m_szMiniDumpPath,_T("%s%s.%ld.dmp"),m_szAppPath,m_szAppBaseName,tt);
 }
 
 //-----------------------------------------------------------------------------
-// Name: getImpersonationToken()
+// Name: GetImpersonationToken()
 // Desc: The method acts as a potential workaround for the fact that the 
 //       current thread may not have a token assigned to it, and if not, the 
 //       process token is received.
 //-----------------------------------------------------------------------------
-bool CMiniDumper::getImpersonationToken(HANDLE* phToken)
+bool CMiniDumper::GetImpersonationToken(HANDLE * phToken)
 {
 	*phToken = NULL;
-
-	if (!OpenThreadToken(GetCurrentThread(),
-		TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES,
-		TRUE,
-		phToken))
-	{
-		if (GetLastError() == ERROR_NO_TOKEN)
-		{
-			// No impersonation token for the current thread is available. 
-			// Let's go for the process token instead.
-			if (!OpenProcessToken(GetCurrentProcess(),
-				TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES,
-				phToken))
-			{
-				return false;
-			}
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	return true;
+	// No impersonation token for the current thread is available. 
+	// Let's go for the process token instead.
+	return (OpenThreadToken(GetCurrentThread(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES, TRUE, phToken) ||
+		((GetLastError() == ERROR_NO_TOKEN) &&
+		OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES, phToken)));
 }
 
 //-----------------------------------------------------------------------------
-// Name: enablePrivilege()
+// Name: EnablePrivilege()
 // Desc: Since a MiniDump contains a lot of meta-data about the OS and 
 //       application state at the time of the dump, it is a rather privileged 
 //       operation. This means we need to set the SeDebugPrivilege to be able 
 //       to call MiniDumpWriteDump.
 //-----------------------------------------------------------------------------
-BOOL CMiniDumper::enablePrivilege(LPCTSTR pszPriv, HANDLE hToken, TOKEN_PRIVILEGES* ptpOld)
+BOOL CMiniDumper::EnablePrivilege(LPCTSTR pszPriv, HANDLE hToken, TOKEN_PRIVILEGES* ptpOld)
 {
-	BOOL bOk = FALSE;
+	BOOL bResult = FALSE;
+	DWORD cbOld = (0L);
+	TOKEN_PRIVILEGES tp = { 0 };
 
-	TOKEN_PRIVILEGES tp;
 	tp.PrivilegeCount = 1;
 	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-	bOk = LookupPrivilegeValue(0, pszPriv, &tp.Privileges[0].Luid);
+	bResult = ::LookupPrivilegeValue(0, pszPriv, &tp.Privileges[0].Luid);
 
-	if (bOk)
+	if (bResult)
 	{
-		DWORD cbOld = sizeof(*ptpOld);
-		bOk = AdjustTokenPrivileges(hToken, FALSE, &tp, cbOld, ptpOld, &cbOld);
+		cbOld = sizeof(*ptpOld);
+		bResult = ::AdjustTokenPrivileges(hToken, FALSE, &tp, cbOld, ptpOld, &cbOld);
 	}
 
-	return (bOk && (ERROR_NOT_ALL_ASSIGNED != GetLastError()));
+	return (bResult && (ERROR_NOT_ALL_ASSIGNED != GetLastError()));
 }
 
 //-----------------------------------------------------------------------------
-// Name: restorePrivilege()
+// Name: RestorePrivilege()
 // Desc: 
 //-----------------------------------------------------------------------------
-BOOL CMiniDumper::restorePrivilege(HANDLE hToken, TOKEN_PRIVILEGES* ptpOld)
+BOOL CMiniDumper::RestorePrivilege(HANDLE hToken, TOKEN_PRIVILEGES* ptpOld)
 {
-	BOOL bOk = AdjustTokenPrivileges(hToken, FALSE, ptpOld, 0, NULL, NULL);
-	return (bOk && (ERROR_NOT_ALL_ASSIGNED != GetLastError()));
+	return (AdjustTokenPrivileges(hToken, FALSE, ptpOld, 0, NULL, NULL) && (ERROR_NOT_ALL_ASSIGNED != GetLastError()));
 }
 
 //-----------------------------------------------------------------------------
-// Name: writeMiniDump()
+// Name: WriteMiniDump()
 // Desc: 
 //-----------------------------------------------------------------------------
-LONG CMiniDumper::writeMiniDump(_EXCEPTION_POINTERS *pExceptionInfo)
+LONG CMiniDumper::WriteMiniDump(_EXCEPTION_POINTERS *pExceptionInfo)
 {
 	LONG retval = EXCEPTION_CONTINUE_SEARCH;
 	m_pExceptionInfo = pExceptionInfo;
 
 	HANDLE hImpersonationToken = NULL;
-	if (!getImpersonationToken(&hImpersonationToken))
+	if (!GetImpersonationToken(&hImpersonationToken))
+	{
 		return FALSE;
-
+	}
 	// You have to find the right dbghelp.dll. 
 	// Look next to the EXE first since the one in System32 might be old (Win2k)
 
 	HMODULE hDll = NULL;
-	TCHAR szDbgHelpPath[MAX_PATH];
+	_TCHAR szDbgHelpPath[MAX_PATH] = { 0 };
 
 	if (GetModuleFileName(NULL, m_szAppPath, _MAX_PATH))
 	{
@@ -227,9 +203,9 @@ LONG CMiniDumper::writeMiniDump(_EXCEPTION_POINTERS *pExceptionInfo)
 
 		if (MiniDumpWriteDump != NULL)
 		{
-			_TCHAR szScratch[USER_DATA_BUFFER_SIZE] = { 0 };
+			_TCHAR szScratch[_USER_DATA_BUFFER_SIZE_] = { 0 };
 
-			setMiniDumpFileName();
+			SetMiniDumpFileName();
 
 			// Ask the user if he or she wants to save a mini-dump file...
 			_tcssprintf(szScratch,
@@ -255,7 +231,7 @@ LONG CMiniDumper::writeMiniDump(_EXCEPTION_POINTERS *pExceptionInfo)
 
 				// We need the SeDebugPrivilege to be able to run MiniDumpWriteDump
 				TOKEN_PRIVILEGES tp = { 0 };
-				BOOL bPrivilegeEnabled = enablePrivilege(SE_DEBUG_NAME, hImpersonationToken, &tp);
+				BOOL bPrivilegeEnabled = EnablePrivilege(SE_DEBUG_NAME, hImpersonationToken, &tp);
 
 				BOOL bOk = FALSE;
 
@@ -275,7 +251,7 @@ LONG CMiniDumper::writeMiniDump(_EXCEPTION_POINTERS *pExceptionInfo)
 
 				// Restore the privileges when done
 				if (bPrivilegeEnabled)
-					restorePrivilege(hImpersonationToken, &tp);
+					RestorePrivilege(hImpersonationToken, &tp);
 
 				if (bOk)
 				{
