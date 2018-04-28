@@ -1,3 +1,7 @@
+#pragma once
+
+#ifndef __COMMONWINDOW_H_
+#define __COMMONWINDOW_H_
 
 #include <richedit.h>
 #include <gdiplus.h>
@@ -1679,3 +1683,4 @@ namespace PPSHUAI
 		};
 	}
 }
+#endif //__COMMONWINDOW_H_

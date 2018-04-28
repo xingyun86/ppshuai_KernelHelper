@@ -1170,7 +1170,7 @@ namespace PPSHUAI{
 			}
 			else
 			{
-				lpszUserAgent = IE8_USER_AGENT;
+				lpszUserAgent = _T(IE8_USER_AGENT);
 			}
 			m_hSession = ::InternetOpen(lpszUserAgent, dwAccessType, lpszProxy, lpszProxyBypass, INTERNET_FLAG_ASYNC);
 			if (NULL == m_hSession)
@@ -1652,9 +1652,9 @@ namespace PPSHUAI{
 
 
 		int __cdecl
-			t_wmain(
+			t_tmain(
 			__in int argc,
-			__in_ecount(argc) LPWSTR *argv
+			__in_ecount(argc) LPTSTR *argv
 			)
 		{
 			DWORD Error;
@@ -1683,7 +1683,7 @@ namespace PPSHUAI{
 			}
 
 			// Create Session handle and specify async Mode
-			SessionHandle = InternetOpen(L"AsyncHttpClient",  // User Agent
+			SessionHandle = InternetOpen(_T("AsyncHttpClient"),  // User Agent
 				OpenType,                      // Preconfig or Proxy
 				Configuration.ProxyName,       // Proxy name
 				Configuration.ProxyBypass,     // Proxy bypass, do not bypass any address
@@ -1691,7 +1691,7 @@ namespace PPSHUAI{
 
 			if (SessionHandle == NULL)
 			{
-				LogInetError(GetLastError(), L"InternetOpen");
+				LogInetError(GetLastError(), _T("InternetOpen"));
 				goto Exit;
 			}
 
@@ -2102,7 +2102,7 @@ namespace PPSHUAI{
 
 				if (Error != ERROR_IO_PENDING)
 				{
-					LogInetError(Error, L"HttpSendRequest");
+					LogInetError(Error, _T("HttpSendRequest"));
 				}
 				goto Exit;
 			}
@@ -2173,7 +2173,7 @@ namespace PPSHUAI{
 
 				if (Error != ERROR_IO_PENDING)
 				{
-					LogInetError(Error, L"HttpSendRequestEx");
+					LogInetError(Error, _T("HttpSendRequestEx"));
 				}
 
 				goto Exit;
@@ -2223,7 +2223,7 @@ namespace PPSHUAI{
 			if (!Success)
 			{
 				Error = GetLastError();
-				LogSysError(Error, L"ReadFile");
+				LogSysError(Error, _T("ReadFile"));
 				goto Exit;
 			}
 
@@ -2297,7 +2297,7 @@ namespace PPSHUAI{
 				}
 				else
 				{
-					LogInetError(Error, L"InternetWriteFile");
+					LogInetError(Error, _T("InternetWriteFile"));
 				}
 
 				goto Exit;
@@ -2356,7 +2356,7 @@ namespace PPSHUAI{
 				}
 				else
 				{
-					LogInetError(Error, L"HttpEndRequest");
+					LogInetError(Error, _T("HttpEndRequest"));
 					goto Exit;
 				}
 			}
@@ -2422,7 +2422,7 @@ namespace PPSHUAI{
 				}
 				else
 				{
-					LogInetError(Error, L"InternetReadFile");
+					LogInetError(Error, _T("InternetReadFile"));
 				}
 
 				goto Exit;
@@ -2492,7 +2492,7 @@ namespace PPSHUAI{
 				if (!Success)
 				{
 					Error = GetLastError();
-					LogSysError(Error, L"WriteFile");
+					LogSysError(Error, _T("WriteFile"));
 					goto Exit;;
 				}
 			}
@@ -2722,7 +2722,7 @@ namespace PPSHUAI{
 			LocalReqContext->dwResponseHeaderDataSize = 0;
 
 			LocalReqContext->State =
-				(LocalReqContext->Method == METHOD_GET) ? REQ_STATE_SEND_REQ : REQ_STATE_SEND_REQ_WITH_BODY;
+				(LocalReqContext->Method == METHOD_TYPE_GET) ? REQ_STATE_SEND_REQ : REQ_STATE_SEND_REQ_WITH_BODY;
 			LocalReqContext->CritSecInitialized = FALSE;
 
 
@@ -2733,7 +2733,7 @@ namespace PPSHUAI{
 			if (!Success)
 			{
 				Error = GetLastError();
-				LogSysError(Error, L"InitializeCriticalSectionAndSpinCount");
+				LogSysError(Error, _T("InitializeCriticalSectionAndSpinCount"));
 				goto Exit;
 			}
 
@@ -2755,7 +2755,7 @@ namespace PPSHUAI{
 			if (LocalReqContext->CompletionEvent == NULL)
 			{
 				Error = GetLastError();
-				LogSysError(Error, L"CreateEvent CompletionEvent");
+				LogSysError(Error, _T("CreateEvent CompletionEvent"));
 				goto Exit;
 			}
 
@@ -2767,7 +2767,7 @@ namespace PPSHUAI{
 			if (LocalReqContext->CleanUpEvent == NULL)
 			{
 				Error = GetLastError();
-				LogSysError(Error, L"CreateEvent CleanUpEvent");
+				LogSysError(Error, _T("CreateEvent CleanUpEvent"));
 				goto Exit;
 			}
 
@@ -2791,7 +2791,7 @@ namespace PPSHUAI{
 				if (LocalReqContext->FileSize == INVALID_FILE_SIZE)
 				{
 					Error = GetLastError();
-					LogSysError(Error, L"GetFileSize");
+					LogSysError(Error, _T("GetFileSize"));
 					goto Exit;
 				}
 			}
@@ -2827,8 +2827,8 @@ namespace PPSHUAI{
 			CreateWininetHandles(
 			__inout PREQUEST_CONTEXT ReqContext,
 			__in HINTERNET SessionHandle,
-			__in LPWSTR HostName,
-			__in LPWSTR Resource,
+			__in LPTSTR HostName,
+			__in LPTSTR Resource,
 			__in BOOL IsSecureConnection
 			)
 			/*++
@@ -2852,7 +2852,7 @@ namespace PPSHUAI{
 			DWORD Error = ERROR_SUCCESS;
 			INTERNET_PORT ServerPort = INTERNET_DEFAULT_HTTP_PORT;
 			DWORD RequestFlags = 0;
-			LPWSTR Verb;
+			LPTSTR Verb;
 
 
 			//
@@ -2889,21 +2889,21 @@ namespace PPSHUAI{
 			if (ReqContext->ConnectHandle == NULL)
 			{
 				Error = GetLastError();
-				LogInetError(Error, L"InternetConnect");
+				LogInetError(Error, _T("InternetConnect"));
 				goto Exit;
 			}
 
 
 			// Set the Verb depending on the operation to perform
-			if (ReqContext->Method == METHOD_GET)
+			if (ReqContext->Method == METHOD_TYPE_GET)
 			{
-				Verb = L"GET";
+				Verb = _T("GET");
 			}
 			else
 			{
 				ASYNC_ASSERT(ReqContext->Method == METHOD_POST);
 
-				Verb = L"POST";
+				Verb = _T("POST");
 			}
 
 			//
@@ -2930,7 +2930,7 @@ namespace PPSHUAI{
 			if (ReqContext->RequestHandle == NULL)
 			{
 				Error = GetLastError();
-				LogInetError(Error, L"HttpOpenRequest");
+				LogInetError(Error, _T("HttpOpenRequest"));
 
 				goto Exit;
 			}
@@ -3137,8 +3137,8 @@ namespace PPSHUAI{
 			OpenFiles(
 			__inout PREQUEST_CONTEXT ReqContext,
 			__in DWORD Method,
-			__in LPWSTR InputFileName,
-			__in LPWSTR OutputFileName
+			__in LPTSTR InputFileName,
+			__in LPTSTR OutputFileName
 			)
 			/*++
 
@@ -3159,7 +3159,7 @@ namespace PPSHUAI{
 		{
 			DWORD Error = ERROR_SUCCESS;
 
-			if (Method == METHOD_POST)
+			if (Method == METHOD_TYPE_POST)
 			{
 				// Open input file
 				ReqContext->UploadFile = CreateFile(InputFileName,
@@ -3173,7 +3173,7 @@ namespace PPSHUAI{
 				if (ReqContext->UploadFile == INVALID_HANDLE_VALUE)
 				{
 					Error = GetLastError();
-					LogSysError(Error, L"CreateFile for input file");
+					LogSysError(Error, _T("CreateFile for input file"));
 					goto Exit;
 				}
 			}
@@ -3190,7 +3190,7 @@ namespace PPSHUAI{
 			if (ReqContext->DownloadFile == INVALID_HANDLE_VALUE)
 			{
 				//Error = GetLastError();
-				LogSysError(Error, L"CreateFile for output file");
+				LogSysError(Error, _T("CreateFile for output file"));
 				goto Exit;
 			}
 
@@ -3202,7 +3202,7 @@ namespace PPSHUAI{
 		DWORD
 			ParseArguments(
 			__in int argc,
-			__in_ecount(argc) LPWSTR *argv,
+			__in_ecount(argc) LPTSTR *argv,
 			__inout PCONFIGURATION Configuration
 			)
 			/*++
@@ -3226,16 +3226,16 @@ namespace PPSHUAI{
 
 			for (i = 1; i < argc; ++i)
 			{
-				if (wcsncmp(argv[i], L"-", 1))
+				if (_tcsncmp(argv[i], _T("-"), 1))
 				{
-					printf("Invalid switch %ws\n", argv[i]);
+					_tprintf(_T("Invalid switch %s\n"), argv[i]);
 					i++;
 					continue;
 				}
 
 				switch (argv[i][1])
 				{
-				case L'p':
+				case _T('p'):
 
 					Configuration->UseProxy = 1;
 					if (i < argc - 1)
@@ -3244,7 +3244,7 @@ namespace PPSHUAI{
 					}
 					break;
 
-				case L'h':
+				case _T('h'):
 
 					if (i < argc - 1)
 					{
@@ -3253,7 +3253,7 @@ namespace PPSHUAI{
 
 					break;
 
-				case L'o':
+				case _T('o'):
 
 					if (i < argc - 1)
 					{
@@ -3262,7 +3262,7 @@ namespace PPSHUAI{
 
 					break;
 
-				case L'r':
+				case _T('r'):
 
 					if (i < argc - 1)
 					{
@@ -3271,7 +3271,7 @@ namespace PPSHUAI{
 
 					break;
 
-				case L'w':
+				case _T('w'):
 
 					if (i < argc - 1)
 					{
@@ -3280,17 +3280,17 @@ namespace PPSHUAI{
 
 					break;
 
-				case L'm':
+				case _T('m'):
 
 					if (i < argc - 1)
 					{
-						if (!_wcsnicmp(argv[i + 1], L"get", 3))
+						if (!_tcsnicmp(argv[i + 1], _T("get"), 3))
 						{
-							Configuration->Method = METHOD_GET;
+							Configuration->Method = METHOD_TYPE_GET;
 						}
-						else if (!_wcsnicmp(argv[i + 1], L"post", 4))
+						else if (!_tcsnicmp(argv[i + 1], _T("post"), 4))
 						{
-							Configuration->Method = METHOD_POST;
+							Configuration->Method = METHOD_TYPE_POST;
 						}
 					}
 					++i;
@@ -3303,7 +3303,7 @@ namespace PPSHUAI{
 				case L't':
 					if (i < argc - 1)
 					{
-						Configuration->UserTimeout = _wtoi(argv[++i]);
+						Configuration->UserTimeout = _ttoi(argv[++i]);
 					}
 					break;
 
@@ -3324,20 +3324,20 @@ namespace PPSHUAI{
 
 				if (Configuration->HostName == NULL)
 				{
-					printf("Defaulting hostname to: %ws\n", DEFAULT_HOSTNAME);
-					Configuration->HostName = DEFAULT_HOSTNAME;
+					printf("Defaulting hostname to: %s\n", DEFAULT_HOSTNAME);
+					Configuration->HostName = _T(DEFAULT_HOSTNAME);
 				}
 
-				if (Configuration->Method == METHOD_NONE)
+				if (Configuration->Method == METHOD_TYPE_NONE)
 				{
 					printf("Defaulting method to: GET\n");
-					Configuration->Method = METHOD_GET;
+					Configuration->Method = METHOD_TYPE_GET;
 				}
 
 				if (Configuration->ResourceOnServer == NULL)
 				{
-					printf("Defaulting resource to: %ws\n", DEFAULT_RESOURCE);
-					Configuration->ResourceOnServer = DEFAULT_RESOURCE;
+					printf("Defaulting resource to: %s\n", DEFAULT_RESOURCE);
+					Configuration->ResourceOnServer = _T(DEFAULT_RESOURCE);
 				}
 
 				if (Configuration->UserTimeout == 0)
@@ -3346,7 +3346,7 @@ namespace PPSHUAI{
 					Configuration->UserTimeout = DEFAULT_TIMEOUT;
 				}
 
-				if (Configuration->InputFileName == NULL && Configuration->Method == METHOD_POST)
+				if (Configuration->InputFileName == NULL && Configuration->Method == METHOD_TYPE_POST)
 				{
 					printf("Error: File to post not specified\n");
 					Error = ERROR_INVALID_PARAMETER;
@@ -3355,9 +3355,9 @@ namespace PPSHUAI{
 
 				if (Configuration->OutputFileName == NULL)
 				{
-					printf("Defaulting output file to: %ws\n", DEFAULT_OUTPUT_FILE_NAME);
+					printf("Defaulting output file to: %s\n", DEFAULT_OUTPUT_FILE_NAME);
 
-					Configuration->OutputFileName = DEFAULT_OUTPUT_FILE_NAME;
+					Configuration->OutputFileName = _T(DEFAULT_OUTPUT_FILE_NAME);
 				}
 
 			}
@@ -3388,11 +3388,11 @@ namespace PPSHUAI{
 			printf("[-p <proxyname>] [-w <output filename>] [-r <file to post>] [-t <userTimeout>]\n");
 			printf("Option Semantics: \n");
 			printf("-m : Specify method (Default: \"GET\")\n");
-			printf("-h : Specify hostname (Default: \"%ws\"\n", DEFAULT_HOSTNAME);
-			printf("-o : Specify resource name on the server (Default: \"%ws\")\n", DEFAULT_RESOURCE);
+			printf("-h : Specify hostname (Default: \"%s\"\n", DEFAULT_HOSTNAME);
+			printf("-o : Specify resource name on the server (Default: \"%s\")\n", DEFAULT_RESOURCE);
 			printf("-s : Use secure connection - https\n");
 			printf("-p : Specify proxy\n");
-			printf("-w : Specify file to write output to (Default: \"%ws\")\n", DEFAULT_OUTPUT_FILE_NAME);
+			printf("-w : Specify file to write output to (Default: \"%s\")\n", DEFAULT_OUTPUT_FILE_NAME);
 			printf("-r : Specify file to post data from\n");
 			printf("-t : Specify time to wait in ms for operation completion (Default: %d)\n", DEFAULT_TIMEOUT);
 
@@ -3402,7 +3402,7 @@ namespace PPSHUAI{
 		VOID
 			LogInetError(
 			__in DWORD Err,
-			__in LPCWSTR Str
+			__in LPCTSTR Str
 			)
 			/*++
 
@@ -3419,14 +3419,14 @@ namespace PPSHUAI{
 			--*/
 		{
 			DWORD Result;
-			PWSTR MsgBuffer = NULL;
+			PTSTR MsgBuffer = NULL;
 
 			Result = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 				FORMAT_MESSAGE_FROM_HMODULE,
-				GetModuleHandle(L"wininet.dll"),
+				GetModuleHandle(_T("wininet.dll")),
 				Err,
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-				(LPWSTR)&MsgBuffer,
+				(LPTSTR)&MsgBuffer,
 				ERR_MSG_LEN,
 				NULL);
 
@@ -3450,7 +3450,7 @@ namespace PPSHUAI{
 		VOID
 			LogSysError(
 			__in DWORD Err,
-			__in LPCWSTR Str
+			__in LPCTSTR Str
 			)
 			/*++
 
@@ -3467,14 +3467,14 @@ namespace PPSHUAI{
 			--*/
 		{
 			DWORD Result;
-			PWSTR MsgBuffer = NULL;
+			PTSTR MsgBuffer = NULL;
 
 			Result = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 				FORMAT_MESSAGE_FROM_SYSTEM,
 				NULL,
 				Err,
 				MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-				(LPWSTR)&MsgBuffer,
+				(LPTSTR)&MsgBuffer,
 				ERR_MSG_LEN,
 				NULL);
 

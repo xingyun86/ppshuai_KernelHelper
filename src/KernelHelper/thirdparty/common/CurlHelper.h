@@ -1603,10 +1603,10 @@ namespace PPSHUAI{
 //#include <wininet.h>
 //#pragma comment(lib, "wininet.lib")
 		// IE8 on Windows 7
-#define     IE8_USER_AGENT  _T("Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0;Trident/4.0)")
-#define     IE9_USER_AGENT  _T("Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1;Trident/5.0)")
-#define     IE10_USER_AGENT _T("Mozilla/5.0 (compatible; WOW64; MSIE 10.0; Windows NT 6.2)")
-#define     IE11_USER_AGENT _T("Mozilla/5.0 (IE 11.0; Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko")
+#define     IE8_USER_AGENT  "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0;Trident/4.0)"
+#define     IE9_USER_AGENT  "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1;Trident/5.0)"
+#define     IE10_USER_AGENT "Mozilla/5.0 (compatible; WOW64; MSIE 10.0; Windows NT 6.2)"
+#define     IE11_USER_AGENT "Mozilla/5.0 (IE 11.0; Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko"
 
 		// HTTP请求方法
 		typedef enum HTTP_REQ_METHOD
@@ -1679,7 +1679,7 @@ namespace PPSHUAI{
 			// 设置HTTP代理服务器例外
 			void SetProxyBypass(LPCTSTR lpszProxyBypass = _T(""));
 			// 设置用户代理
-			void SetUserAgent(LPCTSTR lpszUserAgent = IE8_USER_AGENT);
+			void SetUserAgent(LPCTSTR lpszUserAgent = _T(IE8_USER_AGENT));
 		private:
 #ifndef CALLBACK
 #define CALLBACK __stdcall
@@ -1830,16 +1830,6 @@ namespace PPSHUAI{
 		__inline static BOOL QueryHttpInfoDataW(HINTERNET hInternetRequest, LPVOID pHttpInfoData, DWORD dwHttpInfoDataSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
 		{
 			return (::HttpQueryInfoW(hInternetRequest, dwInfoLevel, (LPVOID)pHttpInfoData, &dwHttpInfoDataSize, pdwIndex));
-		}
-		// 获取HTTP信息数据长度
-		__inline static BOOL QueryHttpInfoDataLength(HINTERNET hInternetRequest, DWORD & dwHttpDataInfoSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
-		{
-			return (!::HttpQueryInfo(hInternetRequest, dwInfoLevel, (LPVOID)NULL, &dwHttpDataInfoSize, pdwIndex) && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER);
-		}
-		// 获取HTTP信息数据
-		__inline static BOOL QueryHttpInfoData(HINTERNET hInternetRequest, LPVOID pHttpInfoData, DWORD dwHttpInfoDataSize, DWORD dwInfoLevel/* = HTTP_QUERY_RAW_HEADERS_CRLF*/, PDWORD pdwIndex/* = NULL*/)
-		{
-			return (::HttpQueryInfo(hInternetRequest, dwInfoLevel, (LPVOID)pHttpInfoData, &dwHttpInfoDataSize, pdwIndex));
 		}
 
 		//传入URL和要保存的文件名称下载文件
@@ -2451,9 +2441,9 @@ namespace PPSHUAI{
 #define BUFFER_LEN  4096
 #define ERR_MSG_LEN 512
 
-#define METHOD_NONE 0
-#define METHOD_GET  1
-#define METHOD_POST 2
+#define METHOD_TYPE_NONE 0
+#define METHOD_TYPE_GET  1
+#define METHOD_TYPE_POST 2
 
 #define REQ_STATE_SEND_REQ             0
 #define REQ_STATE_SEND_REQ_WITH_BODY   1
@@ -2466,13 +2456,13 @@ namespace PPSHUAI{
 
 #define DEFAULT_TIMEOUT 2 * 60 * 1000 // Two minutes
 
-#define DEFAULT_HOSTNAME L"www.microsoft.com"
-#define DEFAULT_RESOURCE L"/"
+#define DEFAULT_HOSTNAME "www.microsoft.com"
+#define DEFAULT_RESOURCE "/"
 
-#define DEFAULT_OUTPUT_FILE_NAME L"response.htm"
-#define SPIN_COUNT 4000
+#define DEFAULT_OUTPUT_FILE_NAME "response.htm"
+#define SPIN_COUNT 4096
 
-#pragma comment(lib, "wininet.lib")
+//#pragma comment(lib, "wininet.lib")
 
 		//
 		// Structure to store configuration in that was gathered from
@@ -2482,13 +2472,13 @@ namespace PPSHUAI{
 		typedef struct _CONFIGURATION
 		{
 			DWORD Method;                 // Method, GET or POST
-			LPWSTR HostName;              // Host to connect to
-			LPWSTR ResourceOnServer;      // Resource to get from the server
-			LPWSTR InputFileName;         // File containing data to post
-			LPWSTR OutputFileName;        // File to write the data received from the server
+			LPTSTR HostName;              // Host to connect to
+			LPTSTR ResourceOnServer;      // Resource to get from the server
+			LPTSTR InputFileName;         // File containing data to post
+			LPTSTR OutputFileName;        // File to write the data received from the server
 			BOOL UseProxy;                // Flag to indicate the use of a proxy
-			LPWSTR ProxyName;             // Name of the proxy to use
-			LPWSTR ProxyBypass;           // Proxy bypass, do not bypass any address
+			LPTSTR ProxyName;             // Name of the proxy to use
+			LPTSTR ProxyBypass;           // Proxy bypass, do not bypass any address
 			BOOL IsSecureConnection;      // Flag to indicate the use of SSL
 			DWORD UserTimeout;            // Timeout for the async operations
 		} CONFIGURATION, *PCONFIGURATION;
@@ -2604,8 +2594,8 @@ namespace PPSHUAI{
 		DWORD CreateWininetHandles(
 			__inout PREQUEST_CONTEXT ReqContext,
 			__in HINTERNET SessionHandle,
-			__in LPWSTR HostName,
-			__in LPWSTR Resource,
+			__in LPTSTR HostName,
+			__in LPTSTR Resource,
 			__in BOOL IsSecureConnection
 			);
 
@@ -2653,13 +2643,13 @@ namespace PPSHUAI{
 		DWORD OpenFiles(
 			__inout PREQUEST_CONTEXT ReqContext,
 			__in DWORD Method,
-			__in LPWSTR InputFileName,
-			__in LPWSTR OutputFileName
+			__in LPTSTR InputFileName,
+			__in LPTSTR OutputFileName
 			);
 
 		DWORD ParseArguments(
 			__in int argc,
-			__in_ecount(argc) LPWSTR *argv,
+			__in_ecount(argc) LPTSTR *argv,
 			__inout PCONFIGURATION Configuration
 			);
 
@@ -2670,12 +2660,12 @@ namespace PPSHUAI{
 
 		VOID  LogInetError(
 			__in DWORD Err,
-			__in LPCWSTR Str
+			__in LPCTSTR Str
 			);
 
 		VOID LogSysError(
 			__in DWORD Err,
-			__in LPCWSTR Str
+			__in LPCTSTR Str
 			);
 	}
 }

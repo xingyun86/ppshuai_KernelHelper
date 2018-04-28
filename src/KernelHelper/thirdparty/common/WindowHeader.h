@@ -4344,7 +4344,7 @@ namespace GUI{
 		if (FAILED(hr))
 			return L"";
 		WCHAR sRoleBuff[1024] = { 0 };
-		hr = ::GetRoleText(varRoleID.lVal, sRoleBuff, 1024);
+		hr = ::GetRoleTextW(varRoleID.lVal, sRoleBuff, 1024);
 		if (FAILED(hr))
 			return L"";
 		return sRoleBuff;
@@ -5271,7 +5271,7 @@ namespace GUI{
 	}
 	__inline static LONG GetStringRegKey(HKEY hKey, const TSTRING &strValueName, TSTRING &strValue, TSTRING &strDefaultValue) {
 		strValue = strDefaultValue;
-		WCHAR szBuffer[512];
+		_TCHAR szBuffer[512];
 		DWORD dwBufferSize = sizeof(szBuffer);
 		ULONG nError;
 		nError = RegQueryValueEx(hKey, strValueName.c_str(), 0, NULL, (LPBYTE)szBuffer, &dwBufferSize);
@@ -5313,7 +5313,7 @@ namespace GUI{
 		bool success = true;
 		BYTE data[256];
 		TSTRING path(_T("SOFTWARE\\Microsoft\\Internet Explorer"));
-		LONG nError = RegOpenKeyExW(HKEY_LOCAL_MACHINE, path.c_str(), 0, KEY_QUERY_VALUE, &key);
+		LONG nError = RegOpenKeyEx(HKEY_LOCAL_MACHINE, path.c_str(), 0, KEY_QUERY_VALUE, &key);
 		DWORD mode = 11000; // Internet Explorer 11. Webpages containing standards-based !DOCTYPE directives are displayed in IE11 Standards mode. Default value for Internet Explorer 11.
 
 		if (nError != ERROR_SUCCESS) {
@@ -5385,7 +5385,7 @@ namespace GUI{
 			// FeatureControl settings are per-process
 			_TCHAR fileName[MAX_PATH + 1] = { 0 };
 			ZeroMemory(fileName, (MAX_PATH + 1) * sizeof(_TCHAR));
-			GetModuleFileNameW(NULL, fileName, 256);
+			GetModuleFileName(NULL, fileName, 256);
 			TSTRINGVECTOR splittedFileName;
 			PPSHUAI::String::TSTRING_SPLIT_TO_VECTOR(splittedFileName, fileName, _T("\\"));
 			ZeroMemory(fileName, (MAX_PATH + 1) * sizeof(wchar_t));

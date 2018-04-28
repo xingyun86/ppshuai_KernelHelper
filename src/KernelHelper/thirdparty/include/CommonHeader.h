@@ -53,4 +53,10 @@
 #include "SocketHelper.h"
 #include "Sqlite3Helper.h"
 
+#include "MiniDump.h"
+
+#if !defined(KERNELHELPER_BUILDING)
+CMiniDumper G_MD(true);
+#endif
+
 #endif //__COMMONHEADER_H_
