@@ -37,7 +37,7 @@ namespace PPSHUAI
 			{
 				strResult = p_servent->s_name;
 			}
-			SOCKET_CLEANUP(2, 2);
+			SOCKET_CLEANUP();
 			return strResult;
 		}
 

@@ -2906,7 +2906,7 @@ namespace GUI{
 	}
 
 	__inline static
-		HGLOBAL OpenResource(LPVOID & lpData, DWORD & dwSize, HMODULE hModule, LPCTSTR lpName, LPCTSTR lpType)
+		HGLOBAL OpenResource(LPVOID & lpData, DWORD & dwSize, LPCTSTR lpName, LPCTSTR lpType, HMODULE hModule = ::GetModuleHandle(NULL))
 	{
 		BOOL bResult = FALSE;
 		HRSRC hRsrcRes = NULL;// handle/ptr. to res. info. in hSource 
@@ -2918,6 +2918,13 @@ namespace GUI{
 		{
 			goto __LEAVE_CLEAN__;
 		}
+		
+		////////////////////////////////////////////////////////////////////////////////////////////
+		// See:https://msdn.microsoft.com/en-us/library/windows/desktop/ms648047(v=vs.85).aspx
+		// A handle to the resource to be accessed. The LoadResource function returns this handle. 
+		//Note that this parameter is listed as an HGLOBAL variable only for backward compatibility. 
+		//Do not pass any value as a parameter other than a successful return value 
+		//from the LoadResource function.
 
 		// Load the resource into global memory. 
 		hGLOBAL = ::LoadResource(hModule, hRsrcRes);
@@ -2943,26 +2950,16 @@ namespace GUI{
 	}
 
 	__inline static
-		void CloseResource(HGLOBAL & hGlobal)
-	{
-		if (hGlobal)
-		{
-			FreeResource(hGlobal);
-			hGlobal = NULL;
-		}
-	}
-
-	__inline static
-		BOOL ParseResrc(LPCTSTR ptszFileName, UINT uResourceID, LPCTSTR ptszTypeName)
+		BOOL ParseResrc(LPCTSTR ptszFileName, UINT uResourceID, LPCTSTR ptszTypeName, HMODULE hModule = ::GetModuleHandle(NULL))
 	{
 		DWORD dwSize = 0;
 		HANDLE hFile = NULL;
 		BOOL bResult = FALSE;
 		LPVOID lpData = NULL;
 		HGLOBAL hGlobal = NULL;
-		DWORD dwByteWritten = 0;
+		DWORD dwNumberOfBytesWritten = 0;
 
-		hGlobal = OpenResource(lpData, dwSize, GetModuleHandle(NULL), MAKEINTRESOURCE(uResourceID), ptszTypeName);
+		hGlobal = OpenResource(lpData, dwSize, MAKEINTRESOURCE(uResourceID), ptszTypeName, hModule);
 
 		//我们用刚才得到的pBuffer和dwSize来做一些需要的事情。可以直接在内存中使
 		//用，也可以写入到硬盘文件。这里我们简单的写入到硬盘文件，如果我们的自定
@@ -2970,14 +2967,12 @@ namespace GUI{
 		hFile = CreateFile(ptszFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (hFile && hGlobal && dwSize > 0)
 		{
-			WriteFile(hFile, hGlobal, dwSize, &dwByteWritten, NULL);
+			WriteFile(hFile, hGlobal, dwSize, &dwNumberOfBytesWritten, NULL);
 			CloseHandle(hFile);
 
 			bResult = TRUE;
 		}
-
-		CloseResource(hGlobal);
-
+		
 		return bResult;
 	}
 
@@ -4487,14 +4482,7 @@ namespace GUI{
 	class CDlgItemTemplate
 	{
 	public:
-		CDlgItemTemplate()
-		{
 
-		}
-		CDlgItemTemplate(CDlgItemTemplate & dit)
-		{
-			this->Initialize(dit.dwStyle, dit.dwExStyle, dit.wX, dit.wY, dit.wCX, dit.wCY, dit.wID, dit.tCN.c_str(), dit.tTN.c_str(), dit.wCDAIT);
-		}
 		CDlgItemTemplate(DWORD _dwStyle, DWORD _dwExStyle, WORD _wX, WORD _wY, WORD _wCX, WORD _wCY, WORD _wID, LPCTSTR _tCN, LPCTSTR _tTN, WORD _wCDAIT)
 		{
 			this->Initialize(_dwStyle, _dwExStyle, _wX, _wY, _wCX, _wCY, _wID, _tCN, _tTN, _wCDAIT);
@@ -4502,256 +4490,125 @@ namespace GUI{
 
 		void Initialize(DWORD _dwStyle, DWORD _dwExStyle, WORD _wX, WORD _wY, WORD _wCX, WORD _wCY, WORD _wID, LPCTSTR _tCN, LPCTSTR _tTN, WORD _wCDAIT)
 		{
-			this->dwStyle = _dwStyle;
-			this->dwExStyle = _dwExStyle;
-			this->wX = _wX;
-			this->wY = _wY;
-			this->wCX = _wCX;
-			this->wCY = _wCY;
-			this->wID = _wID;
+			this->dit.style = _dwStyle;
+			this->dit.dwExtendedStyle = _dwExStyle;
+			this->dit.x = _wX;
+			this->dit.y = _wY;
+			this->dit.cx = _wCX;
+			this->dit.cy = _wCY;
+			this->dit.id = _wID;
 			this->tCN = _tCN;
 			this->tTN = _tTN;
 			this->wCDAIT = _wCDAIT;
+			this->dwSize = sizeof(DLGITEMTEMPLATE) + sizeof(wCDAIT) + (this->tCN.length() + this->tTN.length() + 2) * sizeof(WCHAR);
 		}
 
 	public:
-		DWORD dwStyle;
-		DWORD dwExStyle;
-		WORD wX;
-		WORD wY;
-		WORD wCX;
-		WORD wCY;
-		WORD wID;
+		DWORD dwSize;
+		
+		DLGITEMTEMPLATE dit;
 		TSTRING tCN;
 		TSTRING tTN;
-		WORD wCDAIT;
+		WORD wCDAIT;		
 	};
 
 	class CDlgTemplate
 	{
 	public:
-		CDlgTemplate()
-		{
 
-		}
-		CDlgTemplate(CDlgTemplate & cdt)
+		CDlgTemplate(DWORD _dwStyle, DWORD _dwExStyle, WORD _wCDIT, WORD _wX, WORD _wY, WORD _wCX, WORD _wCY, WORD _wMENU, LPCTSTR _tCN, LPCTSTR _tTN, WORD _wFS, LPCTSTR _tFN, std::vector<CDlgItemTemplate> & _SDITVECTOR)
 		{
-			this->Initialize(cdt.dwStyle, cdt.dwExStyle, cdt.wCDIT, cdt.wX, cdt.wY, cdt.wCX, cdt.wCY, cdt.wMENU, cdt.tCN.c_str(), cdt.tTN.c_str(), cdt.wFS, cdt.tFN.c_str(), &cdt.SDITMAP);
-		}
-		CDlgTemplate(DWORD _dwStyle, DWORD _dwExStyle, WORD _wCDIT, WORD _wX, WORD _wY, WORD _wCX, WORD _wCY, WORD _wMENU, LPCTSTR _tCN, LPCTSTR _tTN, WORD _wFS, LPCTSTR _tFN, std::map<SIZE_T, CDlgItemTemplate> * _SDITMAP)
-		{
-			this->Initialize(_dwStyle, _dwExStyle, _wCDIT, _wX, _wY, _wCX, _wCY, _wMENU, _tCN, _tTN, _wFS, _tFN, _SDITMAP);
+			this->Initialize(_dwStyle, _dwExStyle, _wCDIT, _wX, _wY, _wCX, _wCY, _wMENU, _tCN, _tTN, _wFS, _tFN, _SDITVECTOR);
 		}
 
-		void Initialize(DWORD _dwStyle, DWORD _dwExStyle, WORD _wCDIT, WORD _wX, WORD _wY, WORD _wCX, WORD _wCY, WORD _wMENU, LPCTSTR _tCN, LPCTSTR _tTN, WORD _wFS, LPCTSTR _tFN, std::map<SIZE_T, CDlgItemTemplate> * _SDITMAP)
+		void Initialize(DWORD _dwStyle, DWORD _dwExStyle, WORD _wCDIT, WORD _wX, WORD _wY, WORD _wCX, WORD _wCY, WORD _wMENU, LPCTSTR _tCN, LPCTSTR _tTN, WORD _wFS, LPCTSTR _tFN, std::vector<CDlgItemTemplate> & _SDITVECTOR)
 		{
-			this->dwStyle = _dwStyle;
-			this->dwExStyle = _dwExStyle;
-			this->wCDIT = _wCDIT;
-			this->wX = _wX;
-			this->wY = _wY;
-			this->wCX = _wCX;
-			this->wCY = _wCY;
+			this->dt.style = _dwStyle;
+			this->dt.dwExtendedStyle = _dwExStyle;
+			this->dt.cdit = _wCDIT;
+			this->dt.x = _wX;
+			this->dt.y = _wY;
+			this->dt.cx = _wCX;
+			this->dt.cy = _wCY;
 			this->wMENU = _wMENU;
 			this->tCN = _tCN;
 			this->tTN = _tTN;
 			this->wFS = _wFS;
 			this->tFN = _tFN;
-			if (_SDITMAP)
-			{
-				SDITMAP.insert(_SDITMAP->begin(), _SDITMAP->end());
-			}
+			this->dwSize = sizeof(DLGTEMPLATE) + sizeof(wMENU) + sizeof(wFS) + (tCN.length() + tTN.length() + tFN.length() + 3) * sizeof(WCHAR);
+
+			this->dt.cdit = 0;
+			std::for_each(_SDITVECTOR.begin(), _SDITVECTOR.end(), [&, this](const std::vector<CDlgItemTemplate>::value_type & it){
+				this->dwSize += it.dwSize;
+				this->dt.cdit++;
+				SDITVECTOR.push_back(it);
+			});
 		}
 
 	public:
-		DWORD dwStyle;
-		DWORD dwExStyle;
-		WORD wCDIT;
-		WORD wX;
-		WORD wY;
-		WORD wCX;
-		WORD wCY;
+		DWORD dwSize;
+
+		DLGTEMPLATE dt;
 		WORD wMENU;
 		TSTRING tCN;
 		TSTRING tTN;
 		WORD wFS;
 		TSTRING tFN;
 
-		std::map<SIZE_T, CDlgItemTemplate> SDITMAP;
+		std::vector<CDlgItemTemplate> SDITVECTOR;
 	};
 	
-	__inline static void * InitDlgData(SIZE_T * pstSize, std::map<SIZE_T, CDlgTemplate> * pSDTMAP)
+	__inline static BYTE * AllocDlgData(CDlgTemplate * pCDT)
 	{
 		BYTE * pbData = NULL;
-		SIZE_T stPlusSize = 0L;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTEnd;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTIdx;
-		std::map<SIZE_T, CDlgItemTemplate>::iterator itSDITEnd;
-		std::map<SIZE_T, CDlgItemTemplate>::iterator itSDITIdx;
+		DWORD  dwNext = (0L);
 
-		itSDTEnd = pSDTMAP->end();
-		itSDTIdx = pSDTMAP->begin();
-		for (; itSDTIdx != itSDTEnd; itSDTIdx++)
+		pbData = (BYTE *)malloc(pCDT->dwSize * sizeof(BYTE)); memset(pbData, 0, pCDT->dwSize);
+
+		memcpy(pbData + dwNext, &pCDT->dt, sizeof(pCDT->dt)); dwNext += sizeof(pCDT->dt);
+		memcpy(pbData + dwNext, &pCDT->wMENU, sizeof(pCDT->wMENU));	dwNext += sizeof(pCDT->wMENU);
+		memcpy(pbData + dwNext, Convert::TToW(pCDT->tCN).c_str(), (pCDT->tCN.length() + 1) * sizeof(WCHAR)); dwNext += (pCDT->tCN.length() + 1) * sizeof(WCHAR);
+		memcpy(pbData + dwNext, Convert::TToW(pCDT->tTN).c_str(), (pCDT->tTN.length() + 1) * sizeof(WCHAR)); dwNext += (pCDT->tTN.length() + 1) * sizeof(WCHAR);
+		memcpy(pbData + dwNext, &pCDT->wFS, sizeof(pCDT->wFS)); dwNext += sizeof(pCDT->wFS);
+		memcpy(pbData + dwNext, Convert::TToW(pCDT->tFN).c_str(), (pCDT->tFN.length() + 1) * sizeof(WCHAR)); dwNext += (pCDT->tFN.length() + 1) * sizeof(WCHAR);
+
+		for (auto it : pCDT->SDITVECTOR)
 		{
-			stPlusSize = sizeof(itSDTIdx->second.dwStyle);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.dwStyle, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = sizeof(itSDTIdx->second.dwExStyle);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.dwExStyle, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = sizeof(itSDTIdx->second.wCDIT);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.wCDIT, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = sizeof(itSDTIdx->second.wX);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.wX, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = sizeof(itSDTIdx->second.wY);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.wY, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = sizeof(itSDTIdx->second.wCX);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.wCX, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = sizeof(itSDTIdx->second.wCY);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.wCY, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = sizeof(itSDTIdx->second.wMENU);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.wMENU, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = (Convert::TToW(itSDTIdx->second.tCN).length() + 1) * sizeof(WCHAR);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), Convert::TToW(itSDTIdx->second.tCN).c_str(), stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = (Convert::TToW(itSDTIdx->second.tTN).length() + 1) * sizeof(WCHAR);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), Convert::TToW(itSDTIdx->second.tTN).c_str(), stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = sizeof(itSDTIdx->second.wFS);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), &itSDTIdx->second.wFS, stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			stPlusSize = (Convert::TToW(itSDTIdx->second.tFN).length() + 1) * sizeof(WCHAR);
-			pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-			memcpy(pbData + (*pstSize), Convert::TToW(itSDTIdx->second.tFN).c_str(), stPlusSize);
-			(*pstSize) += stPlusSize;
-
-			itSDITEnd = itSDTIdx->second.SDITMAP.end();
-			itSDITIdx = itSDTIdx->second.SDITMAP.begin();
-			for (; itSDITIdx != itSDITEnd; itSDITIdx++)
-			{
-				stPlusSize = sizeof(itSDITIdx->second.dwStyle);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), &itSDITIdx->second.dwStyle, stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				stPlusSize = sizeof(itSDITIdx->second.dwExStyle);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), &itSDITIdx->second.dwExStyle, stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				stPlusSize = sizeof(itSDITIdx->second.wX);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), &itSDITIdx->second.wX, stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				stPlusSize = sizeof(itSDITIdx->second.wY);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), &itSDITIdx->second.wY, stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				stPlusSize = sizeof(itSDITIdx->second.wCX);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), &itSDITIdx->second.wCX, stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				stPlusSize = sizeof(itSDITIdx->second.wCY);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), &itSDITIdx->second.wCY, stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				stPlusSize = sizeof(itSDITIdx->second.wID);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), &itSDITIdx->second.wID, stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				////////////////////////////////////////////////////////////////////
-				stPlusSize = (Convert::TToW(itSDITIdx->second.tCN).length() + 1) * sizeof(WCHAR);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), Convert::TToW(itSDITIdx->second.tCN).c_str(), stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				stPlusSize = (Convert::TToW(itSDITIdx->second.tTN).length() + 1) * sizeof(WCHAR);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), Convert::TToW(itSDITIdx->second.tTN).c_str(), stPlusSize);
-				(*pstSize) += stPlusSize;
-
-				stPlusSize = sizeof(itSDITIdx->second.wCDAIT);
-				pbData = (BYTE *)realloc(pbData, ((*pstSize) + stPlusSize) * sizeof(BYTE));
-				memcpy(pbData + (*pstSize), &itSDITIdx->second.wCDAIT, stPlusSize);
-				(*pstSize) += stPlusSize;
-			}
+			memcpy(pbData + dwNext, &it.dit, sizeof(it.dit)); dwNext += sizeof(it.dit);
+			memcpy(pbData + dwNext, Convert::TToW(it.tCN).c_str(), (it.tCN.length() + 1) * sizeof(WCHAR)); dwNext += (it.tCN.length() + 1) * sizeof(WCHAR);
+			memcpy(pbData + dwNext, Convert::TToW(it.tTN).c_str(), (it.tTN.length() + 1) * sizeof(WCHAR)); dwNext += (it.tTN.length() + 1) * sizeof(WCHAR);
+			memcpy(pbData + dwNext, &it.wCDAIT, sizeof(it.wCDAIT)); dwNext += sizeof(it.wCDAIT);
 		}
+
 		return pbData;
 	}
-	__inline static std::string InitDlgData(std::map<SIZE_T, CDlgTemplate> * pSDTMAP)
+	__inline static VOID FreeDlgData(BYTE ** pData)
 	{
-		std::string strData("");
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTEnd;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTIdx;
-		std::map<SIZE_T, CDlgItemTemplate>::iterator itSDITIEnd;
-		std::map<SIZE_T, CDlgItemTemplate>::iterator itSDITIdx;
-
-		itSDTEnd = pSDTMAP->end();
-		itSDTIdx = pSDTMAP->begin();
-		for (; itSDTIdx != itSDTEnd; itSDTIdx++)
+		if (pData && *pData)
 		{
-			strData.append((const char *)&itSDTIdx->second.dwStyle, sizeof(itSDTIdx->second.dwStyle));
-			strData.append((const char *)&itSDTIdx->second.dwExStyle, sizeof(itSDTIdx->second.dwExStyle));
-			strData.append((const char *)&itSDTIdx->second.wCDIT, sizeof(itSDTIdx->second.wCDIT));
-			strData.append((const char *)&itSDTIdx->second.wX, sizeof(itSDTIdx->second.wX));
-			strData.append((const char *)&itSDTIdx->second.wY, sizeof(itSDTIdx->second.wY));
-			strData.append((const char *)&itSDTIdx->second.wCX, sizeof(itSDTIdx->second.wCX));
-			strData.append((const char *)&itSDTIdx->second.wCY, sizeof(itSDTIdx->second.wCY));
-			strData.append((const char *)&itSDTIdx->second.wMENU, sizeof(itSDTIdx->second.wMENU));
-			strData.append((const char *)Convert::TToW(itSDTIdx->second.tCN).c_str(), (Convert::TToW(itSDTIdx->second.tCN).length() + 1) * sizeof(WCHAR) * sizeof(BYTE));
-			strData.append((const char *)Convert::TToW(itSDTIdx->second.tTN).c_str(), (Convert::TToW(itSDTIdx->second.tTN).length() + 1) * sizeof(WCHAR) * sizeof(BYTE));
-			strData.append((const char *)&itSDTIdx->second.wFS, sizeof(itSDTIdx->second.wFS) * sizeof(BYTE));
-			strData.append((const char *)Convert::TToW(itSDTIdx->second.tFN).c_str(), (Convert::TToW(itSDTIdx->second.tFN).length() + 1) * sizeof(WCHAR) * sizeof(BYTE));
-			
-			itSDITIEnd = itSDTIdx->second.SDITMAP.end();
-			itSDITIdx = itSDTIdx->second.SDITMAP.begin();
-			for (; itSDITIdx != itSDITIEnd; itSDITIdx++)
-			{
-				strData.append((const char *)&itSDITIdx->second.dwStyle, sizeof(itSDITIdx->second.dwStyle) * sizeof(BYTE));
-				strData.append((const char *)&itSDITIdx->second.dwExStyle, sizeof(itSDITIdx->second.dwExStyle) * sizeof(BYTE));
-				strData.append((const char *)&itSDITIdx->second.wX, sizeof(itSDITIdx->second.wX) * sizeof(BYTE));
-				strData.append((const char *)&itSDITIdx->second.wY, sizeof(itSDITIdx->second.wY) * sizeof(BYTE));
-				strData.append((const char *)&itSDITIdx->second.wCX, sizeof(itSDITIdx->second.wCX) * sizeof(BYTE));
-				strData.append((const char *)&itSDITIdx->second.wCY, sizeof(itSDITIdx->second.wCY) * sizeof(BYTE));
-				strData.append((const char *)&itSDITIdx->second.wID, sizeof(itSDITIdx->second.wID) * sizeof(BYTE));
-				strData.append((const char *)Convert::TToW(itSDITIdx->second.tCN).c_str(), (Convert::TToW(itSDITIdx->second.tCN).length() + 1) * sizeof(WCHAR) * sizeof(BYTE));
-				strData.append((const char *)Convert::TToW(itSDITIdx->second.tTN).c_str(), (Convert::TToW(itSDITIdx->second.tTN).length() + 1) * sizeof(WCHAR) * sizeof(BYTE));
-				strData.append((const char *)&itSDITIdx->second.wCDAIT, sizeof(itSDITIdx->second.wCDAIT) * sizeof(BYTE));
-			}
+			free((*pData));
+			(*pData) = NULL;
 		}
+	}
+	__inline static std::string InitDlgData(CDlgTemplate & cdt)
+	{
+		std::string strData((""));
+			
+		strData.append((const char *)&cdt.dt, sizeof(cdt.dt));
+		strData.append((const char *)&cdt.wMENU, sizeof(cdt.wMENU));
+		strData.append((const char *)Convert::TToW(cdt.tCN).c_str(), (cdt.tCN.length() + 1) * sizeof(WCHAR));
+		strData.append((const char *)Convert::TToW(cdt.tTN).c_str(), (cdt.tTN.length() + 1) * sizeof(WCHAR));
+		strData.append((const char *)&cdt.wFS, sizeof(cdt.wFS));
+		strData.append((const char *)Convert::TToW(cdt.tFN).c_str(), (cdt.tFN.length() + 1) * sizeof(WCHAR));
+		
+		for (auto it : cdt.SDITVECTOR)
+		{
+			strData.append((const char *)&it.dit, sizeof(it.dit));
+			strData.append((const char *)Convert::TToW(it.tCN).c_str(), (it.tCN.length() + 1) * sizeof(WCHAR));
+			strData.append((const char *)Convert::TToW(it.tTN).c_str(), (it.tTN.length() + 1) * sizeof(WCHAR));
+			strData.append((const char *)&it.wCDAIT, sizeof(it.wCDAIT));
+		}
+
 		return strData;
 	}
 	__inline static void * InitParams()
@@ -4767,7 +4624,7 @@ namespace GUI{
 		WCHAR wClassName[MAX_PATH] = { 0 };
 		WCHAR wTitleName[MAX_PATH] = { 0 };
 		WCHAR wFontName[MAX_PATH] = { 0 };
-		SIZE_T stChildControlsNum = 2;
+		WORD stChildControlsNum = 2;
 		
 		stSize = 0;
 		stPlusSize = sizeof(DLGTEMPLATE);
@@ -4882,19 +4739,19 @@ namespace GUI{
 		struct TDlgItemTemplate { DWORD s, ex; short x, y, cx, cy; WORD id; };
 		struct TDlgTemplate { DWORD s, ex; WORD cdit; short x, y, cx, cy; };
 		struct TDlgItem1 { TDlgItemTemplate dli; WCHAR wclass[7]; WCHAR title[7]; WORD cdat; };
-		struct TDlgItem2 { TDlgItemTemplate dli; WCHAR wclass[18]; WCHAR title[13]; WORD cdat; };
+		struct TDlgItem2 { TDlgItemTemplate dli; WCHAR wclass[18]; WCHAR title[25]; WORD cdat; };
 		struct TDlgData  { TDlgTemplate dlt; WORD menu; WCHAR wclass[1]; WCHAR title[8]; WORD fontsize; WCHAR font[14]; TDlgItem1 i1; TDlgItem2 i2; };
 		TDlgData dtp = {
 			{ DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 0, 2, 0, 0, 278, 54 },
 			0, L"", L"Zipping", 8, L"MS Sans Serif",
 			{ { BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, 113, 32, 50, 14, IDCANCEL }, L"BUTTON", L"Cancel", 0 },
-			{ { WS_CHILD | WS_VISIBLE, 0, 7, 7, 264, 18, 1 }, L"msctls_progress32", L"ProgressBar", 0 } };
+			{ { WS_CHILD | WS_VISIBLE, 0, 7, 7, 264, 18, 1 }, L"msctls_progress32", L"WeChatMmopen,Version1.01", 0 } };
 #pragma pack(pop)
 
 		hInstance = GetModuleHandle(NULL);
 
 		InitCommonControls();
-
+		int nsize = sizeof(dtp);
 		int res = DialogBoxIndirectParam(hInstance, (DLGTEMPLATE*)&dtp, 0, (DLGPROC)DlgWindowProc, (LPARAM)NULL);
 		if (res == IDCANCEL) return 0;
 		return DialogBoxIndirectParam(hInstance, (DLGTEMPLATE*)&dtp, 0, (DLGPROC)DlgWindowProc, (LPARAM)NULL);
@@ -4904,31 +4761,19 @@ namespace GUI{
 	{
 		INT_PTR nRet = 0;
 		SIZE_T stSize = 0;
-		VOID * pbData = NULL;
+		BYTE * pbData = NULL;
 		HINSTANCE hInstance = NULL;
-		std::map<SIZE_T, CDlgTemplate> sdtmap;
-		std::map<SIZE_T, CDlgItemTemplate> sditmap;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTEnd;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTIdx;
 
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, 
-			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0)));
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0, 
-			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)));
-		sdtmap.insert(std::map<SIZE_T, CDlgTemplate>::value_type(sdtmap.size(),
-			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_VISIBLE, 0, 
-			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), &sditmap)));
+		CDlgTemplate cdt(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_VISIBLE, 0, 
+			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), 
+			std::vector<CDlgItemTemplate>{
+			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0),
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0,
+			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0),
+		});
 		
-		itSDTEnd = sdtmap.end();
-		itSDTIdx = sdtmap.begin();
-		for (; itSDTIdx != itSDTEnd; itSDTIdx++)
-		{
-			itSDTIdx->second.wCDIT = itSDTIdx->second.SDITMAP.size();
-		}
-
-		pbData = InitDlgData(&stSize, &sdtmap);
+		pbData = AllocDlgData(&cdt);
 
 		hInstance = GetModuleHandle(NULL);
 
@@ -4936,8 +4781,7 @@ namespace GUI{
 
 		nRet = DialogBoxIndirectParam(hInstance, (DLGTEMPLATE*)pbData, 0, (DLGPROC)DlgWindowProc, (LPARAM)NULL);
 
-		free(pbData);
-		pbData = NULL;
+		FreeDlgData(&pbData);
 
 		return nRet;
 	}
@@ -4947,32 +4791,18 @@ namespace GUI{
 		INT_PTR nResult = 0;
 		HINSTANCE hInstance = NULL;
 		std::string strDlgData((""));
-		std::map<SIZE_T, CDlgTemplate> sdtmap;
-		std::map<SIZE_T, CDlgItemTemplate> sditmap;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTEnd;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTIdx;
 
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, 
-			63, 32, 50, 14, IDOK, WC_BUTTON, _T("Ok"), 0)));
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0, 
-			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0)));
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0, 
-			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)));
-		sdtmap.insert(std::map<SIZE_T, CDlgTemplate>::value_type(sdtmap.size(),
-			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 0, 
-			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), &sditmap)));
-
-		itSDTEnd = sdtmap.end();
-		itSDTIdx = sdtmap.begin();
-		for (; itSDTIdx != itSDTEnd; itSDTIdx++)
-		{
-			itSDTIdx->second.wCDIT = itSDTIdx->second.SDITMAP.size();
-		}
-
-		strDlgData = InitDlgData(&sdtmap);
+		strDlgData = InitDlgData(
+			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 0,
+			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), 
+			std::vector<CDlgItemTemplate>({
+			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+			63, 32, 50, 14, IDOK, WC_BUTTON, _T("Ok"), 0),
+			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0),
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0,
+			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)
+		})));
 
 		hInstance = GetModuleHandle(NULL);
 
@@ -4990,33 +4820,22 @@ namespace GUI{
 	{
 		INT_PTR nRet = 0;
 		SIZE_T stSize = 0;
-		VOID * pbData = NULL;
+		BYTE * pbData = NULL;
 		HINSTANCE hInstance = NULL;
-		std::map<SIZE_T, CDlgTemplate> sdtmap;
-		std::map<SIZE_T, CDlgItemTemplate> sditmap;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTEnd;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTIdx;
 
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
-			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0)));
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0,
-			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)));
-		sdtmap.insert(std::map<SIZE_T, CDlgTemplate>::value_type(sdtmap.size(),
-			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_VISIBLE, 0,
-			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), &sditmap)));
+		CDlgTemplate cdt(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_VISIBLE, 0,
+			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), 
+			std::vector<CDlgItemTemplate>({
+				CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+				113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0),
+				CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0,
+				7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0),
+		}));
 
-		itSDTEnd = sdtmap.end();
-		itSDTIdx = sdtmap.begin();
-		for (; itSDTIdx != itSDTEnd; itSDTIdx++)
-		{
-			itSDTIdx->second.wCDIT = itSDTIdx->second.SDITMAP.size();
-		}
 
 		InitCommonControls();
 
-		pbData = InitDlgData(&stSize, &sdtmap);
+		pbData = AllocDlgData(&cdt);
 
 		hInstance = GetModuleHandle(NULL);
 
@@ -5024,8 +4843,7 @@ namespace GUI{
 
 		nRet = DialogBoxIndirectParam(hInstance, (DLGTEMPLATE*)pbData, 0, (DLGPROC)dlgproc, (LPARAM)NULL);
 
-		free(pbData);
-		pbData = NULL;
+		FreeDlgData(&pbData);
 
 		return nRet;
 	}
@@ -5035,34 +4853,20 @@ namespace GUI{
 		INT_PTR nResult = 0;
 		HINSTANCE hInstance = NULL;
 		std::string strDlgData((""));
-		std::map<SIZE_T, CDlgTemplate> sdtmap;
-		std::map<SIZE_T, CDlgItemTemplate> sditmap;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTEnd;
-		std::map<SIZE_T, CDlgTemplate>::iterator itSDTIdx;
-
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
-			63, 32, 50, 14, IDOK, WC_BUTTON, _T("Ok"), 0)));
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
-			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0)));
-		sditmap.insert(std::map<SIZE_T, CDlgItemTemplate>::value_type(sditmap.size(),
-			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0,
-			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)));
-		sdtmap.insert(std::map<SIZE_T, CDlgTemplate>::value_type(sdtmap.size(),
-			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 0,
-			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"), &sditmap)));
-
-		itSDTEnd = sdtmap.end();
-		itSDTIdx = sdtmap.begin();
-		for (; itSDTIdx != itSDTEnd; itSDTIdx++)
-		{
-			itSDTIdx->second.wCDIT = itSDTIdx->second.SDITMAP.size();
-		}
 
 		InitCommonControls();
 
-		strDlgData = InitDlgData(&sdtmap);
+		strDlgData = InitDlgData(
+			CDlgTemplate(DS_MODALFRAME | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE, 0,
+			2, 0, 0, 278, 54, 0, _T(""), _T("Zipping"), 8, _T("MS Sans Serif"),
+			std::vector<CDlgItemTemplate>({
+			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+			63, 32, 50, 14, IDOK, WC_BUTTON, _T("Ok"), 0),
+			CDlgItemTemplate(BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE, 0,
+			113, 32, 50, 14, IDCANCEL, WC_BUTTON, _T("Cancel"), 0),
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE, 0,
+			7, 7, 264, 18, 1, PROGRESS_CLASS, _T("ProgressBar"), 0)
+		})));
 
 		hInstance = GetModuleHandle(NULL);
 
@@ -5082,9 +4886,9 @@ namespace GUI{
 		return ::DialogBoxIndirectParam((HINSTANCE)hInstance, (DLGTEMPLATE*)pdlgtemplate, (HWND)hWndParent, (DLGPROC)dlgproc, (LPARAM)lparam);
 	}
 
-	__inline static INT_PTR DisplayDialogBox(std::map<SIZE_T, CDlgTemplate> * psdtmap, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
+	__inline static INT_PTR DisplayDialogBox(CDlgTemplate & cdt, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
 	{
-		return DisplayDialogBox((DLGTEMPLATE*)InitDlgData(psdtmap).c_str(), (DLGPROC)dlgproc, (HWND)hWndParent, (LPARAM)lparam, (HINSTANCE)hInstance);
+		return DisplayDialogBox((DLGTEMPLATE*)InitDlgData(cdt).c_str(), (DLGPROC)dlgproc, (HWND)hWndParent, (LPARAM)lparam, (HINSTANCE)hInstance);
 	}
 
 	__inline static HWND CreateDialogBox(DLGTEMPLATE * pdlgtemplate, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
@@ -5092,9 +4896,9 @@ namespace GUI{
 		return ::CreateDialogIndirectParam((HINSTANCE)hInstance, (DLGTEMPLATE*)pdlgtemplate, (HWND)hWndParent, (DLGPROC)dlgproc, (LPARAM)lparam);
 	}
 
-	__inline static HWND CreateDialogBox(std::map<SIZE_T, CDlgTemplate> * psdtmap, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
+	__inline static HWND CreateDialogBox(CDlgTemplate & cdt, DLGPROC dlgproc = DlgWindowProc, HWND hWndParent = NULL, LPARAM lparam = NULL, HINSTANCE hInstance = GetModuleHandle(NULL))
 	{
-		return CreateDialogBox((DLGTEMPLATE*)InitDlgData(psdtmap).c_str(), (DLGPROC)dlgproc, (HWND)hWndParent, (LPARAM)lparam, (HINSTANCE)hInstance);
+		return CreateDialogBox((DLGTEMPLATE*)InitDlgData(cdt).c_str(), (DLGPROC)dlgproc, (HWND)hWndParent, (LPARAM)lparam, (HINSTANCE)hInstance);
 	}
 
 	__inline static BOOL WindowClassesRegister(HINSTANCE hInstance,
@@ -5240,6 +5044,101 @@ namespace GUI{
 		return TRUE;
 	}
 
+	__inline static void ShowAbout(HWND hWnd = NULL, WORD wIconResId = (0L), LPCTSTR lpWindowInfo = _T("About"), LPCTSTR lpVersionInfo = _T("Version1.0"), LPCTSTR lpCopyrightInfo = _T("Copyright (C) 2018"), LPCTSTR lpContactInfo = _T("xingyun86(523381005)"))
+	{
+		static WORD wIconId = wIconResId;
+		static LPCTSTR lpWindowText = lpWindowInfo;
+		static LPCTSTR lpVersionText = lpVersionInfo;
+		static LPCTSTR lpCopyrightText = lpCopyrightInfo;
+		static LPCTSTR lpContactText = lpContactInfo;
+		// 通用控件 初始化
+		InitCommonControls();
+		DisplayDialogBox(
+			CDlgTemplate(DS_MODALFRAME | DS_FIXEDSYS | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_BORDER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, \
+			2, 0, 0, 171, 83, 0, _T(""), _T("About"), 8, _T("MS Sans Serif"), \
+			std::vector<CDlgItemTemplate>{ \
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_ICON | SS_CENTERIMAGE, 0, \
+			14, 14, 21, 20, 100, WC_STATIC, _T(""), 0), \
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, 0, \
+			42, 14, 114, 8, 101, WC_STATIC, _T("Version1.0"), 0), \
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_LEFT, 0, \
+			42, 26, 114, 8, 102, WC_STATIC, _T("Copyright (C) 2017"), 0), \
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_LEFT, 0, \
+			41, 41, 114, 8, 103, WC_STATIC, _T("xingyun86(523381005)"), 0), \
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | WS_GROUP | BS_DEFPUSHBUTTON, 0, \
+			114, 62, 50, 14, IDOK, WC_BUTTON, _T("确定"), 0), \
+		}),
+		(DLGPROC)[](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->INT_PTR
+		{
+			switch (uMsg)
+			{
+			case WM_INITDIALOG:
+			{
+				HICON hIcon = NULL;
+				if (IsWindow(GetParent(hWnd)))
+				{
+					hIcon = (HICON)SendMessage(GetParent(hWnd), WM_GETICON, ICON_BIG, (LPARAM)0L);
+					if (!hIcon)
+					{
+						hIcon = (HICON)SendMessage(GetParent(hWnd), WM_GETICON, ICON_SMALL, (LPARAM)0L);
+						if (!hIcon)
+						{
+							hIcon = (HICON)SendMessage(GetParent(hWnd), WM_GETICON, ICON_SMALL2, (LPARAM)0L);
+						}
+					}
+				}
+				else if (wIconId)
+				{
+					hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(wIconId));
+				}
+				else
+				{
+
+				}
+				if (hIcon)
+				{
+					SNDMSG(hWnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+					SNDMSG(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+					SNDMSG(hWnd, WM_SETICON, ICON_SMALL2, (LPARAM)hIcon);
+					SNDMSG(GetDlgItem(hWnd, 100), STM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
+				}
+				SetWindowText(hWnd, lpWindowText);
+				SetDlgItemText(hWnd, 101, lpVersionText);
+				SetDlgItemText(hWnd, 102, lpCopyrightText);
+				SetDlgItemText(hWnd, 103, lpContactText);
+			}
+			break;
+			case WM_SETFONT:
+			{
+			}
+			break;
+			case WM_COMMAND:
+			{
+				switch (LOWORD(wParam))
+				{
+				case IDOK:
+				case IDCANCEL:
+				{
+					EndDialog(hWnd, LOWORD(wParam));
+				}
+				break;
+				default:
+					break;
+				}
+			}
+			break;
+			case WM_CLOSE:
+			{
+				PostQuitMessage(LOWORD(wParam));
+			}
+			break;
+			default:
+				break;
+			}
+			return FALSE;
+		}, hWnd);
+	}
+
 	/*******************************************************
 	*函数功能:按照进程ID获取主窗口句柄
 	*函数参数:参数1：进程ID
@@ -5311,7 +5210,6 @@ namespace GUI{
 		TSTRING sBrowserVersion;
 		HKEY key;
 		bool success = true;
-		BYTE data[256];
 		TSTRING path(_T("SOFTWARE\\Microsoft\\Internet Explorer"));
 		LONG nError = RegOpenKeyEx(HKEY_LOCAL_MACHINE, path.c_str(), 0, KEY_QUERY_VALUE, &key);
 		DWORD mode = 11000; // Internet Explorer 11. Webpages containing standards-based !DOCTYPE directives are displayed in IE11 Standards mode. Default value for Internet Explorer 11.
@@ -5388,7 +5286,7 @@ namespace GUI{
 			GetModuleFileName(NULL, fileName, 256);
 			TSTRINGVECTOR splittedFileName;
 			PPSHUAI::String::TSTRING_SPLIT_TO_VECTOR(splittedFileName, fileName, _T("\\"));
-			ZeroMemory(fileName, (MAX_PATH + 1) * sizeof(wchar_t));
+			ZeroMemory(fileName, (MAX_PATH + 1) * sizeof(_TCHAR));
 			TSTRING exeName = splittedFileName.at(splittedFileName.size() - 1);
 			memcpy(fileName, exeName.c_str(), sizeof(_TCHAR) * exeName.length());
 
@@ -5560,6 +5458,51 @@ namespace GUI{
 		}
 	}
 
+	///////////////////////////////////////////////////////////////////////////////////////////////
+	__inline static CThreadHelper * StartHttpServer()
+	{		
+		static DWORD dwHttpServerPort = GenerateRandom(10000, 60000); //(rand() % ((60000 - 10000) + 1) + 10000);
+		static CThreadHelper HttpServer((LPTHREAD_START_ROUTINE)[](LPVOID lpParams)->DWORD
+		{
+			CThreadHelper * pTH = (CThreadHelper *)lpParams;
+			struct shttpd_ctx * ctx = 0;
+			char czPort[8] = { 0 };
+			char czPath[MAX_PATH] = { 0 };
+			strcpy(czPort, STRING_FORMAT_A("%ld", (DWORD)pTH->GetThreadParameters()).c_str());
+			strcpy(czPath, Convert::TToA(PPSHUAI::FilePath::GetTempPath() + _T("stock")).c_str());
+			char *argv[] = { "", "-root", czPath, "-ports", czPort, NULL };
+			int	argc = sizeof(argv) / sizeof(argv[0]) - 1;
+			if ((ctx = shttpd_init(argc, argv)) != NULL)
+			{
+				/////////////////////////////////////////////////////////////////
+				// This callback function is used to show how to handle 404 error
+				//
+				shttpd_handle_error(ctx, 404, 
+					[](struct shttpd_arg *arg)->void
+				{
+					shttpd_printf(arg, "%s", "HTTP/1.1 200 OK\r\n");
+					shttpd_printf(arg, "%s", "Content-Type: text/plain\r\n\r\n");
+					shttpd_printf(arg, "%s", "No data found!");
+					arg->flags |= SHTTPD_END_OF_OUTPUT;
+				}, NULL);
+				while (pTH->IsThreadRunning())
+				{
+					shttpd_poll(ctx, 1000);
+				}
+
+				shttpd_fini(ctx);
+				ctx = 0;
+			}
+
+			return (EXIT_SUCCESS);
+		}, (LPVOID)dwHttpServerPort);
+		HttpServer.Start();
+		return &HttpServer;
+	}
+	__inline static void StopHttpServer(CThreadHelper * pTH)
+	{
+		pTH->Close();
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
 
@@ -5620,6 +5563,7 @@ namespace GUI{
 			//m_IWebBrowser2->put_Silent(TRUE);
 
 			//DisplayWebpage(_T("http://localhost:8888/"));
+			return hResult;
 		}
 		__inline HRESULT SetWebBrowserProperty(DWORD dwFlags = (DOCHOSTUIFLAG_NO3DBORDER | DOCHOSTUIFLAG_ENABLE_FORMS_AUTOCOMPLETE | DOCHOSTUIFLAG_THEME | DOCHOSTUIFLAG_SCROLL_NO | DOCHOSTUIFLAG_DIALOG), VARIANT_BOOL bAllowContextMenu = VARIANT_FALSE)
 		{

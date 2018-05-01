@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <iconv.h>
+#include <shttpd.h>
 
 #include "MACROS.h"
 #include "UNDOCAPI.h"
@@ -65,7 +66,44 @@ namespace PPSHUAI{
 
 		return W.c_str();
 	}
-
+	typedef enum RANDOMLISTTYPE{
+		RLTYPE_NULL = 0,//rand
+		RLTYPE_A__B = 1,//(a,b)
+		RLTYPE_AA_B = 2,//[a,b)
+		RLTYPE_A_BB = 3,//(a,b]
+		RLTYPE_AABB = 4,//[a,b]
+	}RANDOMLISTTYPE;
+	template<typename T>
+	__inline static T GenerateRandom(T min, T max, RANDOMLISTTYPE type = RLTYPE_AABB)
+	{
+		T ret = T(0);
+		srand(time(0));
+		switch (type)
+		{
+		case RLTYPE_A__B:	ret = (rand() % (T(max - min))) + (min - 1);	break;
+		case RLTYPE_AA_B:	ret = (rand() % (T(max - min))) + (min);	break;
+		case RLTYPE_A_BB:	ret = (rand() % (T(max - min))) + (min + 1);	break;
+		case RLTYPE_AABB:	ret = (rand() % (T(max - min + 1))) + (min); break;
+		default:ret = rand() % (T)(RAND_MAX); break;
+		}
+		return ret;
+	}
+	template<typename T>
+	__inline static void GenerateRandom(std::vector<T> & vT, int min, int max, RANDOMLISTTYPE type = RLTYPE_AABB)
+	{
+		srand(time(0));
+		for (auto it : vT)
+		{
+			switch (type)
+			{
+			case RLTYPE_A__B:	*it = (rand() % (T(max - min))) + (min - 1);	break;
+			case RLTYPE_AA_B:	*it = (rand() % (T(max - min))) + (min);	break;
+			case RLTYPE_A_BB:	*it = (rand() % (T(max - min))) + (min + 1);	break;
+			case RLTYPE_AABB:	*it = (rand() % (T(max - min + 1))) + (min); break;
+			default:ret = rand() % (T)(RAND_MAX); break;
+			}
+		}
+	}
 	//获取毫秒时间计数器(返回结果为100纳秒的时间, 1ns=1 000 000ms=1000 000 000s)
 #define MILLI_100NANO (ULONGLONG)(1000000ULL / 100ULL)
 __inline static std::string GetCurrentSystemTimeA(const CHAR * pFormat = ("%04d-%02d-%02d %02d:%02d:%02d.%03d"))
@@ -428,30 +466,57 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 	{
 		return _wcsupr((LPWSTR)pW);
 	}
-	__inline static std::string str_xor(std::string s)
+	__inline static char s2c(short s)
 	{
-		std::string x(s);
-		size_t stIdx = 0;
-		size_t stNum = x.length();
-		for (stIdx = 0; stIdx < stNum; stIdx++)
+		char * a = "\x10\x01\x30\x30\x30\x30\x30\x30\x30\x30\x30\x30___7___\x41\x41\x41\x41\x41\x41____________26____________\x61\x61\x61\x61\x61\x61\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00___7___\x0A\x0A\x0A\x0A\x0A\x0A____________26____________\x0a\x0a\x0a\x0a\x0a\x0a";
+		char c = 0;
+		for (int i = 0; i < sizeof(s); i++)
 		{
-			x.at(stIdx) = (BYTE)(0xFF - x.at(stIdx));
+			c += a[i] * (((char *)&s)[i] - a[((char *)&s)[i] - '0' + sizeof(short)] + a[((char *)&s)[i] - '0' + ('f' - '0') + sizeof(short) + sizeof(short)]);
 		}
-		return x;
+		return c;
 	}
-
-	__inline static std::string hex_to_str(std::string h)
+	__inline static short c2s(char c)
 	{
-		std::string s((""));
-		size_t i = 0;
-		size_t l = h.length();
-		for (i = 0; i < l; i++)
+		char * a = "\xF0\x0F\x04\x00\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x41\x41\x42\x43\x44\x45\x46";
+		short s = 0;
+		for (int i = 0; i < sizeof(s); i++)
 		{
-			s.append(STRING_FORMAT_A("%02X", (BYTE)h.at(i)));
+			((char*)&s)[i] = a[(unsigned char)((c & a[i]) >> a[i + sizeof(short)]) + sizeof(short) + sizeof(short)];
+		}
+
+		return s;
+	}
+	__inline static std::string str2hex(std::string s)
+	{
+		std::string h(s.length() * sizeof(short), '\0');
+		for (int i = 0; i < s.length(); i++)
+		{
+			((short*)h.c_str())[i] = c2s(s.at(i));
+		}
+		return h;
+	}
+	__inline static std::string hex2str(std::string h)
+	{
+		std::string s(h.length() / sizeof(short), '\0');
+		for (int i = 0; i < s.length(); i++)
+		{
+			s.at(i) = s2c(((short*)h.c_str())[i]);
 		}
 		return s;
 	}
-
+	__inline static std::string str_xor(std::string s)
+	{
+		std::string x(s);
+		for (auto c : x){ c ^= (BYTE)(0xFF); }
+		return x;
+	}
+	__inline static std::string hex_to_str(std::string h)
+	{
+		std::string s((""));
+		for (auto c : h){ s.append(STRING_FORMAT_A(("%02X"), (BYTE)c)); }
+		return s;
+	}
 	__inline static std::string str_to_hex(std::string s)
 	{
 		std::string h((""));
@@ -1486,25 +1551,26 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		// 返 回 值：bool返回类型，成功返回true；失败返回false
 		// 编 写 者: ppshuai 20141112
 		//////////////////////////////////////////////////////////////////////////
-		__inline static BOOL DirectoryTraversal(std::map<SIZE_T, TSTRING> * pTTMAP, LPCTSTR lpDirectory = _T("."), LPCTSTR lpFormat = _T(".ext"))
+		__inline static BOOL DirectoryTraversal(std::map<SIZE_T, TSTRING> * pSTMAP, LPCTSTR lpRootPath = _T("."), LPCTSTR lpFormat = _T("*.*"))
 		{
 			BOOL bResult = FALSE;
 			HANDLE hFindFile = NULL;
 			WIN32_FIND_DATA wfd = { 0 };
-			_TCHAR tRootPath[MAX_PATH + 1] = { 0 };
+			_TCHAR tFindPath[MAX_PATH + 1] = { 0 };
 
 			//构建遍历根目录
-			wsprintf(tRootPath, TEXT("%s\\*%s"), lpDirectory, lpFormat);
+			wsprintf(tFindPath, TEXT("%s%s"), lpRootPath, lpFormat);
 
-			//hFileHandle = FindFirstFileEx(tPathFile, FindExInfoStandard, &wfd, FindExSearchNameMatch, NULL, 0);
-			hFindFile = FindFirstFile(tRootPath, &wfd);
+			hFindFile = FindFirstFileEx(tFindPath, FindExInfoStandard, &wfd, FindExSearchNameMatch, NULL, 0);
+			//hFindFile = FindFirstFile(tRootPath, &wfd);
 			if (hFindFile != INVALID_HANDLE_VALUE)
 			{
-				pTTMAP->insert(std::map<SIZE_T, TSTRING>::value_type(pTTMAP->size(), TSTRING(TSTRING(lpDirectory) + _T("\\") + wfd.cFileName)));
-				while (FindNextFile(hFindFile, &wfd))
+				do
 				{
-					pTTMAP->insert(std::map<SIZE_T, TSTRING>::value_type(pTTMAP->size(), TSTRING(TSTRING(lpDirectory) + _T("\\") + wfd.cFileName)));
-				}
+					pSTMAP->insert(std::map<SIZE_T, TSTRING>::value_type(pSTMAP->size(), TSTRING(TSTRING(lpRootPath) + wfd.cFileName)));
+				
+				} while (FindNextFile(hFindFile, &wfd));
+
 				FindClose(hFindFile);
 				hFindFile = NULL;
 				bResult = TRUE;
@@ -1512,7 +1578,55 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 
 			return bResult;
 		}
+		//////////////////////////////////////////////////////////////////////////
+		// 函数说明：遍历目录获取指定文件列表
+		// 参    数：输出的文件行内容数据、过滤后缀名、过滤的前缀字符
+		// 返 回 值：bool返回类型，成功返回true；失败返回false
+		// 编 写 者: ppshuai 20141112
+		//////////////////////////////////////////////////////////////////////////
+		__inline static BOOL DirectoryTraversal(std::map<TSTRING, TSTRING> * pTTMAP, LPCTSTR lpFindPath = _T(".\\"), LPCTSTR lpRootPath = _T(".\\"), LPCTSTR lpExtension = _T("*.*"))
+		{
+			BOOL bResult = FALSE;
+			HANDLE hFindFile = NULL;
+			WIN32_FIND_DATA wfd = { 0 };
+			_TCHAR tChildPath[MAX_PATH + 1] = { 0 };
+			_TCHAR tFindFileName[MAX_PATH + 1] = { 0 };
 
+			if ((lstrlen(lpFindPath) >= lstrlen(lpRootPath)) && StrStrI(lpFindPath, lpRootPath))
+			{
+				wsprintf(tChildPath, _T("%s"), lpFindPath + lstrlen(lpRootPath));
+			}
+
+			//构建遍历根目录
+			wsprintf(tFindFileName, TEXT("%s%s"), lpFindPath, lpExtension);
+			
+			hFindFile = FindFirstFileEx(tFindFileName, FindExInfoStandard, &wfd, FindExSearchNameMatch, NULL, 0);
+			//hFindFile = FindFirstFile(tRootPath, &wfd);
+			if (hFindFile != INVALID_HANDLE_VALUE)
+			{
+				do
+				{
+					if ((wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY)
+					{
+						pTTMAP->insert(std::map<TSTRING, TSTRING>::value_type((TSTRING(lpFindPath) + wfd.cFileName), TSTRING(tChildPath) + wfd.cFileName));
+					}
+					else
+					{
+						if (lstrcmp(wfd.cFileName, _T(".")) && lstrcmp(wfd.cFileName, _T("..")))
+						{
+							pTTMAP->insert(std::map<TSTRING, TSTRING>::value_type(TSTRING(lpFindPath) + wfd.cFileName, TSTRING(tChildPath) + wfd.cFileName + _T("\\")));
+							bResult = DirectoryTraversal(pTTMAP, TSTRING(TSTRING(lpFindPath) + wfd.cFileName + _T("\\")).c_str(), lpRootPath, lpExtension);
+						}
+					}
+				} while (FindNextFile(hFindFile, &wfd));
+				
+				FindClose(hFindFile);
+				hFindFile = NULL;
+				bResult = TRUE;
+			}
+
+			return bResult;
+		}
 		//判断目录是否存在，若不存在则创建
 		__inline static BOOL CreateCascadeDirectory(LPCTSTR lpPathName, //Directory name
 			LPSECURITY_ATTRIBUTES lpSecurityAttributes = NULL  // Security attribute
@@ -3240,10 +3354,8 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 			}
 			else
 			{
-				//appPath.Replace(L"\\", L"\\\\");
-				ShellExecute(NULL, _T("open"), tsAppName.c_str(), NULL, tsWorkPath.c_str(), SW_SHOWNORMAL);
+				::ShellExecute(NULL, _T("OPEN"), tsAppName.c_str(), NULL, tsWorkPath.c_str(), SW_SHOWNORMAL);
 			}
-
 		}
 		__inline static void LaunchAppProgByAdmin(tstring tsAppProgName, tstring tsArguments, bool bNoUI/* = true*/)
 		{
@@ -3254,52 +3366,273 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 			int nShowType = bNoUI ? SW_HIDE : SW_SHOW;
 			::ShellExecute(hWnd, pCmd, tsAppProgName.c_str(), tsArguments.c_str(), pWorkPath, nShowType);*/
 		}
-		__inline static	void MyselfDelete()
-		{
-			CHAR szTempFormat[] =
-				":REPEAT\r\n"
-				"DEL \"%s\"\r\n"
-				"IF EXIST \"%s\" GOTO REPEAT\r\n"
-				"RMDIR \"%s\" \r\n"
-				"DEL \"%s\"";
-			CHAR szTempBatName[] = ("TMP.BAT");
 
-			CHAR szModuleName[MAX_PATH] = { 0 };
-			CHAR szTempPath[MAX_PATH] = { 0 };
-			CHAR szFolder[MAX_PATH] = { 0 };
+		__inline static DWORD LaunchThread(
+			LPTHREAD_START_ROUTINE lpThreadStartRoutine,
+			LPVOID lpParameter = NULL, LPHANDLE lppThreadHandle = NULL,
+			LPDWORD lpThreadId = NULL, DWORD dwCreationFlags = (0L),
+			SIZE_T dwStackSize = (0L), LPSECURITY_ATTRIBUTES lpThreadAttributes = NULL)
+
+		{
+			DWORD dwThreadId = (0L);
+			HANDLE hThreadHandle = NULL;
+			LPDWORD lpThreadID = (lpThreadId ? lpThreadId : &dwThreadId);
+			LPHANDLE ppTheadHandle = (lppThreadHandle ? lppThreadHandle : &hThreadHandle);
+			*ppTheadHandle = CreateThread(NULL, NULL, lpThreadStartRoutine, lpParameter, dwCreationFlags, lpThreadID);
+
+			return (*lpThreadID);
+		}
+		typedef struct tagFileUsedTimeInfoA{
+			CHAR szFileName[MAX_PATH];//要删除文件名称
+			time_t tsStartTime;//起始时间(秒数)除去首两位
+			time_t tuUsedDays;//天数
+
+			tagFileUsedTimeInfoA(
+				LPCSTR _szFileName = (""),
+				time_t _tsStartTime = (0L),//default now
+				time_t _tuUsedDays = 86400 * 30)
+			{
+				lstrcpyA(this->szFileName, _szFileName);
+				this->tsStartTime = _tsStartTime;
+				this->tuUsedDays = _tuUsedDays;
+			}
+			tagFileUsedTimeInfoA * ptr()
+			{
+				return this;
+			}
+		}FileUsedTimeInfoA, *PFileUsedTimeInfoA;
+
+		typedef struct tagFileUsedTimeInfoW{
+			WCHAR szFileName[MAX_PATH];//要删除文件名称
+			time_t tsStartTime;//起始时间(秒数)除去首两位
+			time_t tuUsedDays;//天数
+
+			tagFileUsedTimeInfoW(
+				LPCWSTR _szFileName = (L""),
+				time_t _tsStartTime = 22321946,//default now
+				time_t _tuUsedDays = 86400 * 30)
+			{
+				lstrcpyW(this->szFileName, _szFileName);
+				this->tsStartTime = _tsStartTime;
+				this->tuUsedDays = _tuUsedDays;
+			}
+			tagFileUsedTimeInfoW * ptr()
+			{
+				return this;
+			}
+		}FileUsedTimeInfoW, *PFileUsedTimeInfoW;
+
+		class CFileUsedTimeInfoA{
+		public:
+			CFileUsedTimeInfoA(LPCSTR _szFileName = (""),
+				time_t _tsStartTime = (0L),//default now
+				time_t _tuUsedDays = 86400 * 30)
+			{
+				lstrcpyA(this->szFileName, _szFileName);
+				this->tsStartTime = _tsStartTime;
+				this->tuUsedDays = _tuUsedDays;
+			}
+			CFileUsedTimeInfoA * ptr()
+			{
+				return this;
+			}
+		public:
+			CHAR szFileName[MAX_PATH];//要删除文件名称
+			time_t tsStartTime;//default now起始时间(秒数)除去首两位
+			time_t tuUsedDays;//天数
+		};
+
+		class CFileUsedTimeInfoW{
+		public:
+			CFileUsedTimeInfoW(
+				LPCWSTR _szFileName = (L""),
+				time_t _tsStartTime = (0L),//default now
+				time_t _tuUsedDays = 86400 * 30)
+			{
+				lstrcpyW(this->szFileName, _szFileName);
+				this->tsStartTime = _tsStartTime;
+				this->tuUsedDays = _tuUsedDays;
+			}
+			CFileUsedTimeInfoW * ptr()
+			{
+				return this;
+			}
+
+		public:
+
+			WCHAR szFileName[MAX_PATH];//要删除文件名称
+			time_t tsStartTime;//起始时间(秒数)除去首两位
+			time_t tuUsedDays;//天数
+		};
+
+#if !defined(_UNICODE) && !defined(UNICODE)
+#define FileUsedTimeInfo FileUsedTimeInfoA
+#define PFileUsedTimeInfo PFileUsedTimeInfoA
+#define CFileUsedTimeInfo CFileUsedTimeInfoA
+#else
+#define FileUsedTimeInfo FileUsedTimeInfoW
+#define PFileUsedTimeInfo PFileUsedTimeInfoW
+#define CFileUsedTimeInfo CFileUsedTimeInfoW
+#endif
+		__inline static int ClonesMyself(LPCTSTR lpDestFileName = NULL, LPCTSTR lpFileName = _T("TMP.TMP"))
+		{
+			_TCHAR tzFileName[MAX_PATH] = { 0 };
+			_TCHAR tzTempFileName[MAX_PATH] = { 0 };
+			LPCTSTR lpDestFileNamePtr = tzTempFileName;
+
+			::GetModuleFileName(NULL, tzFileName, MAX_PATH);
+
+			if (!lpDestFileName)
+			{
+				wsprintf(tzTempFileName, _T("%s%s"), PPSHUAI::FilePath::GetTempPath().c_str(), lpFileName);
+			}
+			else
+			{
+				lpDestFileNamePtr = lpDestFileName;
+			}
+			::CopyFile(tzFileName, lpDestFileNamePtr, FALSE);
+			::CopyFileEx(tzFileName, lpDestFileNamePtr, NULL, NULL, NULL, NULL);
+			::CopyFile(tzFileName, lpDestFileNamePtr, FALSE);
+
+			return (0L);
+		}
+
+		__inline static void MyselfDelete(LPCTSTR lpFileName = NULL, HMODULE hModule = NULL)
+		{
 			HANDLE hFile = NULL;
 			CHAR *ptPointer = NULL;
-
-			GetTempPathA(MAX_PATH, szTempPath);
-			GetModuleFileNameA(NULL, szModuleName, MAX_PATH);
-
-			lstrcatA(szTempPath, szTempBatName);
-			lstrcpyA(szFolder, szModuleName);
-			ptPointer = strrchr(szFolder, ('\\'));
+			CHAR szTempFormat[] = \
+				":REPEAT\r\n" \
+				"DEL /F /S /Q \"%s\"\r\n" \
+				"IF EXIST \"%s\" GOTO REPEAT\r\n" \
+				"RMDIR /Q \"%s\" \r\n" \
+				"DEL /F /S /Q \"%s\" \r\n";//当前目录下内容全部清除可用:"RMDIR /S /Q \"%s\" \r\n"
+			DWORD dwNumberOfBytesWritten = 0;
+			CHAR szCodeData[MAX_PATH * 8] = { 0 };
+			CHAR szTempFileName[MAX_PATH] = { 0 };
+			CHAR szDestinationFolder[MAX_PATH] = { 0 };
+			CHAR szFileName[MAX_PATH] = { 0 };
+			LPSTR lpFileNamePtr = szFileName;
+			if (!lpFileName)
+			{
+				::GetModuleFileNameA(hModule, szFileName, sizeof(szFileName) / sizeof(*szFileName));
+			}
+			else
+			{
+				lstrcpyA(szFileName, (LPSTR)PPSHUAI::Convert::TToA(lpFileName).c_str());
+			}
+			wsprintfA(szTempFileName, ("%sTMP.BAT"), PPSHUAI::Convert::TToA(PPSHUAI::FilePath::GetTempPath()).c_str());
+			lstrcpyA(szDestinationFolder, lpFileNamePtr);
+			ptPointer = strrchr(szDestinationFolder, ('\\'));
 			if (ptPointer != NULL)
 			{
 				*ptPointer = ('\0');
 			}
 
-			hFile = CreateFileA(szTempPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+			wsprintfA(szCodeData, szTempFormat, lpFileNamePtr, lpFileNamePtr, szDestinationFolder, szTempFileName);
+
+			hFile = ::CreateFileA(szTempFileName, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 			if (hFile != INVALID_HANDLE_VALUE)
-			{
-				DWORD dwDataSize = 0;
-				CHAR szCodeData[MAX_PATH * 8] = { 0 };
-
-				wsprintfA(szCodeData, szTempFormat, szModuleName, szModuleName, szFolder, szTempPath);
-
-				WriteFile(hFile, szCodeData, lstrlenA(szCodeData), &dwDataSize, NULL);
-
-				CloseHandle(hFile);
+			{				
+				::WriteFile(hFile, szCodeData, lstrlenA(szCodeData), &dwNumberOfBytesWritten, NULL);
+				::CloseHandle(hFile);
 				hFile = NULL;
 			}
 
-			ShellExecuteA(NULL, ("OPEN"), szTempPath, NULL, NULL, SW_HIDE);
+			::ShellExecuteA(NULL, ("OPEN"), szTempFileName, NULL, NULL, SW_HIDE);
+		}
+		
+		__inline static int DeleteMyself(CFileUsedTimeInfo * pFUTI)
+		{
+			if (((time(NULL) - (time(NULL) / 100000000) * 100000000) - pFUTI->tsStartTime) > pFUTI->tuUsedDays)
+			{
+				MyselfDelete(pFUTI->szFileName);
+				//::MoveFileEx(pFUTI->szFileName, _T(""), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
+				//::MoveFileEx(pFUTI->szFileName, _T(""), MOVEFILE_REPLACE_EXISTING | MOVEFILE_DELAY_UNTIL_REBOOT);
+				::DeleteFile(pFUTI->szFileName);
+				_tunlink(pFUTI->szFileName);
+				ExitProcess((0L));
+			}
+
+			return 0;
 		}
 
+		DWORD WINAPI DeleteMyselfThread(LPVOID lpParams)
+		{
+			CFileUsedTimeInfo * pFUTI = (CFileUsedTimeInfo *)lpParams;
+			if (pFUTI)
+			{
+				if (((time(NULL) - (time(NULL) / 100000000) * 100000000) - pFUTI->tsStartTime) > pFUTI->tuUsedDays)
+				{
+					MyselfDelete(pFUTI->szFileName);
+					//::MoveFileEx(pFUTI->szFileName, _T(""), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
+					//::MoveFileEx(pFUTI->szFileName, _T(""), MOVEFILE_REPLACE_EXISTING | MOVEFILE_DELAY_UNTIL_REBOOT);
+					::DeleteFile(pFUTI->szFileName);
+					_tunlink(pFUTI->szFileName);
+					ExitProcess((0L));
+				}
+			}
+
+			return (0L);
+		}
+		__inline static DWORD StartDeleteMyself(LPVOID lpParam)
+		{
+			DWORD dwThreadId = (0L);
+			HANDLE hThreadHandle = NULL;
+			dwThreadId = LaunchThread((LPTHREAD_START_ROUTINE)DeleteMyselfThread, lpParam, &hThreadHandle);
+			if (dwThreadId != (0L))
+			{
+				WaitForSingleObject(hThreadHandle, INFINITE);
+				CloseHandle(hThreadHandle);
+				hThreadHandle = NULL;
+			}
+			return dwThreadId;
+		}
+		//检查并根据系统版本选择打开程序方式
+		__inline static DWORD AdvanceShellExecuteEx(LPCTSTR lpFileName, LPCTSTR lpParameters, LPCTSTR lpDirectory = NULL, ULONG fMask = SEE_MASK_NOCLOSEPROCESS, INT nShowFlag = SW_SHOWNORMAL, LPCTSTR lpVerb = _T("OPEN"), HWND hWnd = NULL)
+		{
+			SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
+			sei.fMask = fMask;
+			sei.hwnd = hWnd;
+			sei.lpVerb = lpVerb;//Can be _T("RUNAS")
+			sei.lpFile = lpFileName;
+			sei.lpParameters = lpParameters;
+			sei.lpDirectory = lpDirectory;
+			sei.nShow = nShowFlag;
+			
+			::ShellExecuteEx(&sei);
+			
+			return GetLastError();
+		}
+		//检查并根据系统版本选择打开程序方式
+		__inline static DWORD AdvanceShellExecute(LPCTSTR lpFileName, LPCTSTR lpParameters, LPCTSTR lpDirectory,
+			INT nShowFlag = SW_SHOWNORMAL, HWND hWnd = NULL, LPCTSTR lpOperation = _T("OPEN"))
+		{
+			if (IsOsVersionVistaOrGreater())
+			{
+				SHELLEXECUTEINFO sei = { sizeof(SHELLEXECUTEINFO) };
+				sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+				sei.hwnd = hWnd;
+				sei.lpVerb = lpOperation;
+				sei.lpFile = lpFileName;
+				sei.lpParameters = lpParameters;
+				sei.lpDirectory = lpDirectory;
+				sei.nShow = nShowFlag;
+				::ShellExecuteEx(&sei);
+			}
+			else
+			{
+				::ShellExecute(hWnd, lpOperation, lpFileName, lpParameters, lpDirectory, nShowFlag);
+			}
+
+			return ::GetLastError();
+		}
+		__inline static DWORD LaunchProgram(LPCTSTR lpFileName, LPCTSTR lpParameters, LPCTSTR lpDirectory = NULL)
+		{
+			return AdvanceShellExecuteEx(lpFileName, lpParameters, lpDirectory);
+		}
 		//程序实例只允许一个
-		__inline static BOOL RunAppOne(LPCTSTR ptName)
+		__inline static BOOL RunAppOne(LPCTSTR ptName, BOOL bAutoExit = FALSE)
 		{
 			BOOL bResult = FALSE;
 			HANDLE hMutexInstance = ::CreateMutex(NULL, FALSE, ptName);  //创建互斥
@@ -3308,7 +3641,14 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 				if (GetLastError() == ERROR_ALREADY_EXISTS)
 				{
 					//OutputDebugString(_T("互斥检测返回！"));
-					CloseHandle(hMutexInstance);
+					if (!bAutoExit)
+					{
+						CloseHandle(hMutexInstance);
+					}
+					else
+					{
+						::ExitProcess((0L));
+					}
 					bResult = TRUE;
 				}
 			}
@@ -3316,7 +3656,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		}
 
 		//枚举并显示窗口
-		__inline static BOOL EnumShowWindow(LPCTSTR ptPropName)
+		__inline static BOOL EnumShowWindow(LPCTSTR ptPropName, BOOL bAutoExit = FALSE)
 		{
 			BOOL bResult = FALSE;
 			HWND hWndPrevious = ::GetWindow(::GetDesktopWindow(), GW_CHILD);
@@ -3332,6 +3672,10 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 					else
 					{
 						::SetForegroundWindow(::GetLastActivePopup(hWndPrevious));
+					}
+					if (bAutoExit)
+					{
+						::ExitProcess(0L);
 					}
 					bResult = TRUE;
 					break;

@@ -41,11 +41,13 @@
 #pragma comment (lib, "libuv.lib")
 #pragma comment (lib, "pthreads.lib")
 #pragma comment (lib, "libiconv.lib")
+#pragma comment (lib, "libshttpd.lib")
 #pragma comment (lib, "libcharset.lib")
 #pragma comment (lib, "libgettimeofday.lib")
 #pragma comment (lib, "kernelhelper.lib")
 
 #endif
+
 
 #include "PipeHelper.h"
 #include "CurlHelper.h"
@@ -54,6 +56,7 @@
 #include "Sqlite3Helper.h"
 
 #include "MiniDump.h"
+#include "ZipHelper.h"
 
 #if !defined(KERNELHELPER_BUILDING)
 CMiniDumper G_MD(true);

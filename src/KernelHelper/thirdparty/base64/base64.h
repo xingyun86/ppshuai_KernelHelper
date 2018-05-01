@@ -57,7 +57,7 @@ namespace PPSHUAI
 
 		static const std::string kBase64String = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-		__inline static inline bool IsBase64(unsigned char c)
+		__inline static bool IsBase64(unsigned char c)
 		{
 			return (isalnum(c) || (c == '+') || (c == '/'));
 		}
