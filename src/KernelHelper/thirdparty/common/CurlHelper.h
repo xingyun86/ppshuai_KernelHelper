@@ -10,6 +10,89 @@
 #include <wininet.h>
 
 namespace PPSHUAI{
+	typedef struct _tagByteData {
+#define call_back_data_size 0x10000
+		char * p;
+		unsigned int s;
+		unsigned int v;
+		static void * startup()
+		{
+			void * thiz = malloc(sizeof(struct _tagByteData));
+			if (thiz)
+			{
+				((struct _tagByteData *)thiz)->init();
+			}
+			return thiz;
+		}
+		_tagByteData()
+		{
+		}
+		_tagByteData(char ** _p = 0, unsigned int _s = 0, unsigned int _v = 0)
+		{
+			init(_p, _s, _v);
+		}
+		void init(char ** _p = 0, unsigned int _s = 0, unsigned int _v = 0)
+		{
+			p = _p ? (*_p) : 0; s = _s; v = (!p || !_v) ? call_back_data_size : _v;
+			if (!p)
+			{
+				p = (char *)malloc(v * sizeof(char));
+			}
+			if (p && v > 0)
+			{
+				memset(p, 0, v * sizeof(char));
+			}
+		}
+		void copy(const char * _p, unsigned int _s)
+		{
+			if (_s > 0)
+			{
+				if (s + _s > v)
+				{
+					v += _s + 1;
+					p = (char *)realloc(p, v * sizeof(char));
+					memset(p + s, 0, _s + 1);
+				}
+				if (p)
+				{
+					memcpy(p, _p, _s);
+					s = _s;
+				}
+			}
+		}
+		char * append(char * _p, unsigned int _s)
+		{
+			if (_s > 0)
+			{
+				if (s + _s > v)
+				{
+					v += _s + 1;
+					p = (char *)realloc(p, v * sizeof(char));
+					memset(p + s, 0, _s + 1);
+				}
+				if (p)
+				{
+					memcpy(p + s, _p, _s);
+					s += _s;
+				}
+			}
+			return p;
+		}
+		void exit(char ** _p)
+		{
+			if (_p && (*_p))
+			{
+				free((*_p));
+				(*_p) = 0;
+			}
+			s = v = 0;
+		}
+		void cleanup()
+		{
+			exit(&p);
+			free(this);
+		}
+	}BYTEDATA, *PBYTEDATA;
 	namespace CURLTOOL {
 
 		typedef struct _tagCallBackData {
@@ -1619,6 +1702,7 @@ namespace PPSHUAI{
 		{
 			REQ_VERSION_HTTP_10,
 			REQ_VERSION_HTTP_11,
+			REQ_VERSION_HTTP_20,
 		}HTTP_REQ_VERSION;
 		// HTTP状态事件标识
 		typedef enum HTTP_STATUS_EVENT
@@ -1836,7 +1920,7 @@ namespace PPSHUAI{
 		__inline static HRESULT SynchromousInternetStartupA(LPINTERNET_SESSIONA lpInternetSession)
 		{
 			BOOL bResult = FALSE;
-			LPVOID lpData = NULL;
+			LPBYTE lpData = NULL;
 			LPCSTR lpProxy = NULL;
 			LPCSTR lpHeaders = NULL;
 			HRESULT hResult = S_FALSE;
@@ -1941,7 +2025,7 @@ namespace PPSHUAI{
 			{
 				if (lpInternetSession->dwResponseDataAllocateCapacity <= 0)
 				{
-					lpData = lpInternetSession->lpResponseData = (LPBYTE)::LocalAlloc(LMEM_FIXED | LMEM_MOVEABLE | LMEM_ZEROINIT, lpInternetSession->dwResponseDataLength * sizeof(BYTE));
+					lpData = (LPBYTE)malloc(lpInternetSession->dwResponseDataLength * sizeof(BYTE));
 				}
 				else
 				{
@@ -1953,30 +2037,29 @@ namespace PPSHUAI{
 				lpInternetSession->dwResponseDataLength = (0L);
 				while (bResult = ::InternetReadFile(hInternetRequest, btByteData, sizeof(btByteData) / sizeof(*btByteData), &dwSucceedNumber) && dwSucceedNumber > 0)
 				{
-					if (lpData && lpInternetSession->lpResponseData)
+					if (lpData)
 					{
 						if (lpInternetSession->dwResponseDataAllocateCapacity < (lpInternetSession->dwResponseDataLength + dwSucceedNumber))
 						{
-							lpData = lpInternetSession->lpResponseData;
-							lpInternetSession->lpResponseData = (LPBYTE)::LocalReAlloc(lpData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber), LMEM_FIXED | LMEM_MOVEABLE | LMEM_MODIFY);
+							lpData = (LPBYTE)realloc(lpInternetSession->lpResponseData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber));
 							if (GetLastError() != ERROR_SUCCESS)
 							{
 								if (lpData)
 								{
-									::LocalFree(lpData);
+									free(lpData);
 									lpData = (0L);
 								}
 								lpInternetSession->dwResponseDataAllocateCapacity = (0L);
 							}
 							else
 							{
-								memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+								memcpy((LPVOID)((LPBYTE)lpData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
 								lpInternetSession->dwResponseDataAllocateCapacity = (lpInternetSession->dwResponseDataLength + dwSucceedNumber);
 							}
 						}
 						else
 						{
-							memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);	
+							memcpy((LPVOID)((LPBYTE)lpData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
 						}						
 					}
 
@@ -1984,7 +2067,7 @@ namespace PPSHUAI{
 					{
 						WriteFile(hFileHandle, btByteData, dwSucceedNumber, &dwSucceedNumber, NULL);
 					}
-
+					lpInternetSession->lpResponseData = lpData;
 					lpInternetSession->dwResponseDataLength += dwSucceedNumber;
 				}
 			}
@@ -2019,7 +2102,7 @@ namespace PPSHUAI{
 		__inline static HRESULT SynchromousInternetStartupW(LPINTERNET_SESSIONW lpInternetSession)
 		{
 			BOOL bResult = FALSE;
-			LPVOID lpData = NULL;
+			LPBYTE lpData = NULL;
 			LPCWSTR lpProxy = NULL;
 			LPCWSTR lpHeaders = NULL;
 			HRESULT hResult = S_FALSE;
@@ -2122,37 +2205,43 @@ namespace PPSHUAI{
 			}
 			if (lpInternetSession->dwResponseDataLength > 0)
 			{
-				lpData = lpInternetSession->lpResponseData = (LPBYTE)::LocalAlloc(LMEM_FIXED | LMEM_MOVEABLE | LMEM_ZEROINIT, lpInternetSession->dwResponseDataLength * sizeof(BYTE));
+				if (lpInternetSession->dwResponseDataAllocateCapacity <= 0)
+				{
+					lpData = (LPBYTE)malloc(lpInternetSession->dwResponseDataLength * sizeof(BYTE));
+				}
+				else
+				{
+					lpData = lpInternetSession->lpResponseData;
+				}
 			}
 			if (*lpInternetSession->tzOutputFileName || (lpInternetSession->dwResponseDataLength > 0))
 			{
 				lpInternetSession->dwResponseDataLength = (0L);
 				while (bResult = ::InternetReadFile(hInternetRequest, btByteData, sizeof(btByteData) / sizeof(*btByteData), &dwSucceedNumber) && dwSucceedNumber > 0)
 				{
-					if (lpData && lpInternetSession->lpResponseData)
+					if (lpData)
 					{
 						if (lpInternetSession->dwResponseDataAllocateCapacity < (lpInternetSession->dwResponseDataLength + dwSucceedNumber))
 						{
-							lpData = lpInternetSession->lpResponseData;
-							lpInternetSession->lpResponseData = (LPBYTE)::LocalReAlloc(lpData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber), LMEM_FIXED | LMEM_MOVEABLE | LMEM_MODIFY);
+							lpData = (LPBYTE)realloc(lpInternetSession->lpResponseData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber));
 							if (GetLastError() != ERROR_SUCCESS)
 							{
 								if (lpData)
 								{
-									::LocalFree(lpData);
+									free(lpData);
 									lpData = (0L);
 								}
 								lpInternetSession->dwResponseDataAllocateCapacity = (0L);
 							}
 							else
 							{
-								memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+								memcpy((LPVOID)((LPBYTE)lpData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
 								lpInternetSession->dwResponseDataAllocateCapacity = (lpInternetSession->dwResponseDataLength + dwSucceedNumber);
 							}
 						}
 						else
 						{
-							memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+							memcpy((LPVOID)((LPBYTE)lpData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
 						}
 					}
 
@@ -2160,7 +2249,7 @@ namespace PPSHUAI{
 					{
 						WriteFile(hFileHandle, btByteData, dwSucceedNumber, &dwSucceedNumber, NULL);
 					}
-
+					lpInternetSession->lpResponseData = lpData;
 					lpInternetSession->dwResponseDataLength += dwSucceedNumber;
 				}
 			}
@@ -2195,7 +2284,7 @@ namespace PPSHUAI{
 		__inline static HRESULT SynchromousInternetStartup(LPINTERNET_SESSION lpInternetSession)
 		{
 			BOOL bResult = FALSE;
-			LPVOID lpData = NULL;
+			LPBYTE lpData = NULL;
 			LPCTSTR lpProxy = NULL;
 			LPCTSTR lpHeaders = NULL;
 			HRESULT hResult = S_FALSE;			
@@ -2298,37 +2387,43 @@ namespace PPSHUAI{
 			}
 			if (lpInternetSession->dwResponseDataLength > 0)
 			{
-				lpData = lpInternetSession->lpResponseData = (LPBYTE)::LocalAlloc(LMEM_FIXED | LMEM_MOVEABLE | LMEM_ZEROINIT, lpInternetSession->dwResponseDataLength * sizeof(BYTE));
+				if (lpInternetSession->dwResponseDataAllocateCapacity <= 0)
+				{
+					lpData = (LPBYTE)malloc(lpInternetSession->dwResponseDataLength * sizeof(BYTE));
+				}
+				else
+				{
+					lpData = lpInternetSession->lpResponseData;
+				}
 			}
 			if (*lpInternetSession->tzOutputFileName || (lpInternetSession->dwResponseDataLength > 0))
 			{
 				lpInternetSession->dwResponseDataLength = (0L);
 				while (bResult = ::InternetReadFile(hInternetRequest, btByteData, sizeof(btByteData) / sizeof(*btByteData), &dwSucceedNumber) && dwSucceedNumber > 0)
 				{
-					if (lpData && lpInternetSession->lpResponseData)
+					if (lpData)
 					{
 						if (lpInternetSession->dwResponseDataAllocateCapacity < (lpInternetSession->dwResponseDataLength + dwSucceedNumber))
 						{
-							lpData = lpInternetSession->lpResponseData;
-							lpInternetSession->lpResponseData = (LPBYTE)::LocalReAlloc(lpData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber), LMEM_FIXED | LMEM_MOVEABLE | LMEM_MODIFY);
+							lpData = (LPBYTE)realloc(lpInternetSession->lpResponseData, (lpInternetSession->dwResponseDataLength + dwSucceedNumber));
 							if (GetLastError() != ERROR_SUCCESS)
 							{
 								if (lpData)
 								{
-									::LocalFree(lpData);
+									free(lpData);
 									lpData = (0L);
 								}
 								lpInternetSession->dwResponseDataAllocateCapacity = (0L);
 							}
 							else
 							{
-								memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+								memcpy((LPVOID)((LPBYTE)lpData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
 								lpInternetSession->dwResponseDataAllocateCapacity = (lpInternetSession->dwResponseDataLength + dwSucceedNumber);
 							}
 						}
 						else
 						{
-							memcpy((LPVOID)((LPBYTE)lpInternetSession->lpResponseData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
+							memcpy((LPVOID)((LPBYTE)lpData + lpInternetSession->dwResponseDataLength), btByteData, dwSucceedNumber);
 						}
 					}
 
@@ -2336,7 +2431,7 @@ namespace PPSHUAI{
 					{
 						WriteFile(hFileHandle, btByteData, dwSucceedNumber, &dwSucceedNumber, NULL);
 					}
-
+					lpInternetSession->lpResponseData = lpData;
 					lpInternetSession->dwResponseDataLength += dwSucceedNumber;
 				}
 			}
@@ -2370,7 +2465,7 @@ namespace PPSHUAI{
 		{
 			if (lpInternetSession && lpInternetSession->lpResponseData)
 			{
-				::LocalFree(lpInternetSession->lpResponseData);
+				free(lpInternetSession->lpResponseData);
 				lpInternetSession->lpResponseData = NULL;
 			}
 			lpInternetSession->dwResponseDataAllocateCapacity = (0L);
@@ -2379,7 +2474,7 @@ namespace PPSHUAI{
 		{
 			if (lpInternetSession && lpInternetSession->lpResponseData)
 			{
-				::LocalFree(lpInternetSession->lpResponseData);
+				free(lpInternetSession->lpResponseData);
 				lpInternetSession->lpResponseData = NULL;
 			}
 			lpInternetSession->dwResponseDataAllocateCapacity = (0L);
@@ -2388,7 +2483,7 @@ namespace PPSHUAI{
 		{
 			if (lpInternetSession && lpInternetSession->lpResponseData)
 			{
-				::LocalFree(lpInternetSession->lpResponseData);
+				free(lpInternetSession->lpResponseData);
 				lpInternetSession->lpResponseData = NULL;
 			}
 			lpInternetSession->dwResponseDataAllocateCapacity = (0L);

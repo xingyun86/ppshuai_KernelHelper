@@ -472,17 +472,17 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		char c = 0;
 		for (int i = 0; i < sizeof(s); i++)
 		{
-			c += a[i] * (((char *)&s)[i] - a[((char *)&s)[i] - '0' + sizeof(short)] + a[((char *)&s)[i] - '0' + ('f' - '0') + sizeof(short) + sizeof(short)]);
+			c += a[i] * (((char *)&s)[i] - a[((char *)&s)[i] - '0' + sizeof(short)] + a[((char *)&s)[i] - '0' + ('f' - '0') + sizeof(char) + sizeof(short)]);
 		}
 		return c;
 	}
 	__inline static short c2s(char c)
 	{
-		char * a = "\xF0\x0F\x04\x00\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x41\x41\x42\x43\x44\x45\x46";
+		char * a = "\xF0\x0F\x04\x00\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x41\x42\x43\x44\x45\x46";
 		short s = 0;
 		for (int i = 0; i < sizeof(s); i++)
 		{
-			((char*)&s)[i] = a[(unsigned char)((c & a[i]) >> a[i + sizeof(short)]) + sizeof(short) + sizeof(short)];
+			((char*)&s)[i] = a[((unsigned char)(c & a[i]) >> a[i + sizeof(short)]) + sizeof(short) + sizeof(short)];
 		}
 
 		return s;
@@ -1387,15 +1387,17 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 
 	namespace FilePath{
 
-		__inline static BOOL SelectSaveFile(_TCHAR(&tFileName)[MAX_PATH], const _TCHAR * ptFilter = _T("Execute Files (*.EXE)\0*.EXE\0All Files (*.*)\0*.*\0\0"))
+		__inline static BOOL SelectSaveFile(_TCHAR(&tFileName)[MAX_PATH], const _TCHAR * ptFilter = _T("Execute Files (*.EXE)\0*.EXE\0All Files (*.*)\0*.*\0\0"), HWND hWndOwner = NULL, DWORD dwFlags = OFN_EXPLORER | OFN_ENABLEHOOK | OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST, LPOFNHOOKPROC lpofnHookProc = NULL)
 		{
 			BOOL bResult = FALSE;
 			OPENFILENAME ofn = { 0 };
 			ofn.lStructSize = sizeof(OPENFILENAME);
 			ofn.lpstrFilter = ptFilter;
 			ofn.lpstrFile = tFileName;
+			ofn.hwndOwner = hWndOwner;
+			ofn.lpfnHook = lpofnHookProc;
 			ofn.nMaxFile = MAX_PATH;
-			ofn.Flags = OFN_EXPLORER | OFN_ENABLEHOOK | OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST;
+			ofn.Flags = dwFlags;
 			bResult = GetSaveFileName(&ofn);
 			if (bResult == FALSE)
 			{
@@ -1404,15 +1406,17 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 			}
 			return bResult;
 		}
-		__inline static BOOL SelectOpenFile(_TCHAR(&tFileName)[MAX_PATH], const _TCHAR * ptFilter = _T("Execute Files (*.EXE)\0*.EXE\0All Files (*.*)\0*.*\0\0"))
+		__inline static BOOL SelectOpenFile(_TCHAR(&tFileName)[MAX_PATH], const _TCHAR * ptFilter = _T("Execute Files (*.EXE)\0*.EXE\0All Files (*.*)\0*.*\0\0"), HWND hWndOwner = NULL, DWORD dwFlags = OFN_EXPLORER | OFN_ENABLEHOOK | OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST, LPOFNHOOKPROC lpofnHookProc = NULL)
 		{
 			BOOL bResult = FALSE;
 			OPENFILENAME ofn = { 0 };
 			ofn.lStructSize = sizeof(OPENFILENAME);
 			ofn.lpstrFilter = ptFilter;
 			ofn.lpstrFile = tFileName;
+			ofn.hwndOwner = hWndOwner;
+			ofn.lpfnHook = lpofnHookProc;
 			ofn.nMaxFile = MAX_PATH;
-			ofn.Flags = OFN_EXPLORER | OFN_ENABLEHOOK | OFN_HIDEREADONLY | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST;
+			ofn.Flags = dwFlags;
 			bResult = GetOpenFileName(&ofn);
 			if (bResult == FALSE)
 			{
@@ -1849,6 +1853,50 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 
 	namespace String{
 
+		__inline static size_t file_reader(char ** ppdata, size_t &size, std::string filename, std::string mode = "rb")
+		{
+#define DATA_BASE_SIZE	0x10000
+
+			FILE * pF = 0;
+			size_t sizeofread = 0;
+
+			char * pdata = 0;
+
+			pF = fopen(filename.c_str(), mode.c_str());
+			if (pF)
+			{
+				size = 0;
+				(*ppdata) = (char *)malloc((size + DATA_BASE_SIZE) * sizeof(char));
+				while (!feof(pF))
+				{			
+					sizeofread = fread((void *)((*ppdata) + size), sizeof(char), DATA_BASE_SIZE, pF);
+					size += sizeofread;
+					if (sizeofread >= DATA_BASE_SIZE)
+					{
+						break;
+					}
+					pdata = (*ppdata);
+					(*ppdata) = (char *)realloc(pdata, (size + DATA_BASE_SIZE) * sizeof(char));
+					if (!(*ppdata) || GetLastError() != ERROR_SUCCESS)
+					{
+						if (pdata)
+						{
+							free(pdata);
+							pdata = 0;
+						}
+						break;
+					}
+				}
+				
+				fclose(pF);
+				pF = 0;
+			}
+
+			return size;
+
+#undef DATA_BASE_SIZE
+		}
+
 		__inline static size_t file_reader(std::string&data, std::string filename, std::string mode = "rb")
 		{
 #define DATA_BASE_SIZE	0x10000
@@ -1890,6 +1938,21 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 			return size;
 		}
 
+		__inline static size_t file_writer(char * data, size_t size, std::string filename, std::string mode = "wb")
+		{
+			FILE * pF = 0;
+			size_t ssize = 0;
+
+			pF = fopen(filename.c_str(), mode.c_str());
+			if (pF)
+			{
+				ssize = fwrite((void *)(data), sizeof(char), size, pF);
+				fclose(pF);
+				pF = 0;
+			}
+
+			return ssize;
+		}
 		__inline static bool string_regex_valid(std::string data, std::string pattern)
 		{
 			return std::regex_match(data, std::regex(pattern));

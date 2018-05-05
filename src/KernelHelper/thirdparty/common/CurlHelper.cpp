@@ -1265,6 +1265,11 @@ namespace PPSHUAI{
 				lpVersion = _T("HTTP/1.1");
 			}
 			break;
+			case REQ_VERSION_HTTP_20:
+			{
+				lpVersion = _T("HTTP/2.0");
+			}
+			break;
 			default:
 			{
 				lpVersion = NULL;
@@ -1329,33 +1334,34 @@ namespace PPSHUAI{
 
 			if (m_hCompleteEvent != NULL)
 			{
-				::CloseHandle(m_hCompleteEvent);
-				m_hCompleteEvent = NULL;
+				::CloseHandle(m_hCompleteEvent);				
 			}
 
 			if (m_hCancelEvent != NULL)
 			{
-				::CloseHandle(m_hCancelEvent);
-				m_hCancelEvent = NULL;
+				::CloseHandle(m_hCancelEvent);				
 			}
 
 			if (m_hRequest)
 			{
-				::InternetCloseHandle(m_hRequest);
-				m_hRequest = NULL;
+				::InternetCloseHandle(m_hRequest);				
 			}
 
 			if (m_hConnect)
 			{
-				::InternetCloseHandle(m_hConnect);
-				m_hConnect = NULL;
+				::InternetCloseHandle(m_hConnect);				
 			}
 
 			if (m_hSession)
 			{
-				::InternetCloseHandle(m_hSession);
-				m_hSession = NULL;
+				::InternetCloseHandle(m_hSession);				
 			}
+
+			m_hCompleteEvent = NULL;
+			m_hCancelEvent = NULL;
+			m_hRequest = NULL;
+			m_hConnect = NULL;
+			m_hSession = NULL;
 
 			return bResult;
 		}
@@ -1443,6 +1449,10 @@ namespace PPSHUAI{
 					if (dwNumberOfBytesRead > 0)
 					{
 						dwRespDataSize += dwNumberOfBytesRead;
+						if (!(*ppRespData))
+						{
+							(*ppRespData) = (BYTE*)malloc(sizeof(BYTE));
+						}
 						pData = (BYTE *)realloc((*ppRespData), dwRespDataSize * sizeof(BYTE));
 						if (!pData)
 						{

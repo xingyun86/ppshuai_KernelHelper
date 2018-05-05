@@ -93,7 +93,8 @@ namespace PPSHUAI{
 	{
 		BOOL bResult = FALSE;
 		HZIP hZip = NULL;
-		ZIPENTRY ze = { 0 };
+		ZIPENTRY zeRoot = { 0 };
+		ZIPENTRY zeChild = { 0 };
 		ZZRESULT zResult = ZZ_ERRNO;
 
 		hZip = OpenZip(lpCompressFileName, lpPassword);
@@ -102,15 +103,15 @@ namespace PPSHUAI{
 			zResult = SetUnzipBaseDir(hZip, lpUnCompressPathName);
 			if (zResult == ZZR_OK)
 			{
-				zResult = GetZipItem(hZip, -1, &ze);
-				if (ze.index > 0)
+				zResult = GetZipItem(hZip, -1, &zeRoot);
+				if (zeRoot.index > 0)
 				{
-					for (int i = 0; i < ze.index; i++)
+					for (int i = 0; i < zeRoot.index; i++)
 					{
-						zResult = GetZipItem(hZip, i, &ze);
+						zResult = GetZipItem(hZip, i, &zeChild);
 						if (zResult == ZZR_OK)
 						{
-							zResult = UnzipItem(hZip, i, ze.name);
+							zResult = UnzipItem(hZip, i, zeChild.name);
 						}
 						if (zResult != ZZR_OK)
 						{

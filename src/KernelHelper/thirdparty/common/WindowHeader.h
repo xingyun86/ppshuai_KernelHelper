@@ -1164,6 +1164,56 @@ namespace GUI{
 	{
 		ListView_DeleteAllItems(hListViewWnd);
 	}
+	__inline static void ListCtrlInsertHeaderData(TSTRINGVECTOR & tv, HWND hListViewWnd, UINT nWidth = 100)
+	{
+		LV_COLUMN lvc = { 0 };
+
+		lvc.iSubItem = 0;
+		lvc.cx = nWidth;
+		lvc.mask = LVCF_TEXT | LVCF_WIDTH;
+		for (auto it:tv)
+		{
+			lvc.pszText = (LPTSTR)it.c_str();	
+			ListView_InsertColumn(hListViewWnd, lvc.iSubItem++, &lvc);
+		}
+	}
+	__inline static UINT ListCtrlInsertCellData(TSTRING ts, HWND hListViewWnd, UINT nColumnIndex = 0, UINT nRowIndex = 0)
+	{
+		LV_ITEM lvi = { 0 };
+		//if ((lvi.iSubItem < Header_GetItemCount(ListView_GetHeader(hListViewWnd))))
+		//{
+		lvi.mask = LVIF_TEXT;
+		//lvi.mask = LVIF_PARAM;
+		lvi.iItem = nRowIndex;
+		lvi.iSubItem = nColumnIndex;
+		//lvi.lParam = lvi.iSubItem;
+		lvi.pszText = (LPTSTR)ts.c_str();
+		if (lvi.iSubItem != (0))
+		{
+			ListView_SetItem(hListViewWnd, &lvi);
+		}
+		else
+		{
+			ListView_InsertItem(hListViewWnd, &lvi);
+		}
+		//}
+		return (lvi.iSubItem + 1);
+	}
+	__inline static UINT ListCtrlInsertItemData(TSTRINGVECTOR & tv, HWND hListViewWnd, UINT nColumnIndex = 0, UINT nRowIndex = 0)
+	{
+		for (auto it : tv)
+		{			
+			nColumnIndex = ListCtrlInsertCellData(it, hListViewWnd, nColumnIndex, nRowIndex);
+		}
+		return (nRowIndex + 1);
+	}
+	__inline static void ListCtrlInsertItemsData(TSTRINGVECTORVECTOR & tvv, HWND hListViewWnd, UINT nColumnIndex = 0, UINT nRowIndex = 0)
+	{
+		for (auto it : tvv)
+		{
+			nRowIndex = ListCtrlInsertItemData(it, hListViewWnd, nColumnIndex, nRowIndex);
+		}
+	}
 	__inline static void ListCtrlInsertData(TSTRINGVECTORMAP * pTVMAP, HWND hListViewWnd, HIMAGELIST hImageList = NULL, LPCTSTR lpListCtrlText = _T(""), LPCTSTR lpHeaderText = _T("|3|3|3|3|3|3|3|3|3|3"))
 	{
 		SIZE_T stIndex = 0;
@@ -1355,7 +1405,13 @@ namespace GUI{
 				int offset = 0;
 				offset = tRect.bottom - tRect.top - metric.tmHeight;
 				OffsetRect(&tRect, 0, offset / 2);
-				DrawText(hdc, Global_ColumnContext[i], lstrlen(Global_ColumnContext[i]), &tRect, nFormat);
+				HD_ITEM hdi = { 0 };
+				_TCHAR tHeaderText[MAXBYTE] = { 0 };
+				hdi.mask = HDI_TEXT;
+				hdi.cchTextMax = MAXBYTE;
+				hdi.pszText = tHeaderText;
+				Header_GetItem(hHeaderWnd, i, &hdi);
+				DrawText(hdc, tHeaderText, lstrlen(tHeaderText), &tRect, nFormat);
 				SelectObject(hdc, hOldFont);
 				DeleteObject(hFont); //释放字体
 			}
@@ -1623,9 +1679,17 @@ namespace GUI{
 							ListView_SetItemState(hDataListCtrl, lvinfo.iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 						}
 					}
+					else if (lvinfo.flags == LVHT_ONITEMLABEL)
+					{
+
+					}
+					else if (lvinfo.flags == (LVHT_ONITEMLABEL | LVHT_BELOW))
+					{
+
+					}
 					else
 					{
-						if (ListView_GetCheckState(hDataListCtrl, lvinfo.iItem))
+						/*if (ListView_GetCheckState(hDataListCtrl, lvinfo.iItem))
 						{
 							ListView_SetCheckState(hDataListCtrl, lvinfo.iItem, FALSE);
 							ListView_SetItemState(hDataListCtrl, lvinfo.iItem, 0, LVIS_SELECTED | LVIS_FOCUSED);
@@ -1634,7 +1698,7 @@ namespace GUI{
 						{
 							ListView_SetCheckState(hDataListCtrl, lvinfo.iItem, TRUE);
 							ListView_SetItemState(hDataListCtrl, lvinfo.iItem, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
-						}
+						}*/
 					}
 				}
 			}
@@ -1712,6 +1776,7 @@ namespace GUI{
 					}
 				}
 			}
+			//SetWindowLong(hDlg, DWL_MSGRESULT, iresult);
 			SetWindowLongPtr(hDlg, DWLP_MSGRESULT, iresult);
 			break;
 			default:
@@ -5044,37 +5109,46 @@ namespace GUI{
 		return TRUE;
 	}
 
-	__inline static void ShowAbout(HWND hWnd = NULL, WORD wIconResId = (0L), LPCTSTR lpWindowInfo = _T("About"), LPCTSTR lpVersionInfo = _T("Version1.0"), LPCTSTR lpCopyrightInfo = _T("Copyright (C) 2018"), LPCTSTR lpContactInfo = _T("xingyun86(523381005)"))
+	__inline static void ShowAbout(HWND hWnd = NULL, WORD wIconResId = (0L), LPCTSTR lpWindowInfo = _T("About"), LPCTSTR lpVersionInfo = _T("Version1.0"), LPCTSTR lpCopyrightInfo = _T("Copyright (C) 2018"), LPCTSTR lpContactInfo = _T("Contact:xingyun86(523381005)"))
 	{
-		static WORD wIconId = wIconResId;
-		static LPCTSTR lpWindowText = lpWindowInfo;
-		static LPCTSTR lpVersionText = lpVersionInfo;
-		static LPCTSTR lpCopyrightText = lpCopyrightInfo;
-		static LPCTSTR lpContactText = lpContactInfo;
-		// 通用控件 初始化
+#define TTMAP_KEY_ICONID			"ICON_ID"
+#define TTMAP_KEY_WINDOWINFO		"WINDOW_INFO"
+#define TTMAP_KEY_VERSIONINFO		"VERSION_INFO"
+#define TTMAP_KEY_COPYRIGHTINFO		"COPYRIGHT_INFO"
+#define TTMAP_KEY_CONTACTINFO		"CONTACT_INFO"
+		TSTRINGTSTRINGMAP ttmap = {
+			{ _T(TTMAP_KEY_ICONID), STRING_FORMAT(_T("0x%08X"), wIconResId) },
+			{ _T(TTMAP_KEY_WINDOWINFO), lpWindowInfo },
+			{ _T(TTMAP_KEY_VERSIONINFO), lpVersionInfo },
+			{ _T(TTMAP_KEY_COPYRIGHTINFO), lpCopyrightInfo },
+			{ _T(TTMAP_KEY_CONTACTINFO), lpContactInfo },
+		};
+		// 通用控件 初始化 
 		InitCommonControls();
 		DisplayDialogBox(
 			CDlgTemplate(DS_MODALFRAME | DS_FIXEDSYS | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_BORDER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, \
-			2, 0, 0, 171, 83, 0, _T(""), _T("About"), 8, _T("MS Sans Serif"), \
+			2, 0, 0, 200, 100, 0, _T(""), _T("About"), 8, _T("MS Sans Serif"), \
 			std::vector<CDlgItemTemplate>{ \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_ICON | SS_CENTERIMAGE, 0, \
 			14, 14, 21, 20, 100, WC_STATIC, _T(""), 0), \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, 0, \
-			42, 14, 114, 8, 101, WC_STATIC, _T("Version1.0"), 0), \
+			42, 14, 198, 8, 101, WC_STATIC, _T("Version1.0"), 0), \
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | ES_LEFT | ES_MULTILINE | ES_READONLY, 0, \
+			42, 26, 198, 24, 102, WC_EDIT, _T("Copyright (C) 2018"), 0), \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_LEFT, 0, \
-			42, 26, 114, 8, 102, WC_STATIC, _T("Copyright (C) 2017"), 0), \
-			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_LEFT, 0, \
-			41, 41, 114, 8, 103, WC_STATIC, _T("xingyun86(523381005)"), 0), \
+			41, 51, 198, 8, 103, WC_STATIC, _T("Contact:xingyun86(523381005)"), 0), \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | WS_GROUP | BS_DEFPUSHBUTTON, 0, \
-			114, 62, 50, 14, IDOK, WC_BUTTON, _T("确定"), 0), \
+			114, 72, 50, 14, IDOK, WC_BUTTON, _T("确定"), 0), \
 		}),
 		(DLGPROC)[](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->INT_PTR
 		{
 			switch (uMsg)
 			{
 			case WM_INITDIALOG:
-			{
+			{	
 				HICON hIcon = NULL;
+				TSTRINGTSTRINGMAP * pTTMAP = (TSTRINGTSTRINGMAP*)lParam;
+				WORD wIconId = _tcstoul(pTTMAP->at(_T(TTMAP_KEY_ICONID)).c_str(), 0, 16);
 				if (IsWindow(GetParent(hWnd)))
 				{
 					hIcon = (HICON)SendMessage(GetParent(hWnd), WM_GETICON, ICON_BIG, (LPARAM)0L);
@@ -5102,10 +5176,10 @@ namespace GUI{
 					SNDMSG(hWnd, WM_SETICON, ICON_SMALL2, (LPARAM)hIcon);
 					SNDMSG(GetDlgItem(hWnd, 100), STM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
 				}
-				SetWindowText(hWnd, lpWindowText);
-				SetDlgItemText(hWnd, 101, lpVersionText);
-				SetDlgItemText(hWnd, 102, lpCopyrightText);
-				SetDlgItemText(hWnd, 103, lpContactText);
+				SetWindowText(hWnd, pTTMAP->at(_T(TTMAP_KEY_WINDOWINFO)).c_str());
+				SetDlgItemText(hWnd, 101, pTTMAP->at(_T(TTMAP_KEY_VERSIONINFO)).c_str());
+				SetDlgItemText(hWnd, 102, pTTMAP->at(_T(TTMAP_KEY_COPYRIGHTINFO)).c_str());
+				SetDlgItemText(hWnd, 103, pTTMAP->at(_T(TTMAP_KEY_CONTACTINFO)).c_str());
 			}
 			break;
 			case WM_SETFONT:
@@ -5127,18 +5201,423 @@ namespace GUI{
 				}
 			}
 			break;
-			case WM_CLOSE:
-			{
-				PostQuitMessage(LOWORD(wParam));
-			}
-			break;
+			//case WM_CLOSE:
+			//{
+			//	PostQuitMessage(LOWORD(wParam));
+			//}
+			//break;
 			default:
 				break;
 			}
 			return FALSE;
-		}, hWnd);
+		}, hWnd, (LPARAM)&ttmap);
+	}
+	__inline static void SelectColor()
+	{
+		CHOOSECOLOR cc;                 // common dialog box structure 
+		static COLORREF acrCustClr[16]; // array of custom colors 
+		HWND hwnd;                      // owner window
+		HBRUSH hbrush;                  // brush handle
+		static DWORD rgbCurrent;        // initial color selection
+
+		// Initialize CHOOSECOLOR 
+		ZeroMemory(&cc, sizeof(cc));
+		cc.lStructSize = sizeof(cc);
+		cc.hwndOwner = hwnd;
+		cc.lpCustColors = (LPDWORD)acrCustClr;
+		cc.rgbResult = rgbCurrent;
+		cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+
+		if (ChooseColor(&cc) == TRUE)
+		{
+			hbrush = CreateSolidBrush(cc.rgbResult);
+			rgbCurrent = cc.rgbResult;
+		}
+	}
+	__inline static void SelectFont()
+	{
+		HWND hwnd;                // owner window
+		HDC hdc;                  // display device context of owner window
+
+		CHOOSEFONT cf;            // common dialog box structure
+		static LOGFONT lf;        // logical font structure
+		static DWORD rgbCurrent;  // current text color
+		HFONT hfont, hfontPrev;
+		DWORD rgbPrev;
+
+		// Initialize CHOOSEFONT
+		ZeroMemory(&cf, sizeof(cf));
+		cf.lStructSize = sizeof(cf);
+		cf.hwndOwner = hwnd;
+		cf.lpLogFont = &lf;
+		cf.rgbColors = rgbCurrent;
+		cf.Flags = CF_SCREENFONTS | CF_EFFECTS;
+
+		if (ChooseFont(&cf) == TRUE)
+		{
+			hfont = CreateFontIndirect(cf.lpLogFont);
+			hfontPrev = (HFONT)SelectObject(hdc, hfont);
+			rgbCurrent = cf.rgbColors;
+			rgbPrev = SetTextColor(hdc, rgbCurrent);
+		}
+	}
+	//显示打印对话框
+	__inline static void ShowPrintDlg(HWND hwnd = NULL)
+	{
+		PRINTDLG pd;
+		//HWND hwnd = NULL;
+
+		// Initialize PRINTDLG
+		ZeroMemory(&pd, sizeof(pd));
+		pd.lStructSize = sizeof(pd);
+		pd.hwndOwner = hwnd;
+		pd.hDevMode = NULL;     // Don't forget to free or store hDevMode.
+		pd.hDevNames = NULL;     // Don't forget to free or store hDevNames.
+		pd.Flags = PD_USEDEVMODECOPIESANDCOLLATE | PD_RETURNDC;
+		pd.nCopies = 1;
+		pd.nFromPage = 0xFFFF;
+		pd.nToPage = 0xFFFF;
+		pd.nMinPage = 1;
+		pd.nMaxPage = 0xFFFF;
+
+		if (PrintDlg(&pd) == TRUE)
+		{
+			// GDI calls to render output. 
+
+			// Delete DC when done.
+			DeleteDC(pd.hDC);
+		}
+	}
+	// hWnd is the window that owns the property sheet.
+	__inline static HRESULT DisplayPrintPropertySheet(HWND hWnd)
+	{
+		HRESULT hResult;
+		PRINTDLGEX pdx = { 0 };
+		LPPRINTPAGERANGE pPageRanges = NULL;
+
+		// Allocate an array of PRINTPAGERANGE structures.
+		pPageRanges = (LPPRINTPAGERANGE)GlobalAlloc(GPTR, 10 * sizeof(PRINTPAGERANGE));
+		if (!pPageRanges)
+			return E_OUTOFMEMORY;
+
+		//  Initialize the PRINTDLGEX structure.
+		pdx.lStructSize = sizeof(PRINTDLGEX);
+		pdx.hwndOwner = hWnd;
+		pdx.hDevMode = NULL;
+		pdx.hDevNames = NULL;
+		pdx.hDC = NULL;
+		pdx.Flags = PD_RETURNDC | PD_COLLATE;
+		pdx.Flags2 = 0;
+		pdx.ExclusionFlags = 0;
+		pdx.nPageRanges = 0;
+		pdx.nMaxPageRanges = 10;
+		pdx.lpPageRanges = pPageRanges;
+		pdx.nMinPage = 1;
+		pdx.nMaxPage = 1000;
+		pdx.nCopies = 1;
+		pdx.hInstance = 0;
+		pdx.lpPrintTemplateName = NULL;
+		pdx.lpCallback = NULL;
+		pdx.nPropertyPages = 0;
+		pdx.lphPropertyPages = NULL;
+		pdx.nStartPage = START_PAGE_GENERAL;
+		pdx.dwResultAction = 0;
+
+		//  Invoke the Print property sheet.
+
+		hResult = PrintDlgEx(&pdx);
+
+		if ((hResult == S_OK) && pdx.dwResultAction == PD_RESULT_PRINT)
+		{
+			// User clicked the Print button, so use the DC and other information returned in the 
+			// PRINTDLGEX structure to print the document.
+		}
+
+		if (pdx.hDevMode != NULL)
+			GlobalFree(pdx.hDevMode);
+		if (pdx.hDevNames != NULL)
+			GlobalFree(pdx.hDevNames);
+		if (pdx.lpPageRanges != NULL)
+			GlobalFree(pPageRanges);
+
+		if (pdx.hDC != NULL)
+			DeleteDC(pdx.hDC);
+
+		return hResult;
 	}
 
+	__inline static UINT_PTR CALLBACK PaintHook(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+	{
+		LPRECT lprc;
+		COLORREF crMargRect;
+		HDC hdc, hdcOld;
+
+		switch (uMsg)
+		{
+			// Draw the margin rectangle. 
+		case WM_PSD_MARGINRECT:
+			hdc = (HDC)wParam;
+			lprc = (LPRECT)lParam;
+
+			// Get the system highlight color. 
+			crMargRect = GetSysColor(COLOR_HIGHLIGHT);
+
+			// Create a dash-dot pen of the system highlight color and 
+			// select it into the DC of the sample page. 
+			hdcOld = (HDC)SelectObject(hdc, CreatePen(PS_DASHDOT, .5, crMargRect));
+
+			// Draw the margin rectangle. 
+			Rectangle(hdc, lprc->left, lprc->top, lprc->right, lprc->bottom);
+
+			// Restore the previous pen to the DC. 
+			SelectObject(hdc, hdcOld);
+			return TRUE;
+
+		default:
+			return FALSE;
+		}
+		return TRUE;
+	}
+
+	__inline static void SettingUpPaintPage(LPPAGESETUPHOOK lpPageSetupHook = NULL, LPPAGEPAINTHOOK lpPagePaintHook = &PaintHook)
+	{
+		PAGESETUPDLG psd;    // common dialog box structure
+		HWND hwnd;           // owner window
+
+		// Initialize PAGESETUPDLG
+		ZeroMemory(&psd, sizeof(psd));
+		psd.lStructSize = sizeof(psd);
+		psd.hwndOwner = hwnd;
+		psd.hDevMode = NULL; // Don't forget to free or store hDevMode.
+		psd.hDevNames = NULL; // Don't forget to free or store hDevNames.
+		psd.Flags = PSD_INTHOUSANDTHSOFINCHES | PSD_MARGINS |
+			PSD_ENABLEPAGEPAINTHOOK;
+		psd.rtMargin.top = 1000;
+		psd.rtMargin.left = 1250;
+		psd.rtMargin.right = 1250;
+		psd.rtMargin.bottom = 1000;
+		psd.lpfnPageSetupHook = lpPageSetupHook;
+		psd.lpfnPagePaintHook = lpPagePaintHook;
+
+		if (PageSetupDlg(&psd) == TRUE)
+		{
+			// check paper size and margin values here.
+		}
+	}
+	__inline static void ShowFindTextDlg(HWND hWnd = NULL, LPCTSTR lpWindowInfo = _T("About"))
+	{
+#define TTMAP_KEY_WINDOWINFO		"WINDOW_INFO"
+		static UINT uFindReplaceMsg;  // message identifier for FINDMSGSTRING 
+		static HWND hdlg = NULL;     // handle to Find dialog box
+		SORTDATAINFO m_sdi;
+		static SORTDATAINFO * pSDI = &m_sdi;
+		TSTRINGTSTRINGMAP ttmap = {
+			{ _T(TTMAP_KEY_WINDOWINFO), lpWindowInfo },
+		};
+		// 通用控件 初始化 
+		InitCommonControls();
+		INITCOMMONCONTROLSEX iccex = { 0 };
+		iccex.dwSize = sizeof(iccex);
+		// 将它设置为包括所有要在应用程序中使用的公共控件类。
+		iccex.dwICC = ICC_WIN95_CLASSES;
+		::InitCommonControlsEx(&iccex);
+		
+		DisplayDialogBox(
+			CDlgTemplate(DS_MODALFRAME | DS_FIXEDSYS | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_BORDER | WS_POPUP | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, \
+			2, 0, 0, 200, 100, 0, _T(""), _T("About"), 8, _T("MS Sans Serif"), \
+			std::vector<CDlgItemTemplate>{ \
+			//CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_ICON | SS_CENTERIMAGE, 0, \
+			//14, 14, 21, 20, 100, WC_STATIC, _T(""), 0), 
+			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | LVS_REPORT | LVS_SINGLESEL, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT, \
+			42, 14, 198, 8, 101, WC_LISTVIEW, _T("ListVi"), 0), 
+			//CDlgItemTemplate(WS_CHILD | WS_VISIBLE | WS_GROUP | BS_DEFPUSHBUTTON, 0, \
+			//114, 72, 50, 14, IDOK, WC_BUTTON, _T("确定"), 0), 
+		}),
+		(DLGPROC)[](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->INT_PTR
+		{
+			switch (uMsg)
+			{
+			case WM_INITDIALOG:
+			{
+				//启动查找时打开
+				//uFindReplaceMsg = RegisterWindowMessage(FINDMSGSTRING);
+				FINDREPLACE fr;       // common dialog box structure
+				//HWND hwnd;            // owner window
+				_TCHAR szFindWhat[MAXBYTE] = { 0 };  // buffer receiving string
+				//HWND hdlg = NULL;     // handle to Find dialog box
+
+				// Initialize FINDREPLACE
+				ZeroMemory(&fr, sizeof(fr));
+				fr.lStructSize = sizeof(fr);
+				fr.hwndOwner = GetDlgItem(hWnd, 101);
+				fr.lpstrFindWhat = szFindWhat;
+				fr.wFindWhatLen = MAXBYTE;
+				fr.Flags = 0;
+
+				//hdlg = FindText(&fr);
+
+				HICON hIcon = NULL;
+				TSTRINGTSTRINGMAP * pTTMAP = (TSTRINGTSTRINGMAP*)lParam;
+				if (IsWindow(GetParent(hWnd)))
+				{
+					hIcon = (HICON)SendMessage(GetParent(hWnd), WM_GETICON, ICON_BIG, (LPARAM)0L);
+					if (!hIcon)
+					{
+						hIcon = (HICON)SendMessage(GetParent(hWnd), WM_GETICON, ICON_SMALL, (LPARAM)0L);
+						if (!hIcon)
+						{
+							hIcon = (HICON)SendMessage(GetParent(hWnd), WM_GETICON, ICON_SMALL2, (LPARAM)0L);
+						}
+					}
+				}
+				else
+				{
+
+				}
+				if (hIcon)
+				{
+					SNDMSG(hWnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+					SNDMSG(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+					SNDMSG(hWnd, WM_SETICON, ICON_SMALL2, (LPARAM)hIcon);
+					SNDMSG(GetDlgItem(hWnd, 100), STM_SETIMAGE, IMAGE_ICON, (LPARAM)hIcon);
+				}
+				SetWindowText(hWnd, pTTMAP->at(_T(TTMAP_KEY_WINDOWINFO)).c_str());
+				//RECT rc = { 0 };
+				//HWND hListWnd = CreateCustomWindow(GetModuleHandle(NULL), WC_LISTVIEW, _T(""), WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | LVS_REPORT | LVS_SINGLESEL, LVS_EX_GRIDLINES | LVS_EX_FULLROWSELECT, rc, hWnd, (HMENU)101);
+				TSTRINGVECTOR tv;
+
+				TSTRINGVECTORMAP tvmap = {
+					{ _T("进程名称"), tv },
+					{ _T("进程ID"), tv },
+					{ _T("图标文件"), tv },
+				};
+				std::map<DWORD, PROCESSENTRY32> pemap;
+				std::map<DWORD, PROCESSENTRY32>::iterator itEnd;
+				std::map<DWORD, PROCESSENTRY32>::iterator itIdx;
+				SystemKernel::EnumProcess_R3(&pemap);
+				itEnd = pemap.end();
+				itIdx = pemap.begin();
+
+				HIMAGELIST hImageList = ImageList_Create(32, 32, ILC_COLOR8 | ILC_MASK, 3, 1);
+
+				for (; itIdx != itEnd; itIdx++)
+				{
+					/*TSTRING tsName = _T("");
+					_TCHAR tF[MAX_PATH] = { 0 };
+					GetProcessFullPath(itIdx->second.th32ProcessID, tF);
+					HANDLE h_Process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, itIdx->second.th32ProcessID);
+
+					if (h_Process)
+					{
+					_TCHAR tFilePath[MAX_PATH] = { 0 };
+					::GetModuleFileName((HMODULE)h_Process, tFilePath, MAX_PATH + 1);
+					CloseHandle(h_Process);
+					}*/
+					TSTRING tsFileName = _T("");
+					std::map<DWORD, MODULEENTRY32> memap;
+					SystemKernel::EnumModules_R3(&memap, itIdx->second.th32ProcessID);
+					if (memap.size() && lstrlen(memap.begin()->second.szExePath))
+					{
+						tsFileName = memap.begin()->second.szExePath;
+					}
+					else
+					{
+						if (FilePath::IsFileExistEx((PPSHUAI::FilePath::GetSystemPath() + itIdx->second.szExeFile).c_str()))
+						{
+							tsFileName = (PPSHUAI::FilePath::GetSystemPath() + itIdx->second.szExeFile);
+						}
+						else
+						{
+							tsFileName = itIdx->second.szExeFile;
+						}
+					}
+					tvmap.at(_T("进程名称")).push_back(itIdx->second.szExeFile);
+					tvmap.at(_T("进程ID")).push_back(PPSHUAI::STRING_FORMAT(_T("%ld"), itIdx->second.th32ProcessID));
+					tvmap.at(_T("图标文件")).push_back(tsFileName);
+				}
+				GUI::ImageListInit(hImageList, &tvmap, _T("图标文件"));
+				ListView_SetImageList(GetDlgItem(hWnd, 101), hImageList, LVSIL_NORMAL);
+				ListView_SetImageList(GetDlgItem(hWnd, 101), hImageList, LVSIL_SMALL);
+				
+				ListCtrlSetSortDataInfo(GetDlgItem(hWnd, 101), pSDI);
+				ListCtrlDeleteAllRows(GetDlgItem(hWnd, 101));
+				ListCtrlDeleteAllColumns(GetDlgItem(hWnd, 101));
+				ListCtrlInsertData(&tvmap,GetDlgItem(hWnd, 101), hImageList);
+
+				MoveWindow(GetDlgItem(hWnd, 101), 0, 0, 200, 100, FALSE);
+			}
+			break;
+			case WM_SETFONT:
+			{
+			}
+			break;
+			case WM_SIZE:
+			{
+				HWND hListViewWnd = GetDlgItem(hWnd, 101);
+				if (hListViewWnd)
+				{
+					RECT rcWnd = { 0 };
+					GetClientRect(hWnd, &rcWnd);
+					MoveWindow(hListViewWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, TRUE);
+					//SetWindowPos(hListViewWnd, HWND_NOTOPMOST, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, SWP_NOMOVE | SWP_NOSIZE);
+				}
+			}
+			break;
+			case WM_COMMAND:
+			{
+				switch (LOWORD(wParam))
+				{
+				case IDOK:
+				case IDCANCEL:
+				{
+					EndDialog(hWnd, LOWORD(wParam));
+				}
+				break;
+				default:
+					break;
+				}
+			}
+			break;
+			//case WM_CLOSE:
+			//{
+			//	PostQuitMessage(LOWORD(wParam));
+			//}
+			//break;
+			default:
+			{
+				LPFINDREPLACE lpfr;
+
+				if (uMsg == uFindReplaceMsg)
+				{
+					// Get pointer to FINDREPLACE structure from lParam.
+					lpfr = (LPFINDREPLACE)lParam;
+
+					// If the FR_DIALOGTERM flag is set, 
+					// invalidate the handle that identifies the dialog box. 
+					if (lpfr->Flags & FR_DIALOGTERM)
+					{
+						hdlg = NULL;
+						return 0;
+					}
+
+					// If the FR_FINDNEXT flag is set, 
+					// call the application-defined search routine
+					// to search for the requested string. 
+					if (lpfr->Flags & FR_FINDNEXT)
+					{
+						//SearchFile(lpfr->lpstrFindWhat, \
+							(BOOL)(lpfr->Flags & FR_DOWN), \
+							(BOOL)(lpfr->Flags & FR_MATCHCASE));
+					}
+
+					return 0;
+				}
+			}
+				break;
+			}
+			return FALSE;
+		}, hWnd, (LPARAM)&ttmap);
+	}
 	/*******************************************************
 	*函数功能:按照进程ID获取主窗口句柄
 	*函数参数:参数1：进程ID
@@ -5459,18 +5938,37 @@ namespace GUI{
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
-	__inline static CThreadHelper * StartHttpServer()
-	{		
-		static DWORD dwHttpServerPort = GenerateRandom(10000, 60000); //(rand() % ((60000 - 10000) + 1) + 10000);
-		static CThreadHelper HttpServer((LPTHREAD_START_ROUTINE)[](LPVOID lpParams)->DWORD
+	__inline static CThreadHelper * StartHttpServer(DWORD & dwHttpServPort, LPCSTR lpHttpServPath = ("."), LPCSTR lpHttp404Pages = ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nNo data found!\r\n"))
+	{
+#define THREAD_HTTP_SERV_PATH "THREAD_HTTP_SERV_PATH"
+#define THREAD_HTTP_SERV_PORT "THREAD_HTTP_SERV_PORT"
+#define THREAD_HTTP_404_ERROR "THREAD_HTTP_404_ERROR"
+
+		static std::map<std::string, std::string> ssmap = {
+			{ (THREAD_HTTP_SERV_PATH), lpHttpServPath },
+			{ (THREAD_HTTP_SERV_PORT), STRING_FORMAT_A("%ld", (dwHttpServPort = GenerateRandom(10000, 60000))).c_str() }, //(rand() % ((60000 - 10000) + 1) + 10000);
+		};
+		
+		putenv(std::string(std::string(THREAD_HTTP_404_ERROR) + "=" + lpHttp404Pages).c_str());
+		static CThreadHelper threadhelper_httpserver((LPTHREAD_START_ROUTINE)[](LPVOID lpParams)->DWORD
 		{
 			CThreadHelper * pTH = (CThreadHelper *)lpParams;
+			std::map<std::string, std::string> * pSSMAP = (std::map<std::string, std::string> *)pTH->GetThreadParameters();
 			struct shttpd_ctx * ctx = 0;
-			char czPort[8] = { 0 };
-			char czPath[MAX_PATH] = { 0 };
-			strcpy(czPort, STRING_FORMAT_A("%ld", (DWORD)pTH->GetThreadParameters()).c_str());
-			strcpy(czPath, Convert::TToA(PPSHUAI::FilePath::GetTempPath() + _T("stock")).c_str());
-			char *argv[] = { "", "-root", czPath, "-ports", czPort, NULL };
+			char cRoots[USHRT_MAX] = { 0 };
+			char cPorts[8] = { 0 };
+			strcpy(cRoots, (PPSHUAI::Convert::TToA(PPSHUAI::FilePath::GetTempPath()) + pSSMAP->at(THREAD_HTTP_SERV_PATH)).c_str());
+			strcpy(cPorts, pSSMAP->at(THREAD_HTTP_SERV_PORT).c_str());
+			char *argv[] = { "", 
+				"-root", cRoots,
+				"-ports", cPorts,
+				"-dir_list", "no", 
+				"-index_files", "index.html,index.htm,index.php,index.cgi",
+				"-cgi_ext", "cgi,pl,php", 
+				"-ssi_ext", "shtml,shtm", "-auth_realm", "mydomain.com",
+				"-systray", "no", 
+				"-threads", "1", 
+				NULL };
 			int	argc = sizeof(argv) / sizeof(argv[0]) - 1;
 			if ((ctx = shttpd_init(argc, argv)) != NULL)
 			{
@@ -5480,9 +5978,7 @@ namespace GUI{
 				shttpd_handle_error(ctx, 404, 
 					[](struct shttpd_arg *arg)->void
 				{
-					shttpd_printf(arg, "%s", "HTTP/1.1 200 OK\r\n");
-					shttpd_printf(arg, "%s", "Content-Type: text/plain\r\n\r\n");
-					shttpd_printf(arg, "%s", "No data found!");
+					shttpd_printf(arg, "%s", getenv(THREAD_HTTP_404_ERROR));
 					arg->flags |= SHTTPD_END_OF_OUTPUT;
 				}, NULL);
 				while (pTH->IsThreadRunning())
@@ -5495,9 +5991,9 @@ namespace GUI{
 			}
 
 			return (EXIT_SUCCESS);
-		}, (LPVOID)dwHttpServerPort);
-		HttpServer.Start();
-		return &HttpServer;
+		}, (LPVOID)&ssmap);
+		threadhelper_httpserver.Start();
+		return &threadhelper_httpserver;
 	}
 	__inline static void StopHttpServer(CThreadHelper * pTH)
 	{
