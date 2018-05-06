@@ -1,22 +1,22 @@
-
+#include <windows.h>
+#include <thread>
 #include "SocketHelper.h"
 #include "TCPSocket.h"
+#include "UDPSocket.h"
 
-#include <thread>
-
-CWebServicesHandler::CWebServicesHandler()
+CTcpSocketHandler::CTcpSocketHandler()
 {
 	this->SetAutoReConnect(false);
 	this->SetRecvFlag(false);
 	m_clientSocket = INVALID_SOCKET;
 }
 
-CWebServicesHandler::~CWebServicesHandler()
+CTcpSocketHandler::~CTcpSocketHandler()
 {
 
 }
 
-int CWebServicesHandler::Init(const char *cServerAddr, int nServerPort, bool bAutoReConnect/* = false*/)
+int CTcpSocketHandler::Init(const char *cServerAddr, int nServerPort, bool bAutoReConnect/* = false*/)
 {
 	this->SetAutoReConnect(bAutoReConnect);
 	this->SetServerAddr(cServerAddr);
@@ -32,35 +32,35 @@ int CWebServicesHandler::Init(const char *cServerAddr, int nServerPort, bool bAu
 	return 0;
 }
 
-void CWebServicesHandler::ClientInit()
+void CTcpSocketHandler::ClientInit()
 {
 	ClientSockInitialize();
 	ClientSetSockOptions();
-	ClientSetSockAddrInf();
+	ClientSetSockAddrsIn();
 	ClientExecuteConnect();
 }
 
-void CWebServicesHandler::ClientSockInitialize()
+void CTcpSocketHandler::ClientSockInitialize()
 {
 	m_clientReConnectSocket = Tcp_SockInitialize();
 }
 
-void CWebServicesHandler::ClientSetSockOptions()
+void CTcpSocketHandler::ClientSetSockOptions()
 {
 	//默认不设置超时
 	Tcp_SetSockOptions(m_clientSocket, 0, 0, TRUE);
 }
 
-void CWebServicesHandler::ClientSetSockAddrInf()
+void CTcpSocketHandler::ClientSetSockAddrsIn()
 {
-	Tcp_SetSockAddrInf(this->m_strServerAddr.c_str(), this->m_nServerPort, this->m_serverSockAddrIn);
+	Tcp_SetSockAddrsIn(this->m_strServerAddr.c_str(), this->m_nServerPort, this->m_serverSockAddrIn);
 }
-void CWebServicesHandler::ClientExecuteConnect()
+void CTcpSocketHandler::ClientExecuteConnect()
 {
 	m_clientSocket = Tcp_Connect(m_clientReConnectSocket, this->m_serverSockAddrIn);
 }
 
-int CWebServicesHandler::Exit()
+int CTcpSocketHandler::Exit()
 {
 	SetRecvFlag(false);	
 	SetAutoReConnect(false);
@@ -75,12 +75,12 @@ int CWebServicesHandler::Exit()
 	return 0;
 }
 
-void CWebServicesHandler::RecvDataFromApp(void * p)
+void CTcpSocketHandler::RecvDataFromApp(void * p)
 {
 	SOCKET clientSocket = INVALID_SOCKET;
 	char cResult[16384] = { 0 };
 	int nResult = 0;
-	CWebServicesHandler *pWSH = (CWebServicesHandler *)p;
+	CTcpSocketHandler *pWSH = (CTcpSocketHandler *)p;
 	if (pWSH)
 	{
 		//自动重连尚未开始
@@ -145,16 +145,59 @@ void CWebServicesHandler::RecvDataFromApp(void * p)
 	}
 }
 
-int CWebServicesHandler::StartRecvDataThread()
+int CTcpSocketHandler::StartRecvDataThread()
 {
-	std::thread mythread(&CWebServicesHandler::RecvDataFromApp, this);
-	mythread.detach();
+	std::thread(&CTcpSocketHandler::RecvDataFromApp, this).detach();
 
 	return 0;
 }
 
-int CWebServicesHandler::RequestCommand(const char * pCommand, int nCommandLength)
+int CTcpSocketHandler::RequestCommand(const char * pCommand, int nCommandLength)
 {
 	return Tcp_Send(m_clientSocket, pCommand, nCommandLength);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////
+SOCKET CUdpSocketHandler::udp_start(int nPort)
+{
+	SOCKET s = INVALID_SOCKET;
+
+	Udp_InitSocket(s);
+	Udp_BindSocket(s, nPort);
+
+	return s;
+}
+
+DWORD WINAPI CUdpSocketHandler::udp_recvdata_thread(void *p)
+{
+	SOCKET s = (SOCKET)p;
+	SOCKETPACKET sp = { 0 };
+
+	while (true)
+	{
+		//等待并接收数据
+		sp.ssize = sizeof(SOCKETPACKET);
+		Udp_RecvData(s, &sp.si, (unsigned char *)&sp, sp.ssize);
+		if (sp.size)
+		{
+			Udp_RecvData(s, &sp.si, (unsigned char *)&sp.data, sp.size);
+		}
+	}
+
+	Udp_ExitSocket(s);
+
+	return 0;
+}
+
+DWORD WINAPI CUdpSocketHandler::udp_senddata_thread(void *p)
+{
+	SOCKETPACKET * psp = (SOCKETPACKET *)p;
+	psp->ssize = sizeof(SOCKETPACKET);
+	Udp_SendData(psp->s, &psp->si, (unsigned char *)psp, psp->ssize);
+	if (psp->size)
+	{
+		Udp_RecvData(psp->s, &psp->si, (unsigned char *)psp->data, psp->size);
+	}
+
+	return 0;
+}

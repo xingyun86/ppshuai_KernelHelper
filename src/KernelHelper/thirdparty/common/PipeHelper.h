@@ -3,8 +3,6 @@
 #ifndef __PIPEHELPER_H_
 #define __PIPEHELPER_H_
 
-#include "CommonHelper.h"
-
 #define MAX_READ_TIMEOUT	WAIT_TIMEOUT	//默认300毫秒超时
 #define BUFFSIZE			0xFFFF	        //默认缓冲区大小
 

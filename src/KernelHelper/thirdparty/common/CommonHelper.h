@@ -1075,7 +1075,54 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		{
 			return UnicodeToANSI(UTF8ToUnicode(str));
 		}
+
+		//通用版将wstring转化为string
+		__inline std::string WToA(std::wstring wstr, unsigned codepage = CP_ACP)
+		{
+			int nwstrlen = WideCharToMultiByte(codepage, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
+			if (nwstrlen > 0)
+			{
+				std::string str(nwstrlen + 1, '\0');
+				WideCharToMultiByte(codepage, 0, wstr.c_str(), -1, (LPSTR)str.c_str(), nwstrlen, NULL, NULL);
+				return str;
+			}
+
+			return ("");
+		}
 		
+		//通用版将string转化为wstring
+		__inline std::wstring AToW(std::string str, unsigned codepage = CP_ACP)
+		{
+			int nstrlen = MultiByteToWideChar(codepage, 0, str.c_str(), -1, NULL, 0);
+			if (nstrlen > 0)
+			{
+				std::wstring wstr(nstrlen + 1, '\0');
+				MultiByteToWideChar(codepage, 0, str.c_str(), -1, (LPWSTR)wstr.c_str(), nstrlen);
+				return wstr;
+			}
+
+			return (L"");
+		}
+
+		//将X编码转化为Y编码
+		__inline static std::string CodePage_XToY(std::string str, unsigned src_codepage, unsigned dst_codepage)
+		{
+			return WToA(AToW(str, src_codepage), dst_codepage);
+		}
+
+
+		//将UTF8转化为GB2312
+		__inline static std::string UTF8ToGB2132(std::string str)
+		{
+			return CodePage_XToY(str, CP_UTF8, CP_ACP);
+		}
+
+		//将GB2312转化为UTF8
+		__inline static std::string GB2132ToUTF8(std::string str)
+		{
+			return CodePage_XToY(str, CP_ACP, CP_UTF8);
+		}
+
 		__inline static TSTRING VarChangeToStr(VARIANT var)
 		{
 			TSTRING t = _T("");
@@ -1383,6 +1430,147 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 				break;
 			}
 		}
+
+		__inline static std::string SpeedToShortA(double dSpeed)
+		{
+			char cSpeed[MAXBYTE] = { 0 };
+			const int N_1KB = 1024;
+			const int N_1MB = N_1KB * N_1KB;
+			const int N_1GB = N_1MB * N_1KB;
+			if (dSpeed >= N_1GB)
+			{
+				dSpeed /= N_1GB;
+				sprintf(cSpeed, ("%lf GB/s"), dSpeed);
+			}
+			else if (dSpeed >= N_1MB)
+			{
+				dSpeed /= N_1MB;
+				sprintf(cSpeed, ("%lf MB/s"), dSpeed);
+			}
+			else if (dSpeed >= N_1KB)
+			{
+				dSpeed /= N_1KB;
+				sprintf(cSpeed, ("%lf KB/s"), dSpeed);
+			}
+			else
+			{
+				sprintf(cSpeed, ("%lf Bytes/s"), dSpeed);
+			}
+
+			return cSpeed;
+		}
+		__inline static std::wstring SpeedToShortW(double dSpeed)
+				{
+					wchar_t cSpeed[MAXBYTE] = { 0 };
+					const int N_1KB = 1024;
+					const int N_1MB = N_1KB * N_1KB;
+					const int N_1GB = N_1MB * N_1KB;
+					if (dSpeed >= N_1GB)
+					{
+						dSpeed /= N_1GB;
+						swprintf(cSpeed, (L"%lf GB/s"), dSpeed);
+					}
+					else if (dSpeed >= N_1MB)
+					{
+						dSpeed /= N_1MB;
+						swprintf(cSpeed, (L"%lf MB/s"), dSpeed);
+					}
+					else if (dSpeed >= N_1KB)
+					{
+						dSpeed /= N_1KB;
+						swprintf(cSpeed, (L"%lf KB/s"), dSpeed);
+					}
+					else
+					{
+						swprintf(cSpeed, (L"%lf Bytes/s"), dSpeed);
+					}
+
+					return cSpeed;
+				}
+
+		__inline static std::string TimeToShortA(double dTime)
+		{
+			char cTime[MAXBYTE] = { 0 };
+			const int N_1MIN = 60;
+			const int N_1HOUR = N_1MIN * N_1MIN;
+			const int N_1DAY = 24 * N_1HOUR;
+			double dExternTime = dTime;
+			int nUnit = 0;
+			while (dExternTime > 0)
+			{
+				if (dExternTime >= N_1DAY)
+				{
+					nUnit = dExternTime / N_1DAY;
+					sprintf(cTime, ("%d天"), nUnit);
+					dExternTime -= nUnit * N_1DAY;
+				}
+				else if (dExternTime > N_1HOUR)
+				{
+					nUnit = dExternTime / N_1HOUR;
+					sprintf(cTime, ("%s%d小时"), cTime, nUnit);
+					dExternTime -= nUnit * N_1HOUR;
+				}
+				else if (dExternTime > N_1MIN)
+				{
+					nUnit = dExternTime / N_1MIN;
+					sprintf(cTime, ("%s%d分钟"), cTime, nUnit);
+					dExternTime -= nUnit * N_1MIN;
+				}
+				else
+				{
+					sprintf(cTime, ("%s%lf秒"), cTime, dExternTime);
+					dExternTime = 0;
+				}
+			}
+
+			return std::string(cTime);
+		}
+		__inline static std::wstring TimeToShortW(double dTime)
+		{
+			wchar_t cTime[MAXBYTE] = { 0 };
+			const int N_1MIN = 60;
+			const int N_1HOUR = N_1MIN * N_1MIN;
+			const int N_1DAY = 24 * N_1HOUR;
+			double dExternTime = dTime;
+			int nUnit = 0;
+			while (dExternTime > 0)
+			{
+				if (dExternTime >= N_1DAY)
+				{
+					nUnit = dExternTime / N_1DAY;
+					swprintf(cTime, (L"%d天"), nUnit);
+					dExternTime -= nUnit * N_1DAY;
+				}
+				else if (dExternTime > N_1HOUR)
+				{
+					nUnit = dExternTime / N_1HOUR;
+					swprintf(cTime, (L"%s%d小时"), cTime, nUnit);
+					dExternTime -= nUnit * N_1HOUR;
+				}
+				else if (dExternTime > N_1MIN)
+				{
+					nUnit = dExternTime / N_1MIN;
+					swprintf(cTime, (L"%s%d分钟"), cTime, nUnit);
+					dExternTime -= nUnit * N_1MIN;
+				}
+				else
+				{
+					swprintf(cTime, (L"%s%lf秒"), cTime, dExternTime);
+					dExternTime = 0;
+				}
+			}
+
+			return std::wstring(cTime);
+		}
+
+#if !defined(UNICODE) && !defined(_UNICODE)
+#define SpeedToShort SpeedToShortA
+#define TimeToShort TimeToShortA
+#else
+#define SpeedToShort SpeedToShortW
+#define TimeToShort TimeToShortW
+#endif
+
 	}
 
 	namespace FilePath{
@@ -3910,6 +4098,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 	};
 }
 
+#include "Network.h"
 #include "PEFileInfo.h"
 #include "ThreadHelper.h"
 #include "WindowHeader.h"
@@ -3917,7 +4106,5 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 #include "ListCtrlData.h"
 #include "SystemDataInfo.h"
 #include "CryptyHeader.h"
-#include "CommonWindow.h"
-#include "Network.h"
 
 #endif //__COMMONHELPER_H_

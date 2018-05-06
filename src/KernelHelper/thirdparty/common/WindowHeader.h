@@ -1155,7 +1155,122 @@ namespace GUI{
 			}
 		}
 	}
+	//////////////////////////////////////////////////////////////////////////////////////
+	// ListCtrl 操作
+	__inline static void ListCtrl_InsertColumn(HWND hListCtrlWnd, TSTRINGVECTOR *pSV, int nWidth)
+	{
+		if (pSV)
+		{
+			ListView_DeleteAllItems(hListCtrlWnd);
+			while (ListView_DeleteColumn(hListCtrlWnd, 0)){};
 
+			size_t stIdx = 0;
+			size_t stSize = pSV->size();
+			for (stIdx = 0; stIdx < stSize; stIdx++)
+			{
+				tstring tsText = pSV->at(stIdx);
+				LV_COLUMN lvc = { 0 };
+				lvc.mask = LVCF_WIDTH | LVCF_TEXT;
+				lvc.fmt = LVCFMT_CENTER;
+				lvc.cx = nWidth;
+				lvc.pszText = (_TCHAR *)tsText.c_str();
+				lvc.iSubItem = 0;
+				ListView_InsertColumn(hListCtrlWnd, stIdx, &lvc);
+			}
+		}
+	}
+
+	__inline static void ListCtrl_InsertRowData(HWND hListCtrlWnd, TSTRINGVECTORVECTOR *pSVV)
+	{
+		HWND hHeaderCtrlWnd = (HWND)ListView_GetHeader(hListCtrlWnd);
+		if (hHeaderCtrlWnd)
+		{
+			if (pSVV)
+			{
+				size_t stColumnCount = Header_GetItemCount(hHeaderCtrlWnd);
+
+				ListView_DeleteAllItems(hListCtrlWnd);
+
+				size_t stRowIdx = 0;
+				size_t stRowSize = pSVV->size();
+				for (stRowIdx = 0; stRowIdx < stRowSize; stRowIdx++)
+				{
+					TSTRINGVECTOR *pSV = &pSVV->at(stRowIdx);
+					if (pSV)
+					{
+						size_t stColIdx = 0;
+						size_t stColSize = pSV->size();
+						stColSize = stColSize > stColumnCount ? stColumnCount : stColSize;
+						if (stColSize)
+						{
+							tstring tsText = pSV->at(stColIdx);
+							LV_ITEM lvi = { 0 };
+							lvi.mask = LVIF_TEXT;
+							lvi.iItem = stRowIdx;
+							lvi.iSubItem = stColIdx;
+							lvi.pszText = (_TCHAR *)tsText.c_str();
+							ListView_InsertItem(hListCtrlWnd, &lvi);
+
+							for (++stColIdx; stColIdx < stColSize; stColIdx++)
+							{
+								tsText = pSV->at(stColIdx);
+								lvi.iSubItem = stColIdx;
+								lvi.pszText = (_TCHAR *)tsText.c_str();
+								ListView_SetItem(hListCtrlWnd, &lvi);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	__inline static void ListCtrl_UpdateCellData(HWND hListCtrlWnd, size_t stRowIdx, size_t stColIdx, tstring tsText)
+	{
+		HWND hHeaderCtrlWnd = (HWND)ListView_GetHeader(hListCtrlWnd);
+		if (hHeaderCtrlWnd)
+		{
+			size_t stColCount = Header_GetItemCount(hHeaderCtrlWnd);
+			size_t stRowCount = ListView_GetItemCount(hListCtrlWnd);
+			if (stRowIdx >= 0 && stRowIdx < stRowCount &&
+				stColIdx >= 0 && stColIdx < stColCount)
+			{
+				LV_ITEM lvi = { 0 };
+				lvi.mask = LVIF_TEXT;
+				lvi.iItem = stRowIdx;
+				lvi.iSubItem = stColIdx;
+				lvi.pszText = (_TCHAR *)tsText.c_str();
+				ListView_SetItem(hListCtrlWnd, &lvi);
+			}
+		}
+	}
+
+	__inline static void ListCtrl_AutoColumnWidth(HWND hListCtrlWnd)
+	{
+		RECT rcListCtrlWnd = { 0 };
+		GetClientRect(hListCtrlWnd, &rcListCtrlWnd);
+		InvalidateRect(hListCtrlWnd, &rcListCtrlWnd, FALSE);
+
+		HWND hHeaderCtrlWnd = (HWND)ListView_GetHeader(hListCtrlWnd);
+		if (hHeaderCtrlWnd)
+		{
+			int nWidth = 0;
+			int nColumnWidth = 0;
+			int nHeaderWidth = 0;
+			int nColumnCount = Header_GetItemCount(hHeaderCtrlWnd);
+
+			for (int nIdx = 0; nIdx < nColumnCount; nIdx++)
+			{
+				ListView_SetColumnWidth(hListCtrlWnd, nIdx, LVSCW_AUTOSIZE);
+				nColumnWidth = ListView_GetColumnWidth(hListCtrlWnd, nIdx);
+				ListView_SetColumnWidth(hListCtrlWnd, nIdx, LVSCW_AUTOSIZE_USEHEADER);
+				nHeaderWidth = ListView_GetColumnWidth(hListCtrlWnd, nIdx);
+				nWidth = nColumnWidth > nHeaderWidth ? nColumnWidth : nHeaderWidth;
+				ListView_SetColumnWidth(hListCtrlWnd, nIdx, nWidth);
+			}
+			InvalidateRect(hListCtrlWnd, &rcListCtrlWnd, TRUE);
+		}
+	}
 	__inline static void ListCtrlDeleteAllColumns(HWND hListViewWnd)
 	{
 		while (ListView_DeleteColumn(hListViewWnd, ListView_GetHeader(hListViewWnd)));
@@ -1861,7 +1976,42 @@ namespace GUI{
 
 		return nNumOfFiles;
 	}
+	//nAnimateType = 1 2 3 4 其它动画类型
+	__inline static BOOL DisplayAnimateWindows(HWND hWnd, unsigned long ulTime, bool bShow = true, bool bSlide = true, int nAnimateType = 0)
+	{
+		unsigned long ulFlags = (bShow ? AW_ACTIVATE : AW_HIDE) | (bSlide ? AW_SLIDE : AW_BLEND);
 
+		switch (nAnimateType)
+		{
+		case 1:
+		{
+			ulFlags |= AW_HOR_POSITIVE;
+		}
+		break;
+		case 2:
+		{
+			ulFlags |= AW_VER_POSITIVE;
+		}
+		break;
+		case 3:
+		{
+			ulFlags |= AW_HOR_NEGATIVE;
+		}
+		break;
+		case 4:
+		{
+			ulFlags |= AW_VER_NEGATIVE;
+		}
+		break;
+		default:
+		{
+			ulFlags |= AW_CENTER;
+		}
+		break;
+		}
+
+		return ::AnimateWindow(hWnd, ulTime, ulFlags);
+	}
 	//显示在屏幕中央
 	__inline static void CenterWindowInScreen(HWND hWnd)
 	{

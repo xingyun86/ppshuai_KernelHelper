@@ -1,6 +1,7 @@
 ﻿// PipeHelper.cpp : Defines the entry point for the console application.
 //
 
+#include "CommonHelper.h"
 #include "PipeHelper.h"
 
 CPipeHelper::CPipeHelper()

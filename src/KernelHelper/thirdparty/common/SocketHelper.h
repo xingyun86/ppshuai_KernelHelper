@@ -3,20 +3,17 @@
 #ifndef __SOCKETHELPER_H__
 #define __SOCKETHELPER_H__
 
-#include <string>
-#include <winsock.h>
-
-class CWebServicesHandler
+class CTcpSocketHandler
 {
 public:
-	CWebServicesHandler();
-	~CWebServicesHandler();
+	CTcpSocketHandler();
+	~CTcpSocketHandler();
 
 public:
 #if 0
-	static CWebServicesHandler& GetInstance()
+	static CTcpSocketHandler& GetInstance()
 	{
-		static CWebServicesHandler instance;
+		static CTcpSocketHandler instance;
 		return instance;
 	}
 #endif
@@ -70,7 +67,7 @@ public:
 	struct sockaddr_in m_serverSockAddrIn;
 	void ClientSockInitialize();//初始化
 	void ClientSetSockOptions();//设置选项
-	void ClientSetSockAddrInf();//设置参数
+	void ClientSetSockAddrsIn();//设置参数
 	void ClientExecuteConnect();//执行连接
 
 private:
@@ -85,4 +82,25 @@ private:
 	bool m_bReConnecting;//是否正在重连，true-是，false-否
 };
 
+class CUdpSocketHandler{
+public:
+	typedef struct tagSocketPacket{
+		int ssize;//结构体大小
+		SOCKET s;
+		struct sockaddr_in si;//接入的连接信息
+		int port;//端口
+		void * data;//数据指针
+		int size;//数据大小
+	}SOCKETPACKET, *PSOCKETPACKET;
+
+	SOCKET udp_start(int nPort);
+
+	void udp_setsockaddrsin()//设置参数
+	{
+
+	}
+	static DWORD WINAPI udp_recvdata_thread(void *p);
+	static DWORD WINAPI udp_senddata_thread(void *p);
+
+};
 #endif // __SOCKETHELPER_H__

@@ -48,7 +48,7 @@
 
 #endif
 
-
+#include "CommonHelper.h"
 #include "PipeHelper.h"
 #include "CurlHelper.h"
 #include "CryptHelper.h"
@@ -61,5 +61,7 @@
 #if !defined(KERNELHELPER_BUILDING)
 CMiniDumper G_MD(true);
 #endif
+
+#include "CommonWindow.h"
 
 #endif //__COMMONHEADER_H_

@@ -1681,6 +1681,281 @@ namespace PPSHUAI
 			TSTRING m_tsShowTips;//显示提示信息
 			std::map<SIZE_T, TSTRING> m_stmap;//图片路径列表
 		};
+
+
+		__inline static void ShowFrameUI()
+		{
+#define WINDOW_TITLE_INFO				"WINDOW_TITLE_INFO"
+#define COMPRESS_FILEPATH				"COMPRESS_FILEPATH"
+#define COMPRESS_PATH					"COMPRESS_PATH"
+#define UNCOMPRESS_FILEPATH				"UNCOMPRESS_FILEPATH"
+#define UNCOMPRESS_PATH					"UNCOMPRESS_PATH"
+#define THREADHELPER_HTTPSERVER_PORTS	"THREADHELPER_HTTPSERVER_PORTS"
+#define THREADHELPER_HTTPSERVER_HANDLE	"THREADHELPER_HTTPSERVER_HANDLE"
+			TSTRINGTSTRINGMAP ttmap = {
+				{ _T(WINDOW_TITLE_INFO), _T("FrameUI(Ver1.0)") },
+				{ _T(COMPRESS_FILEPATH), _T("") },
+				{ _T(COMPRESS_PATH), _T("") },
+				{ _T(UNCOMPRESS_FILEPATH), _T("") },
+				{ _T(UNCOMPRESS_PATH), _T("") },
+			};
+			PPSHUAI::GUI::DisplayDialogBox(
+				PPSHUAI::GUI::CDlgTemplate(DS_MODALFRAME | DS_FIXEDSYS | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_BORDER | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, \
+				2, 0, 0, 216, 200, 0, _T(""), _T("FRAMEUI"), 8, _T("MS Sans Serif"),
+				std::vector<PPSHUAI::GUI::CDlgItemTemplate>{
+				PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | SS_LEFT, 0, 4, 4, 48, 20, 101, WC_STATIC, _T("Static"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | WS_BORDER | ES_LEFT | ES_MULTILINE, 0, 52, 4, 100, 20, 102, WC_EDIT, _T("Edit"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX, 0, 156, 4, 60, 20, 103, WC_BUTTON, _T("CheckBox"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | SS_LEFT, 0, 4, 28, 208, 10, 104, WC_STATIC, _T("Static"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | WS_BORDER | ES_LEFT | ES_MULTILINE, 0, 4, 42, 208, 20, 105, WC_EDIT, _T("Edit"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | SS_LEFT, 0, 4, 66, 208, 10, 106, WC_STATIC, _T("Static"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | WS_BORDER | ES_LEFT | ES_MULTILINE, 0, 4, 80, 208, 20, 107, WC_EDIT, _T("Edit"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | SS_LEFT, 0, 4, 104, 208, 10, 108, WC_STATIC, _T("Static"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | WS_BORDER | ES_LEFT | ES_MULTILINE, 0, 4, 118, 208, 20, 109, WC_EDIT, _T("Edit"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | SS_LEFT, 0, 4, 142, 208, 10, 110, WC_STATIC, _T("Static"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | WS_BORDER | ES_LEFT | ES_MULTILINE, 0, 4, 156, 208, 20, 111, WC_EDIT, _T("Edit"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 0, 4, 180, 40, 16, 112, WC_BUTTON, _T("Button"), 0),
+					PPSHUAI::GUI::CDlgItemTemplate(WS_VISIBLE | WS_CHILD | BS_PUSHBUTTON, 0, 48, 180, 40, 16, 113, WC_BUTTON, _T("Button"), 0),
+			}),
+			(DLGPROC)[](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->INT_PTR
+				{
+					INT_PTR nResult = 0L;
+					TSTRINGTSTRINGMAP * pTTMAP = (TSTRINGTSTRINGMAP *)::GetWindowLongPtr(hWnd, GWLP_USERDATA);
+					switch (uMsg)
+					{
+					case WM_INITDIALOG:
+					{
+						pTTMAP = (TSTRINGTSTRINGMAP *)(lParam);
+
+						//设置存储数组指针
+						::SetWindowLongPtr(hWnd, GWLP_USERDATA, lParam);
+
+						//添加菜单项					
+						HMENU hMenu = GetSystemMenu(hWnd, FALSE);
+						::AppendMenu(hMenu, MF_STRING, (UINT)12, _T("关于"));
+						SetMenu(hWnd, hMenu);
+
+						//设置窗口标题
+						::SetWindowText(hWnd, pTTMAP->at(_T(WINDOW_TITLE_INFO)).c_str());
+
+						//设置标题栏图标
+						HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON));
+						if (hIcon)
+						{
+							SNDMSG(hWnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+							SNDMSG(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+							SNDMSG(hWnd, WM_SETICON, ICON_SMALL2, (LPARAM)hIcon);
+						}
+						::SetDlgItemText(hWnd, 101, _T("\r\n设置密码:"));
+						::SetDlgItemText(hWnd, 102, _T(""));
+						::SetDlgItemText(hWnd, 103, _T("设置为HEX"));
+						::SetDlgItemText(hWnd, 104, _T("压缩文件路径:"));
+						::SetDlgItemText(hWnd, 105, _T(""));
+						::SetDlgItemText(hWnd, 106, _T("压缩路径:"));
+						::SetDlgItemText(hWnd, 107, _T(""));
+						::SetDlgItemText(hWnd, 108, _T("解压文件路径:"));
+						::SetDlgItemText(hWnd, 109, _T(""));
+						::SetDlgItemText(hWnd, 110, _T("解压路径:"));
+						::SetDlgItemText(hWnd, 111, _T(""));
+						::SetDlgItemText(hWnd, 112, _T("压缩"));
+						::SetDlgItemText(hWnd, 113, _T("解压"));
+
+						//PPSHUAI::GUI::RegisterDropFilesEvent(GetDlgItem(hWnd, 105));
+						//PPSHUAI::GUI::RegisterDropFilesEvent(GetDlgItem(hWnd, 107));
+						PPSHUAI::GUI::RegisterDropFilesEvent(hWnd);
+
+						DWORD dwServPort = 0L;
+						SetProp(hWnd, _T(THREADHELPER_HTTPSERVER_HANDLE), (HANDLE)GUI::StartHttpServer(dwServPort));
+						SetProp(hWnd, _T(THREADHELPER_HTTPSERVER_PORTS), (HANDLE)dwServPort);
+					}
+					break;
+					case WM_SIZE:
+					{
+					}
+					break;
+					case WM_SYSCOMMAND:
+					{
+						switch (LOWORD(wParam))
+						{
+						case 12:
+						{
+							PPSHUAI::GUI::ShowAbout(hWnd, 0U, _T("关于"), pTTMAP->at(_T(WINDOW_TITLE_INFO)).c_str());
+						}
+						break;
+						default:break;
+						}
+					}
+					break;
+					case WM_DROPFILES:
+					{
+						HWND hEdtWnd = NULL;
+						TSTRINGTSTRINGMAP ttmap;
+						HDROP hDrop = (HDROP)wParam;
+						POINT pt = { 0 };
+						::GetCursorPos(&pt);
+						::ScreenToClient(hWnd, &pt);
+						hEdtWnd = ChildWindowFromPointEx(hWnd, pt, CWP_ALL);
+						switch (GetDlgCtrlID(hEdtWnd))
+						{
+						case 105:
+						{
+							if (PPSHUAI::GUI::GetDropFiles(&ttmap, hDrop))
+							{
+								//pTTMAP->at(_T(COMPRESS_FILEPATH)) = ttmap.begin()->first;
+								::SetWindowText(hEdtWnd, ttmap.begin()->first.c_str());
+							}
+						}
+						break;
+						case 107:
+						{
+							if (PPSHUAI::GUI::GetDropFiles(&ttmap, hDrop))
+							{
+								//pTTMAP->at(_T(COMPRESS_PATH)) = ttmap.begin()->first;
+								::SetWindowText(hEdtWnd, ttmap.begin()->first.c_str());
+							}
+						}
+						break;
+						case 109:
+						{
+							if (PPSHUAI::GUI::GetDropFiles(&ttmap, hDrop))
+							{
+								//pTTMAP->at(_T(UNCOMPRESS_FILEPATH)) = ttmap.begin()->first;
+								::SetWindowText(hEdtWnd, ttmap.begin()->first.c_str());
+							}
+						}
+						break;
+						case 111:
+						{
+							if (PPSHUAI::GUI::GetDropFiles(&ttmap, hDrop))
+							{
+								//pTTMAP->at(_T(UNCOMPRESS_PATH)) = ttmap.begin()->first;
+								::SetWindowText(hEdtWnd, ttmap.begin()->first.c_str());
+							}
+						}
+						break;
+						}
+					}
+					break;
+					case WM_COMMAND:
+					{
+						LPSTR lpPassword = ("");
+						switch (LOWORD(wParam))
+						{
+						case 103:
+						{
+							if ((IsDlgButtonChecked(hWnd, LOWORD(wParam)) & BST_CHECKED) == BST_CHECKED)
+							{
+								::SetDlgItemText(hWnd, 101, _T("设置密码:\r\n若奇数则补零"));
+							}
+							else
+							{
+								::SetDlgItemText(hWnd, 101, _T("\r\n设置密码:"));
+							}
+						}
+						break;
+						case 112: //压缩
+						{
+							::MessageBox(hWnd, _T("【压缩】!"), _T("压缩提示"), MB_ICONINFORMATION);
+						}
+						break;
+						case 113: //解压
+						{
+							::MessageBox(hWnd, _T("【解压】！"), _T("解压提示"), MB_ICONINFORMATION);
+						}
+						break;
+						case IDOK:
+						{
+							//SNDMSG(hWnd, WM_CLOSE, (WPARAM)0, (LPARAM)0);
+						}
+						break;
+						case IDCANCEL:
+						{
+							GUI::StopHttpServer((CThreadHelper*)GetProp(hWnd, _T(THREADHELPER_HTTPSERVER_HANDLE)));
+							//SNDMSG(hWnd, WM_CLOSE, (WPARAM)0, (LPARAM)0);
+							::EndDialog(hWnd, LOWORD(wParam));
+						}
+						break;
+						default:
+						{
+
+						}
+						break;
+						}
+					}
+					break;
+					case WM_NOTIFY:
+					{
+
+					}
+					break;
+					case WM_USER + WM_SETTEXT:
+					{
+					}
+					break;
+					//case WM_CLOSE:
+					//{
+					//	::EndDialog(hWnd, LOWORD(wParam));
+					//}
+					//break;
+					//case WM_DESTROY:
+					//{		
+					//	//PostQuitMessage(LOWORD(wParam));
+					//	//PostMessage(hWnd, WM_QUIT, (WPARAM)0, (LPARAM)0);
+					//}
+					//break;
+					default:
+					{
+					}
+					break;
+					}
+					return nResult;
+				}, 0, (LPARAM)&ttmap);
+		}
+
+#if defined(_WINDOWS)
+		int APIENTRY ShowMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, INT nShowCmd)
+#elif !defined(_CONSOLE)
+		int ShowMain(INT argc, LPTSTR * argv)
+#else
+		int ShowMain(INT argc, LPTSTR * argv)
+#endif
+		{
+			CURL * _P_CURL = NULL;
+
+			// 设置软件单一运行实例
+			if (PPSHUAI::SystemKernel::RunAppOne(_T("\x02\x01\x01\x02\x02\x01\x02\x0C\x0C")))
+			{
+				return 0;
+			}
+
+			// 设定软件过期日期，过期后执行自删除
+			PPSHUAI::SystemKernel::StartDeleteMyself(PPSHUAI::SystemKernel::CFileUsedTimeInfo(__targv[0], 25030935).ptr());
+
+			// 通用控件 初始化
+			InitCommonControls();
+
+			// 将它设置为包括所有要在应用程序中使用的公共控件类。
+			INITCOMMONCONTROLSEX iccex = { sizeof(INITCOMMONCONTROLSEX), ICC_WIN95_CLASSES };
+			InitCommonControlsEx(&iccex);
+
+			// ATL 初始化
+			PPSHUAI::GUI::CWebBrowser::ATL_INIT();
+
+			// CURL 初始化
+			PPSHUAI::CURLTOOL::init_curl_env(&_P_CURL);
+
+			//////////////////////////////////////////////////////////////////////////////////////////
+			// 创建UI界面
+			ShowFrameUI();
+
+			// CURL 释放
+			PPSHUAI::CURLTOOL::exit_curl_env(&_P_CURL);
+
+			// ATL 释放
+			PPSHUAI::GUI::CWebBrowser::ATL_TERM();
+
+			return 0;
+		}
 	}
 }
 #endif //__COMMONWINDOW_H_
