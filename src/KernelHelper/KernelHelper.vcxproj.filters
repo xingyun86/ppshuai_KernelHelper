@@ -51,6 +51,9 @@
     <ClCompile Include="thirdparty\common\MiniDump.cpp">
       <Filter>Source Files\ThirdParty</Filter>
     </ClCompile>
+    <ClCompile Include="thirdparty\common\UdpSocket.cpp">
+      <Filter>Source Files\ThirdParty</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="thirdparty\include\CommonHeader.h">

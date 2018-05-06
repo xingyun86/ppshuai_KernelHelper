@@ -243,6 +243,7 @@ DEL /F /S /Q $(OutDir)EXCLUDE.TXT
     <ClCompile Include="thirdparty\common\SocketHelper.cpp" />
     <ClCompile Include="thirdparty\common\Sqlite3Helper.cpp" />
     <ClCompile Include="thirdparty\common\TcpSocket.cpp" />
+    <ClCompile Include="thirdparty\common\UdpSocket.cpp" />
     <ClCompile Include="thirdparty\log4z\log4z.cpp" />
     <ClCompile Include="thirdparty\md5\md5.cpp" />
   </ItemGroup>
