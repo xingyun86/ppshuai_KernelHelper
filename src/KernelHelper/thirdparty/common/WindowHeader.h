@@ -5553,14 +5553,15 @@ namespace GUI{
 			break;
 			case WM_SIZE:
 			{
+				RECT rcWin = { 0 };
+				GetClientRect(hWnd, &rcWin);
 				HWND hListViewWnd = GetDlgItem(hWnd, 101);
 				if (hListViewWnd)
 				{
-					RECT rcWnd = { 0 };
-					GetClientRect(hWnd, &rcWnd);
-					MoveWindow(hListViewWnd, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, TRUE);
-					//SetWindowPos(hListViewWnd, HWND_NOTOPMOST, rcWnd.left, rcWnd.top, rcWnd.right - rcWnd.left, rcWnd.bottom - rcWnd.top, SWP_NOMOVE | SWP_NOSIZE);
+					
+					MoveWindow(hListViewWnd, rcWin.left, rcWin.top, rcWin.right - rcWin.left, rcWin.bottom - rcWin.top, FALSE);
 				}
+				RedrawWindow(hWnd, &rcWin, NULL, RDW_INVALIDATE | RDW_UPDATENOW | RDW_ALLCHILDREN | RDW_ERASE);
 			}
 			break;
 			case WM_COMMAND:

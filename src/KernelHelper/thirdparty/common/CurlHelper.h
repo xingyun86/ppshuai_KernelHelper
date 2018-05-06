@@ -2070,6 +2070,7 @@ namespace PPSHUAI{
 					lpInternetSession->lpResponseData = lpData;
 					lpInternetSession->dwResponseDataLength += dwSucceedNumber;
 				}
+				bResult = TRUE;
 			}
 
 			//读取返回数据结果
