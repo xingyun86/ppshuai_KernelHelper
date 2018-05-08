@@ -92,15 +92,15 @@ namespace PPSHUAI{
 	__inline static void GenerateRandom(std::vector<T> & vT, int min, int max, RANDOMLISTTYPE type = RLTYPE_AABB)
 	{
 		srand(time(0));
-		for (auto it : vT)
+		for (auto & it : vT)
 		{
 			switch (type)
 			{
-			case RLTYPE_A__B:	*it = (rand() % (T(max - min))) + (min - 1);	break;
-			case RLTYPE_AA_B:	*it = (rand() % (T(max - min))) + (min);	break;
-			case RLTYPE_A_BB:	*it = (rand() % (T(max - min))) + (min + 1);	break;
-			case RLTYPE_AABB:	*it = (rand() % (T(max - min + 1))) + (min); break;
-			default:ret = rand() % (T)(RAND_MAX); break;
+			case RLTYPE_A__B:	it = (rand() % (T(max - min))) + (min - 1);	break;
+			case RLTYPE_AA_B:	it = (rand() % (T(max - min))) + (min);	break;
+			case RLTYPE_A_BB:	it = (rand() % (T(max - min))) + (min + 1);	break;
+			case RLTYPE_AABB:	it = (rand() % (T(max - min + 1))) + (min); break;
+			default:it = rand() % (T)(RAND_MAX); break;
 			}
 		}
 	}
