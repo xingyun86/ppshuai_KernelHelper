@@ -9,15 +9,50 @@
 #include <olectl.h>
 #include <ocidl.h>
 #include <ole2.h>
-#include <atlbase.h>
-#include <atlwin.h>
 #include <tchar.h>
 #include <math.h>
-#include <atlbase.h>
 #include <oleacc.h>
 //#pragma comment(lib, "oleacc.lib")
 
+////////////////////////////////////////////////////////////////
+// 定义ATL
+////////////////////////////////////////////////////////////////
+// Change these values to use different versions
+//#define WINVER		0x0500
+//#define _WIN32_WINNT	0x0501
+//#define _WIN32_IE		0x0501
+//#define _RICHEDIT_VER	0x0500
+
+#define _WTL_NO_CSTRING
+#define _WTL_NO_WTYPES
+#define _CSTRING_NS
+#define _WTYPES_NS
+
+#include <atlstr.h>
+#include <atlbase.h>
+#include <atlapp.h>
+
+extern CAppModule _Module;
+
+#include <atlwin.h>
+
+#include <atlframe.h>
+#include <atlctrls.h>
+#include <atlctrlx.h>
+#include <atldlgs.h>
+#include <atlddx.h>
+#include <atlcrack.h>
+#include <atlctrlw.h>
+#include <atlmisc.h>
+#include <atltypes.h>
+
+////////////////////////////////////////////////////////////////
+
 #include <gdiplus.h>
+//#pragma comment (lib, "gdiplus.lib")
+
+#include <gl/gl.h>
+//#pragma comment (lib, "opengl32.lib")
 
 #include <map>
 #include <vector>
@@ -1759,7 +1794,7 @@ namespace GUI{
 		return 0;
 	}
 	//对话框通知消息处理函数
-	__inline static INT_PTR OnNotify(HWND hDlg, DWORD dwID, LPARAM lParam)
+	__inline static INT_PTR OnListCtrlNotify(HWND hDlg, DWORD dwID, LPARAM lParam)
 	{
 		UNREFERENCED_PARAMETER(lParam);
 
@@ -1851,7 +1886,7 @@ namespace GUI{
 					break;
 					case CDDS_SUBITEM | CDDS_ITEMPREPAINT:
 					{
-						printf("%d,%d\r\n", pnmlcd->nmcd.dwItemSpec, pnmlcd->iSubItem);
+						//printf("%d,%d\r\n", pnmlcd->nmcd.dwItemSpec, pnmlcd->iSubItem);
 						if (pnmlcd->nmcd.dwItemSpec % 2 && pnmlcd->iSubItem % 2)
 						{
 							pnmlcd->clrText = GLOBAL_COLORVALUEARRAY[DOUBLE_LINE].clrText;
@@ -1969,12 +2004,235 @@ namespace GUI{
 		{
 			//得到文件名
 			DragQueryFile(hDropInfo, nIndex, (LPTSTR)tszFilePathName, _MAX_PATH);
-			pttmap->insert(std::map<TSTRING, tstring>::value_type(tszFilePathName, tszFilePathName));
+			pttmap->insert(std::map<TSTRING, TSTRING>::value_type(tszFilePathName, tszFilePathName));
 		}
 
 		DragFinish(hDropInfo);
 
 		return nNumOfFiles;
+	}
+	__inline static size_t GetDropFiles(std::vector<TSTRING> * pttmap, HDROP hDropInfo)
+	{
+		UINT nIndex = 0;
+		UINT nNumOfFiles = 0;
+		_TCHAR tszFilePathName[MAX_PATH + 1] = { 0 };
+
+		//得到文件个数
+		nNumOfFiles = DragQueryFile(hDropInfo, 0xFFFFFFFF, NULL, 0);
+
+		for (nIndex = 0; nIndex < nNumOfFiles; nIndex++)
+		{
+			//得到文件名
+			DragQueryFile(hDropInfo, nIndex, (LPTSTR)tszFilePathName, _MAX_PATH);
+			pttmap->push_back(tszFilePathName);
+		}
+
+		DragFinish(hDropInfo);
+
+		return nNumOfFiles;
+	}
+
+	__inline static int OnRefreshTreelist(HWND hWndTreeList)
+	{
+		int nResult = 0;
+
+		_TCHAR tzWindowTitle[MAXBYTE] = { 0 };
+		_TCHAR tzWindowClass[MAXBYTE] = { 0 };
+		_TCHAR tzWindowBuffer[MAXBYTE] = { 0 };
+
+		//Tree控件操作变量
+		TVINSERTSTRUCT tvis = { 0 };
+		HWND hWndParent = NULL;
+		HTREEITEM hTreeItemParent = NULL;
+		HWND hWndDesktop = NULL;
+		HTREEITEM hTreeItemDesktop = NULL;
+		HWND hWndChildren = NULL;
+		HTREEITEM hTreeItemChildren = NULL;
+
+		//设置根窗口句柄
+		hWndParent = hWndTreeList;
+
+		//根节点数据
+		tvis.hParent = NULL;
+		tvis.hInsertAfter = NULL;
+		tvis.item.mask = TVIF_TEXT | TVIF_PARAM;
+		tvis.item.pszText = _T("窗口句柄");
+		tvis.item.lParam = 0;//设置项目个数
+
+		//删除全部节点
+		TreeView_DeleteAllItems(hWndParent);
+
+		//添加根节点
+		hTreeItemParent = TreeView_InsertItem(hWndParent, &tvis);
+
+		//获取桌面窗口句柄
+		hWndDesktop = ::GetDesktopWindow();
+
+		//取窗口标题
+		::GetWindowText(hWndDesktop, tzWindowTitle, sizeof(tzWindowTitle) / sizeof(_TCHAR));
+		_sntprintf(tzWindowTitle, sizeof(tzWindowClass) / sizeof(_TCHAR), _T("桌面"));
+
+		//取窗口类名
+		::GetClassName(hWndDesktop, tzWindowClass, sizeof(tzWindowClass) / sizeof(_TCHAR));
+
+		//把信息格式化
+		_sntprintf(tzWindowBuffer, sizeof(tzWindowBuffer) / sizeof(_TCHAR), _T("%s | %s | %d(0x%X)"), tzWindowTitle, tzWindowClass, hWndDesktop, hWndDesktop);
+
+		//节点数据
+		tvis.hParent = hTreeItemParent;
+		tvis.hInsertAfter = TVI_LAST;
+		tvis.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_CHILDREN;
+		tvis.item.pszText = tzWindowBuffer;
+		tvis.item.lParam = (int)hWndDesktop;
+		tvis.item.cChildren = ::GetWindow(hWndDesktop, GW_CHILD) ? 1 : 0;
+
+		//插入节点
+		hTreeItemDesktop = TreeView_InsertItem(hWndParent, &tvis);
+
+		//取子级窗口句柄
+		hWndChildren = ::GetWindow(hWndDesktop, GW_CHILD);
+
+		while (hWndChildren)
+		{
+			//窗口是否可视
+			if (::IsWindowVisible(hWndChildren))
+			{
+				memset(tzWindowTitle, 0, sizeof(tzWindowTitle));
+				memset(tzWindowClass, 0, sizeof(tzWindowClass));
+				memset(tzWindowBuffer, 0, sizeof(tzWindowBuffer));
+
+				//取窗口标题
+				::GetWindowText(hWndChildren, tzWindowTitle, sizeof(tzWindowTitle) / sizeof(_TCHAR));
+
+				//取窗口类名
+				::GetClassName(hWndChildren, tzWindowClass, sizeof(tzWindowClass) / sizeof(_TCHAR));
+
+				//把信息格式化
+				_sntprintf(tzWindowBuffer, sizeof(tzWindowBuffer) / sizeof(_TCHAR), _T("%s | %s | %d(0x%X)"), tzWindowTitle, tzWindowClass, hWndChildren, hWndChildren);
+
+				//节点数据
+				tvis.hParent = hTreeItemDesktop;
+				tvis.hInsertAfter = TVI_LAST;
+				tvis.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_CHILDREN;
+				tvis.item.pszText = tzWindowBuffer;
+				tvis.item.lParam = (int)hWndChildren;
+				tvis.item.cChildren = ::GetWindow(hWndChildren, GW_CHILD) ? 1 : 0;
+
+				//插入节点
+				hTreeItemChildren = TreeView_InsertItem(hWndParent, &tvis);
+			}
+
+			//取下一兄弟窗口
+			hWndChildren = ::GetWindow(hWndChildren, GW_HWNDNEXT);
+		}
+
+		//展开根节点
+		TreeView_Expand(hWndTreeList, hTreeItemParent, TVE_EXPAND);
+
+		//展开桌面节点
+		TreeView_Expand(hWndTreeList, hTreeItemDesktop, TVE_EXPAND);
+
+		return nResult;
+	}
+
+	//树响应函数，选择项目处理
+	__inline static void OnSelectedChangedTreeList(NMHDR * pNMHDR, LRESULT * pResult)
+	{
+		NMTREEVIEW * pNMTV = NULL;
+
+		_TCHAR tzWindowTitle[MAXBYTE] = { 0 };
+		_TCHAR tzWindowClass[MAXBYTE] = { 0 };
+		_TCHAR tzWindowBuffer[MAXBYTE] = { 0 };
+
+		//Tree控件操作变量
+		TVINSERTSTRUCT tvis = { 0 };
+		HWND hWndTreeList = NULL;
+		HWND hWndParent = NULL;
+		HTREEITEM hTreeItemParent = NULL;
+		HWND hWndChildren = NULL;
+		HTREEITEM hTreeItemChildren = NULL;
+
+		pNMTV = (NMTREEVIEW *)pNMHDR;
+		hWndTreeList = pNMTV->hdr.hwndFrom;
+		//::GetClassName(hWndTreeList, tzWindowClass, sizeof(tzWindowClass) / sizeof(_TCHAR));
+		//_tprintf(_T("%s\n"), tzWindowClass);
+
+		//hTreeItemParent = pNMTV->itemNew.hItem;
+		hTreeItemParent = TreeView_GetSelection(hWndTreeList);
+
+		tvis.item.hItem = hTreeItemParent;
+		tvis.item.mask = TVIF_PARAM;
+		TreeView_GetItem(hWndTreeList, &tvis.item);
+		hWndParent = (HWND)tvis.item.lParam;
+
+		//ItemHasChildren     是否有子节点
+		//GetChildItem        获取第一个子结点
+		//GetNextSiblingItem  获取下一个兄弟结点结点
+
+		//判断是否有子节点，已有子节点则不处理
+		if (TreeView_GetChild(hWndTreeList, hTreeItemParent))
+		{
+			return;
+		}
+
+		//遍历子窗口的所有控件
+		//取子级窗口句柄
+		hWndChildren = ::GetWindow(hWndParent, GW_CHILD);
+
+		while (hWndChildren)
+		{
+			//窗口是否可视
+			//if (::IsWindowVisible(hWndChildren))
+			{
+				memset(tzWindowTitle, 0, sizeof(tzWindowTitle));
+				memset(tzWindowClass, 0, sizeof(tzWindowClass));
+				memset(tzWindowBuffer, 0, sizeof(tzWindowBuffer));
+
+				//取窗口标题
+				::GetWindowText(hWndChildren, tzWindowTitle, sizeof(tzWindowTitle) / sizeof(_TCHAR));
+
+				//取窗口类名
+				::GetClassName(hWndChildren, tzWindowClass, sizeof(tzWindowClass) / sizeof(_TCHAR));
+
+				//把信息格式化
+				_sntprintf(tzWindowBuffer, sizeof(tzWindowBuffer) / sizeof(_TCHAR), _T("%s | %s | %d(0x%X)"), tzWindowTitle, tzWindowClass, hWndChildren, hWndChildren);
+
+				//_tprintf(_T("%s\n"), tzWindowBuffer);
+
+				//节点数据
+				tvis.hParent = hTreeItemParent;
+				tvis.hInsertAfter = TVI_LAST;
+				tvis.item.mask = TVIF_TEXT | TVIF_PARAM | TVIF_CHILDREN;
+				tvis.item.pszText = tzWindowBuffer;
+				tvis.item.lParam = (int)hWndChildren;
+				tvis.item.cChildren = ::GetWindow(hWndChildren, GW_CHILD) ? 1 : 0;
+
+				//插入节点
+				hTreeItemChildren = TreeView_InsertItem(hWndTreeList, &tvis);
+			}
+
+			//取下一兄弟窗口
+			hWndChildren = ::GetWindow(hWndChildren, GW_HWNDNEXT);
+		}
+	}
+	__inline static INT_PTR OnTreeNotify(HWND hWnd, DWORD dwID, LPARAM lParam)
+	{
+		INT_PTR nResult = (0);
+		NMHDR * pNMHDR = (NMHDR *)lParam;
+	
+		switch (pNMHDR->code)
+		{
+		case NM_DBLCLK://双击操作
+		{
+			if (pNMHDR->idFrom == dwID)
+			{
+				OnSelectedChangedTreeList((NMHDR *)lParam, 0);
+			}
+		}
+		break;
+		}
+
+		return nResult;
 	}
 	//nAnimateType = 1 2 3 4 其它动画类型
 	__inline static BOOL DisplayAnimateWindows(HWND hWnd, unsigned long ulTime, bool bShow = true, bool bSlide = true, int nAnimateType = 0)
@@ -3247,7 +3505,7 @@ namespace GUI{
 	//	pstEllipse	要设置圆角的横向半径和纵向半径
 	//	prcExcepted	要排除圆角的左上右下侧大小
 	//返回值：无返回
-	__inline static void SetWindowEllispeFrame(HWND hWnd, SIZE * pszEllipse = 0, RECT * prcExcepted = 0)
+	__inline static void SetWindowEllispeFrame(HWND hWnd, SIZE * pszEllipse = 0, RECT * prcExcepted = 0, BOOL bErase = TRUE)
 	{
 		HRGN hRgnWindow = 0;
 		POINT ptPosition = { 0, 0 };
@@ -3268,7 +3526,7 @@ namespace GUI{
 			rcWindow.right - rcWindow.left, rcWindow.bottom - rcWindow.top, pszEllipse->cx, pszEllipse->cy);
 		if (hRgnWindow)
 		{
-			::SetWindowRgn(hWnd, hRgnWindow, TRUE);
+			::SetWindowRgn(hWnd, hRgnWindow, bErase);
 		}
 	}
 
@@ -4805,6 +5063,16 @@ namespace GUI{
 			(*pData) = NULL;
 		}
 	}
+	LPWORD lpwAlign(LPWORD lpIn)
+	{
+		ULONG ul;
+
+		ul = (ULONG)lpIn;
+		ul++;
+		ul >>= 1;
+		ul <<= 1;
+		return (LPWORD)ul;
+	}
 	__inline static std::string InitDlgData(CDlgTemplate & cdt)
 	{
 		std::string strData((""));
@@ -4815,7 +5083,7 @@ namespace GUI{
 		strData.append((const char *)Convert::TToW(cdt.tTN).c_str(), (cdt.tTN.length() + 1) * sizeof(WCHAR));
 		strData.append((const char *)&cdt.wFS, sizeof(cdt.wFS));
 		strData.append((const char *)Convert::TToW(cdt.tFN).c_str(), (cdt.tFN.length() + 1) * sizeof(WCHAR));
-		
+
 		for (auto it : cdt.SDITVECTOR)
 		{
 			strData.append((const char *)&it.dit, sizeof(it.dit));

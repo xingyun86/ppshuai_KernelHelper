@@ -648,15 +648,149 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		strFname = szFname;
 		strExt = szExt;
 	}
-
+#define MEMORY_ALLOCAT	malloc
+#define MEMORY_REALLOC	realloc
+#define MEMORY_RELEASE	free
+	__inline static void * MemoryAllocat(void * p, size_t s)
+	{
+		return malloc(s);
+	}
 	__inline static void * MemoryRealloc(void * p, size_t s)
 	{
-		return realloc(p, s);
+		void * v = realloc(p, s);
+		if (!v)
+		{
+			free(p);
+		}
+		return v;
 	}
-	__inline static void MemoryRelease(void ** p)
+	__inline static void * MemoryRelease(void ** p)
 	{
-		free((*p));	(*p) = 0;
+		free((*p));	
+		return (*p) = 0;
 	}
+
+	class CConfigHelper {
+	public:
+		CConfigHelper(LPCTSTR lpPathFileName = _T("config.ini")) {
+			m_tsPathFileName = lpPathFileName;
+		};
+		virtual ~CConfigHelper() {};
+
+		static void InitRead(std::map<tstring, std::map<tstring, tstring>> & ttmapmap, LPCTSTR lpFileName)
+		{
+			LPTSTR lpTSD = NULL;
+			DWORD dwSectionNames = (0L);
+			LPTSTR lpSectionNames = (0L);
+			LPTSTR lpTK = NULL;
+			DWORD dwKeyNames = (0L);
+			LPTSTR lpKeyNames = (0L);
+			LPTSTR lpVL = NULL;
+
+			lpTSD = NULL;
+			dwSectionNames = MAXBYTE;
+			lpSectionNames = (LPTSTR)malloc(dwSectionNames * sizeof(_TCHAR));
+
+			while ((GetPrivateProfileSectionNames(lpSectionNames, dwSectionNames, lpFileName)) &&
+				((GetLastError() == ERROR_MORE_DATA) || (GetLastError() == ERROR_INSUFFICIENT_BUFFER)))
+			{
+				lpTSD = (LPTSTR)realloc(lpSectionNames, (dwSectionNames + dwSectionNames) * sizeof(_TCHAR));
+				if (!lpTSD)
+				{
+					if (lpSectionNames)
+					{
+						free(lpSectionNames);
+						lpSectionNames = (0L);
+					}
+				}
+				else
+				{
+					lpSectionNames = lpTSD;
+					dwSectionNames += dwSectionNames;
+				}
+			}
+			lpTSD = lpSectionNames;
+			while (lpTSD && (*lpTSD))
+			{
+				ttmapmap.insert(std::map<tstring, std::map<tstring, tstring>>::value_type(lpTSD, std::map<tstring, tstring>{}));
+
+				lpTK = NULL;
+				dwKeyNames = MAXBYTE;
+				lpKeyNames = (LPTSTR)malloc(dwKeyNames * sizeof(_TCHAR));
+
+				while ((GetPrivateProfileSection(lpTSD, lpKeyNames, dwKeyNames, lpFileName)) &&
+					((GetLastError() == ERROR_MORE_DATA) || (GetLastError() == ERROR_INSUFFICIENT_BUFFER)))
+				{
+					lpTK = (LPTSTR)realloc(lpKeyNames, (dwKeyNames + dwKeyNames) * sizeof(_TCHAR));
+					if (!lpTK)
+					{
+						if (lpKeyNames)
+						{
+							free(lpKeyNames);
+							lpKeyNames = (0L);
+						}
+					}
+					else
+					{
+						lpKeyNames = lpTK;
+						dwKeyNames += dwKeyNames;
+					}
+				}
+				lpTK = lpKeyNames;
+				while (lpTK && (*lpTK))
+				{
+					if ((lpVL = _tcschr(lpTK, _T('\x3D'))) && (lpTK != lpVL))
+					{
+						*(lpVL) = _T('\x00');//''
+						ttmapmap.at(lpTSD).insert(std::map<tstring, tstring>::value_type(lpTK, lpVL + 1));
+						*(lpVL) = _T('\x3D');//'='
+					}
+					lpTK += lstrlen(lpTK) + 1;
+				}
+				if (lpKeyNames)
+				{
+					free(lpKeyNames);
+					lpKeyNames = (0L);
+				}
+
+				lpTSD += lstrlen(lpTSD) + 1;
+			}
+			if (lpSectionNames)
+			{
+				free(lpSectionNames);
+				lpSectionNames = (0L);
+			}
+		}
+
+		//! ConfigHelper Singleton
+		static CConfigHelper * getInstance(LPCTSTR lpPathFileName = _T("config.ini")) {
+			static CConfigHelper instance(lpPathFileName);
+			return &instance;
+		}
+
+	public:
+		static TSTRING ReadString(LPCTSTR lpSectionName, LPCTSTR lpKeyName, LPCTSTR lpDefaultValue, LPCTSTR lpFileName)
+		{
+			TSTRING t(USHRT_MAX, _T('\0'));
+			GetPrivateProfileString(lpSectionName, lpKeyName, lpDefaultValue, (LPTSTR)t.c_str(), t.size(), lpFileName);
+			return t;
+		}
+		static BOOL WriteString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpValue, LPCTSTR lpFileName)
+		{
+			return WritePrivateProfileString(lpAppName, lpKeyName, lpValue, lpFileName);
+		}
+		static BOOL WriteInteger(LPCTSTR lpAppName, LPCTSTR lpKeyName, INT nValue, LPCTSTR lpFileName)
+		{
+			_TCHAR tzValue[MAXBYTE] = _T("\0");
+			_sntprintf(tzValue, sizeof(tzValue) / sizeof(*tzValue) - 1, _T("%ld"), nValue);
+			return WriteString(lpAppName, lpKeyName, tzValue, lpFileName);
+		}
+	private:
+
+		tstring m_tsPathFileName;
+
+		std::map<tstring, std::map<tstring, tstring>> m_ttmapmap;//配置信息映射
+	};
 
 #if !defined(_UNICODE) && !defined(UNICODE)
 #define ToUpperCase				ToUpperCaseA
@@ -1743,7 +1877,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		// 返 回 值：bool返回类型，成功返回true；失败返回false
 		// 编 写 者: ppshuai 20141112
 		//////////////////////////////////////////////////////////////////////////
-		__inline static BOOL DirectoryTraversal(std::map<SIZE_T, TSTRING> * pSTMAP, LPCTSTR lpRootPath = _T("."), LPCTSTR lpFormat = _T("*.*"))
+		__inline static BOOL DirectoryTraversal(std::vector<TSTRING> * pTV, LPCTSTR lpRootPath = _T("."), LPCTSTR lpExtension = _T("*.*"))
 		{
 			BOOL bResult = FALSE;
 			HANDLE hFindFile = NULL;
@@ -1751,7 +1885,49 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 			_TCHAR tFindPath[MAX_PATH + 1] = { 0 };
 
 			//构建遍历根目录
-			wsprintf(tFindPath, TEXT("%s%s"), lpRootPath, lpFormat);
+			wsprintf(tFindPath, TEXT("%s%s"), lpRootPath, lpExtension);
+
+			hFindFile = FindFirstFileEx(tFindPath, FindExInfoStandard, &wfd, FindExSearchNameMatch, NULL, 0);
+			//hFindFile = FindFirstFile(tRootPath, &wfd);
+			if (hFindFile != INVALID_HANDLE_VALUE)
+			{
+				do
+				{
+					if ((wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != FILE_ATTRIBUTE_DIRECTORY)
+					{
+						pTV->push_back(TSTRING(TSTRING(lpRootPath) + wfd.cFileName));
+					}
+					else
+					{
+						if (lstrcmp(wfd.cFileName, _T(".")) && lstrcmp(wfd.cFileName, _T("..")))
+						{
+							bResult = DirectoryTraversal(pTV, TSTRING(TSTRING(lpRootPath) + wfd.cFileName + _T("\\")).c_str(), lpExtension);
+						}
+					}
+				} while (FindNextFile(hFindFile, &wfd));
+
+				FindClose(hFindFile);
+				hFindFile = NULL;
+				bResult = TRUE;
+			}
+
+			return bResult;
+		}
+		//////////////////////////////////////////////////////////////////////////
+		// 函数说明：遍历目录获取指定文件列表
+		// 参    数：输出的文件行内容数据、过滤后缀名、过滤的前缀字符
+		// 返 回 值：bool返回类型，成功返回true；失败返回false
+		// 编 写 者: ppshuai 20141112
+		//////////////////////////////////////////////////////////////////////////
+		__inline static BOOL DirectoryTraversal(std::map<SIZE_T, TSTRING> * pSTMAP, LPCTSTR lpRootPath = _T("."), LPCTSTR lpExtension = _T("*.*"))
+		{
+			BOOL bResult = FALSE;
+			HANDLE hFindFile = NULL;
+			WIN32_FIND_DATA wfd = { 0 };
+			_TCHAR tFindPath[MAX_PATH + 1] = { 0 };
+
+			//构建遍历根目录
+			wsprintf(tFindPath, TEXT("%s%s"), lpRootPath, lpExtension);
 
 			hFindFile = FindFirstFileEx(tFindPath, FindExInfoStandard, &wfd, FindExSearchNameMatch, NULL, 0);
 			//hFindFile = FindFirstFile(tRootPath, &wfd);
@@ -1760,7 +1936,12 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 				do
 				{
 					pSTMAP->insert(std::map<SIZE_T, TSTRING>::value_type(pSTMAP->size(), TSTRING(TSTRING(lpRootPath) + wfd.cFileName)));
-				
+
+					if (((wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY) && (lstrcmp(wfd.cFileName, _T(".")) && lstrcmp(wfd.cFileName, _T(".."))))
+					{
+						bResult = DirectoryTraversal(pSTMAP, TSTRING(TSTRING(lpRootPath) + wfd.cFileName + _T("\\")).c_str(), lpExtension);
+					}
+
 				} while (FindNextFile(hFindFile, &wfd));
 
 				FindClose(hFindFile);
