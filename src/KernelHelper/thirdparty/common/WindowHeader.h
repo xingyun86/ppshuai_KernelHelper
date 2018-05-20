@@ -6370,7 +6370,7 @@ namespace GUI{
 		};
 		
 		putenv(std::string(std::string(THREAD_HTTP_404_ERROR) + "=" + lpHttp404Pages).c_str());
-		putenv(std::string(std::string(THREAD_HTTP_TIMEDELAY) + "=" + itoa(nDelayMilliSeconds, 0, 10)).c_str());
+		putenv(std::string(std::string(THREAD_HTTP_TIMEDELAY) + "=" + PPSHUAI::STRING_FORMAT_A(("%d"), nDelayMilliSeconds)).c_str());
 		static CThreadHelper threadhelper_httpserver((LPTHREAD_START_ROUTINE)[](LPVOID lpParams)->DWORD
 		{
 			CThreadHelper * pTH = (CThreadHelper *)lpParams;
