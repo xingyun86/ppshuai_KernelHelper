@@ -6357,11 +6357,12 @@ namespace GUI{
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////
-	__inline static CThreadHelper * StartHttpServer(DWORD & dwHttpServPort, LPCSTR lpHttpServPath = ("."), LPCSTR lpHttp404Pages = ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nNo data found!\r\n"))
+	__inline static CThreadHelper * StartHttpServer(DWORD & dwHttpServPort, LPCSTR lpHttpServPath = ("."), INT nDelayMilliSeconds = 10000 , LPCSTR lpHttp404Pages = ("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nNo data found!\r\n"))
 	{
 #define THREAD_HTTP_SERV_PATH "THREAD_HTTP_SERV_PATH"
 #define THREAD_HTTP_SERV_PORT "THREAD_HTTP_SERV_PORT"
 #define THREAD_HTTP_404_ERROR "THREAD_HTTP_404_ERROR"
+#define THREAD_HTTP_TIMEDELAY "THREAD_HTTP_TIMEDELAY"
 
 		static std::map<std::string, std::string> ssmap = {
 			{ (THREAD_HTTP_SERV_PATH), lpHttpServPath },
@@ -6369,6 +6370,7 @@ namespace GUI{
 		};
 		
 		putenv(std::string(std::string(THREAD_HTTP_404_ERROR) + "=" + lpHttp404Pages).c_str());
+		putenv(std::string(std::string(THREAD_HTTP_TIMEDELAY) + "=" + itoa(nDelayMilliSeconds, 0, 10)).c_str());
 		static CThreadHelper threadhelper_httpserver((LPTHREAD_START_ROUTINE)[](LPVOID lpParams)->DWORD
 		{
 			CThreadHelper * pTH = (CThreadHelper *)lpParams;
@@ -6402,7 +6404,7 @@ namespace GUI{
 				}, NULL);
 				while (pTH->IsThreadRunning())
 				{
-					shttpd_poll(ctx, 1000);
+					shttpd_poll(ctx, atoi(getenv(THREAD_HTTP_TIMEDELAY)));
 				}
 
 				shttpd_fini(ctx);
