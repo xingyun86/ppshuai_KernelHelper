@@ -27,14 +27,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
     <CharacterSet>
     </CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>
     </CharacterSet>
@@ -42,12 +42,12 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v140_xp</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -68,17 +68,30 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/pthreads/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty;$(SolutionDir)thirdparty/aes;$(SolutionDir)thirdparty/md5;$(SolutionDir)thirdparty/log4z;$(SolutionDir)thirdparty/include;$(SolutionDir)thirdparty/base64;$(SolutionDir)thirdparty/common;$(SolutionDir)thirdparty/zip/include;$(SolutionDir)thirdparty/zlib/include;$(SolutionDir)thirdparty/libuv/include;$(SolutionDir)thirdparty/c-ares/include;$(SolutionDir)thirdparty/sqlite3/include;$(SolutionDir)thirdparty/getopt/include;$(SolutionDir)thirdparty/libssh2/include;$(SolutionDir)thirdparty/libiconv/include;$(SolutionDir)thirdparty/jsoncpp/include;$(SolutionDir)thirdparty/libshttpd/include;$(SolutionDir)thirdparty/pthreads/include;$(SolutionDir)thirdparty/curl/libcurl/include;$(SolutionDir)thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/zlib/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libuv/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/getopt/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/openssl/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libshttpd/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <AdditionalDependencies>
       </AdditionalDependencies>
     </Link>
@@ -87,12 +100,12 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/pthreads/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty;$(SolutionDir)thirdparty/aes;$(SolutionDir)thirdparty/md5;$(SolutionDir)thirdparty/log4z;$(SolutionDir)thirdparty/include;$(SolutionDir)thirdparty/base64;$(SolutionDir)thirdparty/common;$(SolutionDir)thirdparty/zip/include;$(SolutionDir)thirdparty/zlib/include;$(SolutionDir)thirdparty/libuv/include;$(SolutionDir)thirdparty/c-ares/include;$(SolutionDir)thirdparty/sqlite3/include;$(SolutionDir)thirdparty/getopt/include;$(SolutionDir)thirdparty/libssh2/include;$(SolutionDir)thirdparty/libiconv/include;$(SolutionDir)thirdparty/jsoncpp/include;$(SolutionDir)thirdparty/libshttpd/include;$(SolutionDir)thirdparty/pthreads/include;$(SolutionDir)thirdparty/curl/libcurl/include;$(SolutionDir)thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/zlib/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libuv/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/getopt/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/openssl/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libshttpd/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <AdditionalDependencies>
       </AdditionalDependencies>
     </Link>
@@ -102,14 +115,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/pthreads/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty;$(SolutionDir)thirdparty/aes;$(SolutionDir)thirdparty/md5;$(SolutionDir)thirdparty/log4z;$(SolutionDir)thirdparty/include;$(SolutionDir)thirdparty/base64;$(SolutionDir)thirdparty/common;$(SolutionDir)thirdparty/zip/include;$(SolutionDir)thirdparty/zlib/include;$(SolutionDir)thirdparty/libuv/include;$(SolutionDir)thirdparty/c-ares/include;$(SolutionDir)thirdparty/sqlite3/include;$(SolutionDir)thirdparty/getopt/include;$(SolutionDir)thirdparty/libssh2/include;$(SolutionDir)thirdparty/libiconv/include;$(SolutionDir)thirdparty/jsoncpp/include;$(SolutionDir)thirdparty/libshttpd/include;$(SolutionDir)thirdparty/pthreads/include;$(SolutionDir)thirdparty/curl/libcurl/include;$(SolutionDir)thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/zlib/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libuv/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/getopt/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/openssl/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libshttpd/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>
@@ -121,14 +134,14 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>./thirdparty;./thirdparty/aes;./thirdparty/md5;./thirdparty/log4z;./thirdparty/include;./thirdparty/base64;./thirdparty/common;./thirdparty/zlib/include;./thirdparty/libuv/include;./thirdparty/c-ares/include;./thirdparty/sqlite3/include;./thirdparty/getopt/include;./thirdparty/libssh2/include;./thirdparty/libiconv/include;./thirdparty/jsoncpp/include;./thirdparty/pthreads/include;./thirdparty/curl/libcurl/include;./thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)thirdparty;$(SolutionDir)thirdparty/aes;$(SolutionDir)thirdparty/md5;$(SolutionDir)thirdparty/log4z;$(SolutionDir)thirdparty/include;$(SolutionDir)thirdparty/base64;$(SolutionDir)thirdparty/common;$(SolutionDir)thirdparty/zip/include;$(SolutionDir)thirdparty/zlib/include;$(SolutionDir)thirdparty/libuv/include;$(SolutionDir)thirdparty/c-ares/include;$(SolutionDir)thirdparty/sqlite3/include;$(SolutionDir)thirdparty/getopt/include;$(SolutionDir)thirdparty/libssh2/include;$(SolutionDir)thirdparty/libiconv/include;$(SolutionDir)thirdparty/jsoncpp/include;$(SolutionDir)thirdparty/libshttpd/include;$(SolutionDir)thirdparty/pthreads/include;$(SolutionDir)thirdparty/curl/libcurl/include;$(SolutionDir)thirdparty/gettimeofday/include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>./thirdparty/lib/$(Platform)/$(Configuration)/;./thirdparty/zlib/lib/$(Platform)/$(Configuration)/;./thirdparty/libuv/lib/$(Platform)/$(Configuration)/;./thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;./thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;./thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;./thirdparty/getopt/lib/$(Platform)/$(Configuration)/;./thirdparty/openssl/lib/$(Platform)/$(Configuration)/;./thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;./thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;./thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;./thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;./thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)thirdparty/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/zlib/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libuv/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/c-ares/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/sqlite3/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libssh2/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/getopt/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/openssl/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libiconv/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/jsoncpp/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/libshttpd/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/pthreads/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/curl/libcurl/lib/$(Platform)/$(Configuration)/;$(SolutionDir)thirdparty/gettimeofday/lib/$(Platform)/$(Configuration)/</AdditionalLibraryDirectories>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>

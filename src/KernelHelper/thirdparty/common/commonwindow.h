@@ -1739,7 +1739,7 @@ namespace PPSHUAI
 						::SetWindowText(hWnd, pTTMAP->at(_T(WINDOW_TITLE_INFO)).c_str());
 
 						//设置标题栏图标
-						HICON hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON));
+						HICON hIcon = LoadIcon(GetModuleHandle(NULL), RT_ICON);
 						if (hIcon)
 						{
 							SNDMSG(hWnd, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
