@@ -47,7 +47,9 @@ int VisitHtmls(STRINGVECTORVECTOR & svvUrl, STRINGVECTORVECTOR & svvMobile, std:
 
 	PPSHUAI::String::string_regex_find(strResult, svvUrl, (strJsonData), "href=\"(.*?)\"");
 
-	PPSHUAI::String::string_regex_find(strResult, svvMobile, (strJsonData), "(1[3|5|7|8]\\d{9})");
+	
+	//PPSHUAI::String::string_regex_find(strResult, svvMobile, (strJsonData), "(1[3|5|7|8]\\d{9})");
+	PPSHUAI::String::string_regex_find(strResult, svvMobile, (strJsonData), "(13[0-9]\\d{8}|14[579]\\d{8}|15[0-3,5-9]\\d{8}|16[6]\\d{8}|17[0135678]\\d{8}|18[0-9]\\d{8}|19[89]\\d{8})");
 
 	return nresult;
 }
@@ -410,6 +412,7 @@ int main(int argc, char ** argv)
 		std::cout << "==" << strData << std::endl;
 		return 0;
 	}*/
+
 	CSqlite3DB sqldb;
 	std::string strDBFileName = "phone-search.db";
 	std::string strDBCommand = 
