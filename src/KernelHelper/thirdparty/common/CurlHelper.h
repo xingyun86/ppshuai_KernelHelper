@@ -27,7 +27,7 @@ namespace PPSHUAI{
 		_tagByteData()
 		{
 		}
-		_tagByteData(char ** _p = 0, unsigned int _s = 0, unsigned int _v = 0)
+		_tagByteData(char ** _p, unsigned int _s = 0, unsigned int _v = 0)
 		{
 			init(_p, _s, _v);
 		}
@@ -112,7 +112,7 @@ namespace PPSHUAI{
 			_tagCallBackData()
 			{
 			}
-			_tagCallBackData(char ** _p = 0, unsigned int _s = 0, unsigned int _v = 0)
+			_tagCallBackData(char ** _p, unsigned int _s = 0, unsigned int _v = 0)
 			{
 				init(_p, _s, _v);
 			}
