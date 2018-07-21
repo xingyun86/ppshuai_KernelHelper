@@ -672,12 +672,31 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 
 	class CConfigHelper {
 	public:
+		//获取程序文件路径
+		__inline static tstring GetAppPath()
+		{
+			tstring tsFilePath = _T("");
+			_TCHAR * pFoundPosition = 0;
+			_TCHAR tFilePath[MAX_PATH] = { 0 };
+			GetModuleFileName(NULL, tFilePath, MAX_PATH);
+			if (*tFilePath)
+			{
+				pFoundPosition = _tcsrchr(tFilePath, _T('\\'));
+				if (*(++pFoundPosition))
+				{
+					*pFoundPosition = _T('\0');
+				}
+				tsFilePath = tFilePath;
+			}
+			return tsFilePath;
+		}
+
 		CConfigHelper(LPCTSTR lpPathFileName = _T("config.ini")) {
-			m_tsPathFileName = lpPathFileName;
+			m_tsPathFileName = CConfigHelper::GetAppPath() + lpPathFileName;
 		};
 		virtual ~CConfigHelper() {};
 
-		static void InitRead(std::map<tstring, std::map<tstring, tstring>> & ttmapmap, LPCTSTR lpFileName)
+		void InitRead(std::map<tstring, std::map<tstring, tstring>> & ttmapmap)
 		{
 			LPTSTR lpTSD = NULL;
 			DWORD dwSectionNames = (0L);
@@ -691,7 +710,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 			dwSectionNames = MAXBYTE;
 			lpSectionNames = (LPTSTR)malloc(dwSectionNames * sizeof(_TCHAR));
 
-			while ((GetPrivateProfileSectionNames(lpSectionNames, dwSectionNames, lpFileName)) &&
+			while ((GetPrivateProfileSectionNames(lpSectionNames, dwSectionNames, m_tsPathFileName.c_str())) &&
 				((GetLastError() == ERROR_MORE_DATA) || (GetLastError() == ERROR_INSUFFICIENT_BUFFER)))
 			{
 				lpTSD = (LPTSTR)realloc(lpSectionNames, (dwSectionNames + dwSectionNames) * sizeof(_TCHAR));
@@ -718,7 +737,7 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 				dwKeyNames = MAXBYTE;
 				lpKeyNames = (LPTSTR)malloc(dwKeyNames * sizeof(_TCHAR));
 
-				while ((GetPrivateProfileSection(lpTSD, lpKeyNames, dwKeyNames, lpFileName)) &&
+				while ((GetPrivateProfileSection(lpTSD, lpKeyNames, dwKeyNames, m_tsPathFileName.c_str())) &&
 					((GetLastError() == ERROR_MORE_DATA) || (GetLastError() == ERROR_INSUFFICIENT_BUFFER)))
 				{
 					lpTK = (LPTSTR)realloc(lpKeyNames, (dwKeyNames + dwKeyNames) * sizeof(_TCHAR));
@@ -769,22 +788,18 @@ __inline static std::wstring STRING_FORMAT_DATETIME_W(struct timeval * ptv, cons
 		}
 
 	public:
-		static TSTRING ReadString(LPCTSTR lpSectionName, LPCTSTR lpKeyName, LPCTSTR lpDefaultValue, LPCTSTR lpFileName)
+		TSTRING ReadString(LPCTSTR lpSectionName, LPCTSTR lpKeyName, LPCTSTR lpDefaultValue)
 		{
 			TSTRING t(USHRT_MAX, _T('\0'));
-			GetPrivateProfileString(lpSectionName, lpKeyName, lpDefaultValue, (LPTSTR)t.c_str(), t.size(), lpFileName);
+			GetPrivateProfileString(lpSectionName, lpKeyName, lpDefaultValue, (LPTSTR)t.c_str(), t.size(), m_tsPathFileName.c_str());
 			return t;
-		}
-		static BOOL WriteString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpValue, LPCTSTR lpFileName)
+		}		
+
+		BOOL WriteString(LPCTSTR lpAppName, LPCTSTR lpKeyName, LPCTSTR lpValue)
 		{
-			return WritePrivateProfileString(lpAppName, lpKeyName, lpValue, lpFileName);
+			return WritePrivateProfileString(lpAppName, lpKeyName, lpValue, m_tsPathFileName.c_str());
 		}
-		static BOOL WriteInteger(LPCTSTR lpAppName, LPCTSTR lpKeyName, INT nValue, LPCTSTR lpFileName)
-		{
-			_TCHAR tzValue[MAXBYTE] = _T("\0");
-			_sntprintf(tzValue, sizeof(tzValue) / sizeof(*tzValue) - 1, _T("%ld"), nValue);
-			return WriteString(lpAppName, lpKeyName, tzValue, lpFileName);
-		}
+
 	private:
 
 		tstring m_tsPathFileName;
