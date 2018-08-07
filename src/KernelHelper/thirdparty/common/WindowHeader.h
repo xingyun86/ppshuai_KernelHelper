@@ -5527,36 +5527,38 @@ namespace GUI{
 		return TRUE;
 	}
 
-	__inline static void ShowAbout(HWND hWnd = NULL, WORD wIconResId = (0L), LPCTSTR lpWindowInfo = _T("About"), LPCTSTR lpVersionInfo = _T("Version1.0"), LPCTSTR lpCopyrightInfo = _T("Copyright (C) 2018"), LPCTSTR lpContactInfo = _T("Contact:xingyun86(523381005)"))
+	__inline static void ShowAbout(HWND hWnd = NULL, WORD wIconResId = (0L), LPCTSTR lpWindowInfo = _T("About"), LPCTSTR lpVersionInfo = _T("Version1.0"), LPCTSTR lpCopyrightInfo = _T("Copyright (C) 2018"), LPCTSTR lpContactInfo = _T("Contact:xingyun86"), LPCTSTR lpButtonInfo = _T("确定"))
 	{
 #define TTMAP_KEY_ICONID			"ICON_ID"
 #define TTMAP_KEY_WINDOWINFO		"WINDOW_INFO"
 #define TTMAP_KEY_VERSIONINFO		"VERSION_INFO"
 #define TTMAP_KEY_COPYRIGHTINFO		"COPYRIGHT_INFO"
 #define TTMAP_KEY_CONTACTINFO		"CONTACT_INFO"
+#define TTMAP_KEY_OKBUTTON_INFO		"OKBUTTON_INFO"
 		TSTRINGTSTRINGMAP ttmap = {
 			{ _T(TTMAP_KEY_ICONID), STRING_FORMAT(_T("0x%08X"), wIconResId) },
 			{ _T(TTMAP_KEY_WINDOWINFO), lpWindowInfo },
 			{ _T(TTMAP_KEY_VERSIONINFO), lpVersionInfo },
 			{ _T(TTMAP_KEY_COPYRIGHTINFO), lpCopyrightInfo },
 			{ _T(TTMAP_KEY_CONTACTINFO), lpContactInfo },
+			{ _T(TTMAP_KEY_OKBUTTON_INFO), lpButtonInfo },
 		};
 		// 通用控件 初始化 
 		InitCommonControls();
 		DisplayDialogBox(
 			CDlgTemplate(DS_MODALFRAME | DS_FIXEDSYS | DS_3DLOOK | DS_SETFONT | DS_CENTER | WS_BORDER | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, \
-			2, 0, 0, 200, 100, 0, _T(""), _T("About"), 8, _T("MS Sans Serif"), \
+			2, 0, 0, 200, 100, 0, _T(""), _T("ABOUT"), 8, _T("MS Sans Serif"), \
 			std::vector<CDlgItemTemplate>{ \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_ICON | SS_CENTERIMAGE, 0, \
-			14, 14, 21, 20, 100, WC_STATIC, _T(""), 0), \
+			14, 14, 21, 20, 100, WC_STATIC, WC_STATIC, 0), \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, 0, \
-			42, 14, 198, 8, 101, WC_STATIC, _T("Version1.0"), 0), \
+			42, 14, 198, 8, 101, WC_STATIC, WC_STATIC, 0), \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | ES_LEFT | ES_MULTILINE | ES_READONLY, 0, \
-			42, 26, 198, 24, 102, WC_EDIT, _T("Copyright (C) 2018"), 0), \
+			42, 26, 198, 24, 102, WC_EDIT, WC_EDIT, 0), \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | SS_LEFT, 0, \
-			41, 51, 198, 8, 103, WC_STATIC, _T("Contact:xingyun86(523381005)"), 0), \
+			41, 51, 198, 8, 103, WC_STATIC, WC_STATIC, 0), \
 			CDlgItemTemplate(WS_CHILD | WS_VISIBLE | WS_GROUP | BS_DEFPUSHBUTTON, 0, \
-			114, 72, 50, 14, IDOK, WC_BUTTON, _T("确定"), 0), \
+			114, 72, 50, 14, IDOK, WC_BUTTON, WC_BUTTON, 0), \
 		}),
 		(DLGPROC)[](HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)->INT_PTR
 		{
@@ -5598,6 +5600,7 @@ namespace GUI{
 				SetDlgItemText(hWnd, 101, pTTMAP->at(_T(TTMAP_KEY_VERSIONINFO)).c_str());
 				SetDlgItemText(hWnd, 102, pTTMAP->at(_T(TTMAP_KEY_COPYRIGHTINFO)).c_str());
 				SetDlgItemText(hWnd, 103, pTTMAP->at(_T(TTMAP_KEY_CONTACTINFO)).c_str());
+				SetDlgItemText(hWnd, IDOK, pTTMAP->at(_T(TTMAP_KEY_OKBUTTON_INFO)).c_str());
 			}
 			break;
 			case WM_SETFONT:
